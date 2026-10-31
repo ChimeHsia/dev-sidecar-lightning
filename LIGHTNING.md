@@ -77,12 +77,32 @@ lightning-browser/
 └─ app/src/main/res/{raw/dsha_ca.pem,xml/network_security_config.xml}
 ```
 
-## 构建
+## 从零构建（克隆仓库后）
+
+payload（`libnodebin.so` 46MB + node libs 30MB）不进版本库，必须先重建：
+
+```bash
+# 1) 生成 Node 运行时 + dev-sidecar 核心
+#    需要本机装有 dev-sidecar（取它的 app.asar 作为核心源码）
+python port/build-payload.py --resources "D:/App/Net/dev-sidecar/resources"
+
+# 2) 同步进壳
+./port/sync-payload.sh                 # 默认 lightning-browser，可传目录名
+
+# 3) 构建
+cd lightning-browser
+JAVA_HOME=../.jdk/jdk-21.0.2 ./gradlew assembleLightningPlusRelease
+# → app/build/outputs/apk/lightningPlus/release/app-lightningPlus-release.apk（58MB）
+```
+
+`port/build-payload.py` 里硬编码了 Termux 清华镜像的 deb 版本（node 24.22.1 及 7 个依赖），
+升级时改那几个常量即可。
+
+## 构建（payload 已就位时）
 
 ```bash
 cd lightning-browser
 JAVA_HOME=../.jdk/jdk-21.0.2 ./gradlew assembleLightningPlusRelease
-# → app/build/outputs/apk/lightningPlus/release/app-lightningPlus-release.apk（58MB）
 ```
 
 ## 已知问题
