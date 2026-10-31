@@ -1,0 +1,305 @@
+diff --git a/app/build.gradle.kts b/app/build.gradle.kts
+index 098c7a3..193a6fe 100644
+--- a/app/build.gradle.kts
++++ b/app/build.gradle.kts
+@@ -90,6 +90,9 @@ android {
+         getByName("release") {
+             isMinifyEnabled = true
+             isShrinkResources = true
++            // 本地自用包：用 debug 签名，省去自建 keystore（上游用 ~/.secrets 里的
++            // Play 上传密钥，这里没有也不想让构建依赖它）
++            signingConfig = signingConfigs.getByName("debug")
+             // Must stay on `proguard-android-optimize.txt`: dropping it to the plain
+             // `proguard-android.txt` saved ~35s on R8 but grew the APK by ~1MB, which is
+             // not acceptable for a ~7MB release. Don't re-try this without a new plan.
+@@ -142,6 +145,11 @@ android {
+     }
+ 
+     packaging {
++        // 边车核心：libnodebin.so 是要被 exec 的 ELF，必须原样解压到 nativeLibraryDir。
++        // assets 里的 zip 已经是压缩过的，再压一遍只会拖慢首次启动。
++        jniLibs {
++            useLegacyPackaging = true
++        }
+         resources.excludes.add("/META-INF/{AL2.0,LGPL2.1}")
+         // kxml2's service file uses a non-standard comma-separated entry that R8 cannot
+         // parse; Android registers KXmlParser/KXmlSerializer via its platform XmlPullParserFactory.
+@@ -153,6 +161,8 @@ android {
+     }
+ 
+     androidResources {
++        // 边车负载本来就是 zip，二次压缩没收益还拖慢首次解压
++        noCompress += listOf("zip", "pem", "crt")
+ 
+         // Only package the locales the app itself is translated into. Without this,
+         // AppCompat (and formerly Material Components) add ~80 extra locale configs
+diff --git a/app/src/main/java/info/plateaukao/einkbro/EinkBroApplication.kt b/app/src/main/java/info/plateaukao/einkbro/EinkBroApplication.kt
+index e72b156..7ecaa6c 100644
+--- a/app/src/main/java/info/plateaukao/einkbro/EinkBroApplication.kt
++++ b/app/src/main/java/info/plateaukao/einkbro/EinkBroApplication.kt
+@@ -19,6 +19,7 @@ import androidx.core.app.NotificationManagerCompat
+ import androidx.core.content.ContextCompat
+ import info.plateaukao.einkbro.activity.BrowserActivity
+ import info.plateaukao.einkbro.activity.SettingActivity
++import info.plateaukao.einkbro.accel.DshaAccel
+ import info.plateaukao.einkbro.browser.AdBlock
+ import info.plateaukao.einkbro.view.compose.UiThemeState
+ import info.plateaukao.einkbro.browser.Cookie
+@@ -103,6 +104,9 @@ class EinkBroApplication : Application() {
+     override fun onCreate() {
+         super.onCreate()
+ 
++        // 边车加速：拉起内嵌 Node 核心（127.0.0.1:31181），异步，失败不影响浏览器本身
++        DshaAccel.start(this)
++
+         startKoin {
+             androidContext(this@EinkBroApplication)
+             modules(myModule)
+diff --git a/app/src/main/java/info/plateaukao/einkbro/accel/DshaAccel.kt b/app/src/main/java/info/plateaukao/einkbro/accel/DshaAccel.kt
+new file mode 100644
+index 0000000..e8aa1e8
+--- /dev/null
++++ b/app/src/main/java/info/plateaukao/einkbro/accel/DshaAccel.kt
+@@ -0,0 +1,187 @@
++package info.plateaukao.einkbro.accel
++
++import android.content.Context
++import android.util.Log
++import androidx.webkit.ProxyConfig
++import androidx.webkit.ProxyController
++import androidx.webkit.WebViewFeature
++import java.io.BufferedReader
++import java.io.File
++import java.io.InputStreamReader
++import java.util.concurrent.Executors
++import java.util.zip.ZipInputStream
++
++/**
++ * 内嵌 dev-sidecar 核心：在本进程里拉起 Node（aarch64 ELF），
++ * 再把 WebView 的流量指向它的 MITM 端口（127.0.0.1:31181）。
++ *
++ * 为什么是 MITM 而不是纯转发：Google 这类站点的 DNS 被投毒、可连的 IP 只给
++ * 诱饵证书（CN=invalid.invalid），纯字节转发必然被浏览器拒绝；只有自己签发证书
++ * 才能接住（CA 打包在 APK 内，只被本 App 的 network-security-config 信任）。
++ *
++ * 关键约束：
++ * - `ProxyController` 是**进程级**的，一个进程调一次即对全部 WebView 生效。
++ * - Node 二进制必须以 `libnodebin.so` 放在 jniLibs（Android 10+ 只允许从
++ *   nativeLibraryDir 执行文件），依赖库靠 LD_LIBRARY_PATH 指过去。
++ */
++object DshaAccel {
++
++    private const val TAG = "dsha-accel"
++    private const val PORT = 31181
++    private const val MARKER_READY = "就绪"
++
++    /** 负载版本：改了 assets 里的 zip 就 +1，保证升级后会重新解压。 */
++    private const val PAYLOAD_VERSION = "2"
++
++    @Volatile
++    private var started = false
++
++    /** 只在 node 就绪后置 true；代理本身可重复设置（WebView 每建一个都补一次）。 */
++    @Volatile
++    private var coreReady = false
++
++    private var process: Process? = null
++
++    @Volatile
++    private var appContext: Context? = null
++
++    private val executor = Executors.newSingleThreadExecutor()
++
++    /** 主进程调用：解压资源 → 起 Node → 等就绪 → 设代理。 */
++    @Synchronized
++    fun start(context: Context) {
++        if (started) return
++        started = true
++        appContext = context.applicationContext
++        Thread({ boot(context.applicationContext) }, "dsha-boot").start()
++    }
++
++    private fun boot(context: Context) {
++        try {
++            prepare(context)
++            launchNode(context)
++        } catch (e: Throwable) {
++            Log.e(TAG, "核心启动失败", e)
++        }
++    }
++
++    private fun launchNode(context: Context) {
++        val root = File(context.filesDir, "node")
++        val projectDir = File(context.filesDir, "nodejs-project")
++        val homeDir = File(projectDir, "home")
++
++        val nodeBin = File(context.applicationInfo.nativeLibraryDir, "libnodebin.so")
++        if (!nodeBin.exists()) {
++            Log.e(TAG, "缺少 node 可执行文件：${nodeBin.absolutePath}")
++            return
++        }
++
++        val pb = ProcessBuilder(nodeBin.absolutePath, "main.js")
++            .directory(projectDir)
++            .redirectErrorStream(true)
++        pb.environment().apply {
++            put("LD_LIBRARY_PATH", root.absolutePath)
++            put("HOME", homeDir.absolutePath)
++            put("TMPDIR", context.cacheDir.absolutePath)
++            put("SSL_CERT_FILE", File(root, "cacert.pem").absolutePath)
++            put("NODE_EXTRA_CA_CERTS", File(root, "cacert.pem").absolutePath)
++            put("DSHA_PORT", PORT.toString())
++        }
++
++        val p = pb.start()
++        process = p
++        Log.i(TAG, "node 已启动")
++
++        try {
++            BufferedReader(InputStreamReader(p.inputStream)).useLines { lines ->
++                lines.forEach { line ->
++                    Log.i(TAG, line)
++                    if (!coreReady && line.contains(MARKER_READY)) {
++                        coreReady = true
++                        appContext?.let { ensureProxy(it) }
++                    }
++                }
++            }
++        } catch (e: Throwable) {
++            Log.w(TAG, "读取 node 输出中断: ${e.message}")
++        }
++        Log.w(TAG, "node 已退出 code=${runCatching { p.waitFor() }.getOrNull()}")
++    }
++
++    /**
++     * 把本进程所有 WebView 的流量导向本地核心。
++     *
++     * 必须可重复调用：`ProxyController` 的设置在 WebView 尚未初始化时可能静默不生效，
++     * 所以每建一个 WebView 就补设一次，确保后来的 WebView 也吃到代理。
++     */
++    @Synchronized
++    fun ensureProxy(context: Context) {
++        appContext = context.applicationContext
++        if (!WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
++            Log.w(TAG, "当前 WebView 不支持 PROXY_OVERRIDE（Chromium 版本过旧）")
++            return
++        }
++        // 不设 bypass：与已验证可用的版本保持一致，加了 bypass 规则反而出现过代理不生效
++        val config = ProxyConfig.Builder()
++            .addProxyRule("http://127.0.0.1:$PORT")
++            .build()
++        ProxyController.getInstance().setProxyOverride(config, executor) {
++            Log.i(TAG, "WebView 代理已生效 → 127.0.0.1:$PORT")
++        }
++    }
++
++    /** 首次启动解压 assets（用标记文件避免重复解压）。 */
++    private fun prepare(context: Context) {
++        val root = File(context.filesDir, "node").apply { mkdirs() }
++        val projectDir = File(context.filesDir, "nodejs-project").apply { mkdirs() }
++        val homeDir = File(projectDir, "home").apply { mkdirs() }
++
++        unzipAsset(context, "node-libs.zip", root)
++        unzipAsset(context, "nodejs-project.zip", projectDir)
++
++        // Termux 的 openssl 默认证书路径不存在，用自带证书包兜底
++        val ca = File(root, "cacert.pem")
++        if (!ca.exists()) copyAsset(context, "cacert.pem", ca)
++
++        // 用打包时固定的 CA 覆盖核心自签的那张：只有这张被 network-security-config
++        // 信任，否则 WebView 会报 ERR_CERT_AUTHORITY_INVALID
++        val dsDir = File(homeDir, ".dev-sidecar").apply { mkdirs() }
++        copyAsset(context, "dsha_ca.crt", File(dsDir, "dev-sidecar.ca.crt"))
++        copyAsset(context, "dsha_ca.key.pem", File(dsDir, "dev-sidecar.ca.key.pem"))
++    }
++
++    private fun copyAsset(context: Context, name: String, dest: File) {
++        context.assets.open(name).use { input -> dest.outputStream().use { input.copyTo(it) } }
++    }
++
++    private fun unzipAsset(context: Context, name: String, dest: File) {
++        val marker = File(dest, ".$name.v$PAYLOAD_VERSION.done")
++        if (marker.exists()) return
++
++        val start = System.currentTimeMillis()
++        var count = 0
++        context.assets.open(name).use { raw ->
++            ZipInputStream(raw.buffered()).use { zip ->
++                while (true) {
++                    val entry = zip.nextEntry ?: break
++                    val out = File(dest, entry.name)
++                    if (entry.isDirectory) {
++                        out.mkdirs()
++                    } else {
++                        out.parentFile?.mkdirs()
++                        out.outputStream().use { zip.copyTo(it) }
++                        count++
++                    }
++                    zip.closeEntry()
++                }
++            }
++        }
++        marker.createNewFile()
++        Log.i(TAG, "解压 $name → ${dest.name}，$count 个文件，${System.currentTimeMillis() - start}ms")
++    }
++
++    fun stop() {
++        process?.destroy()
++        process = null
++    }
++}
+diff --git a/app/src/main/java/info/plateaukao/einkbro/view/EBWebView.kt b/app/src/main/java/info/plateaukao/einkbro/view/EBWebView.kt
+index 85971d4..71f2370 100755
+--- a/app/src/main/java/info/plateaukao/einkbro/view/EBWebView.kt
++++ b/app/src/main/java/info/plateaukao/einkbro/view/EBWebView.kt
+@@ -17,6 +17,7 @@ import android.webkit.WebView
+ import androidx.lifecycle.LifecycleCoroutineScope
+ import info.plateaukao.einkbro.BuildConfig
+ import info.plateaukao.einkbro.R
++import info.plateaukao.einkbro.accel.DshaAccel
+ import info.plateaukao.einkbro.browser.AlbumCallback
+ import info.plateaukao.einkbro.browser.AlbumController
+ import info.plateaukao.einkbro.browser.ChatWebInterface
+@@ -430,6 +431,9 @@ open class EBWebView(
+         initWebView()
+         configApplier.initWebSettings()
+         initPreferences()
++        // 边车加速：每个 WebView 建好都补设一次代理（ProxyController 是进程级的，
++        // 但在 WebView 初始化完成前后设置的行为不一致，所以这里兜底重设）
++        DshaAccel.ensureProxy(context)
+     }
+ 
+     @SuppressLint("ClickableViewAccessibility")
+diff --git a/app/src/main/res/xml/network_security_config.xml b/app/src/main/res/xml/network_security_config.xml
+index f18e1f0..54796ae 100644
+--- a/app/src/main/res/xml/network_security_config.xml
++++ b/app/src/main/res/xml/network_security_config.xml
+@@ -1,8 +1,14 @@
+ <?xml version="1.0" encoding="utf-8"?>
++<!--
++  浏览器需要能打开 http 站点；同时本地 dev-sidecar 核心走 127.0.0.1 明文 HTTP 代理。
++  dsha_ca 是打包时固定的自签 CA：核心用它对 https 做 MITM 解出真实 SNI，
++  只有本 App 信任它（不装系统证书，也不影响其它 App）。
++-->
+ <network-security-config>
+     <base-config cleartextTrafficPermitted="true">
+         <trust-anchors>
+             <certificates src="system" />
++            <certificates src="@raw/dsha_ca" />
+         </trust-anchors>
+     </base-config>
+-</network-security-config>
+\ No newline at end of file
++</network-security-config>
+diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
+index 4f5eb9d..1c338ba 100755
+--- a/gradle/wrapper/gradle-wrapper.properties
++++ b/gradle/wrapper/gradle-wrapper.properties
+@@ -1,6 +1,6 @@
+ distributionBase=GRADLE_USER_HOME
+ distributionPath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-8.14.5-bin.zip
++distributionUrl=https\://mirrors.cloud.tencent.com/gradle/gradle-8.14.5-bin.zip
+ networkTimeout=10000
+ validateDistributionUrl=true
+ zipStoreBase=GRADLE_USER_HOME

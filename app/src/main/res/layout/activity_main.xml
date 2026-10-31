@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/bg_elevated"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="2dp"
+        android:paddingVertical="6dp">
+
+        <TextView
+            android:id="@+id/btnBack"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:contentDescription="@string/action_back"
+            android:focusable="true"
+            android:gravity="center"
+            android:text="‹"
+            android:textColor="@color/text_secondary"
+            android:textSize="26sp" />
+
+        <TextView
+            android:id="@+id/btnForward"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:contentDescription="@string/action_forward"
+            android:focusable="true"
+            android:gravity="center"
+            android:text="›"
+            android:textColor="@color/text_secondary"
+            android:textSize="26sp" />
+
+        <EditText
+            android:id="@+id/urlBar"
+            android:layout_width="0dp"
+            android:layout_height="38dp"
+            android:layout_marginHorizontal="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_url_bar"
+            android:hint="@string/url_hint"
+            android:imeOptions="actionGo"
+            android:inputType="textUri"
+            android:maxLines="1"
+            android:paddingHorizontal="12dp"
+            android:selectAllOnFocus="true"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_secondary"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/btnReload"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:contentDescription="@string/action_reload"
+            android:focusable="true"
+            android:gravity="center"
+            android:text="⟳"
+            android:textColor="@color/text_secondary"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/btnMenu"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:text="☰"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp" />
+
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:max="100"
+        android:progressTint="@color/brand"
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/accelStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/bg_elevated"
+        android:clickable="true"
+        android:focusable="true"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="5dp"
+        android:text="@string/accel_off"
+        android:textColor="@color/text_secondary"
+        android:textSize="11sp" />
+
+    <FrameLayout
+        android:id="@+id/webContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+</LinearLayout>

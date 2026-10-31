@@ -1,0 +1,338 @@
+package acr.browser.lightning.browser.tab
+
+import acr.browser.lightning.download.PendingDownload
+import acr.browser.lightning.ssl.SslCertificateInfo
+import acr.browser.lightning.ssl.SslState
+import android.content.Intent
+import android.os.Bundle
+import android.os.Message
+import androidx.activity.result.ActivityResult
+import androidx.annotation.ColorInt
+import androidx.compose.ui.graphics.ImageBitmap
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+
+/**
+ * The representation of a browser tab.
+ */
+interface TabModel {
+
+    /**
+     * The tab identifier.
+     */
+    val id: Int
+
+    /**
+     * The type of tab this is, defined by its origin.
+     */
+    var tabType: Type
+
+    // Navigation
+
+    /**
+     * Load a [url] in the tab.
+     */
+    suspend fun loadUrl(url: String)
+
+    /**
+     * Load a URL using the provided [tabInitializer].
+     */
+    fun loadFromInitializer(tabInitializer: TabInitializer)
+
+    /**
+     * Go back in the navigation tree.
+     */
+    suspend fun goBack()
+
+    /**
+     * True if [goBack] has something to go back to, false otherwise.
+     */
+    suspend fun canGoBack(): Boolean
+
+    /**
+     * Emits changes to the [canGoBack] status.
+     */
+    fun canGoBackChanges(): Flow<Boolean>
+
+    /**
+     * Go forward in the navigation tree.
+     */
+    suspend fun goForward()
+
+    /**
+     * True if [goForward] has something to go forward to, false otherwise.
+     */
+    suspend fun canGoForward(): Boolean
+
+    /**
+     * Emits changes to the [canGoForward] status.
+     */
+    fun canGoForwardChanges(): Flow<Boolean>
+
+    /**
+     * Toggle the user agent used by the browser to a desktop one or back to the default one.
+     */
+    suspend fun toggleDesktopAgent()
+
+    /**
+     * Reload the page the browser is currently showing.
+     */
+    suspend fun reload()
+
+    /**
+     * Stop loading the current page if it is loading. If the page is not loading, has no effect.
+     */
+    suspend fun stopLoading()
+
+    /**
+     * Highlight words in the webpage that match the [query].
+     */
+    suspend fun find(query: String)
+
+    /**
+     * Move to the next word highlighted by [find].
+     */
+    suspend fun findNext()
+
+    /**
+     * Move to the previous word highlighted by [find].
+     */
+    suspend fun findPrevious()
+
+    /**
+     * Remove highlighting from all words highlighted by [find].
+     */
+    suspend fun clearFindMatches()
+
+    /**
+     * The current query that is being highlighted by [find].
+     */
+    val findQuery: String?
+
+    // Data
+
+    /**
+     * The current query or the current URL that the user has entered in the search bar.
+     */
+    var searchQuery: String
+
+    /**
+     * The text selection in the search query, either the start and end of the selection if the
+     * values are different, or the cursor position if they are the same.
+     */
+    var searchQuerySelection: Pair<Int, Int>
+
+    /**
+     * The current [Favicon] of the webpage.
+     */
+    val favicon: Favicon
+
+    /**
+     * The states of the [favicon].
+     */
+    fun faviconChanges(): StateFlow<Favicon>
+
+    /**
+     * A preview of the tab's content.
+     */
+    val preview: Preview
+
+    /**
+     * The states of the [preview].
+     */
+    fun previewChanges(): StateFlow<Preview>
+
+    /**
+     * The thematic color of the current webpage.
+     */
+    @get:ColorInt
+    val themeColor: Int
+
+    /**
+     * Emits changes to the [themeColor].
+     */
+    fun themeColorChanges(): Flow<Int>
+
+    /**
+     * The URL of the currently displayed webpage.
+     */
+    val url: String
+
+    /**
+     * Emits changes to the [url].
+     */
+    fun urlChanges(): Flow<String>
+
+    /**
+     * The title of the current webpage.
+     */
+    val title: String?
+
+    /**
+     * The states of the [title].
+     */
+    fun titleChanges(): StateFlow<String?>
+
+    /**
+     * Get the current SSL certificate information about the webpage.
+     */
+    suspend fun getSslCertificateInfo(): SslCertificateInfo?
+
+    /**
+     * The current state of the SSL certificate.
+     */
+    val sslState: SslState
+
+    /**
+     * The states of the [sslState].
+     */
+    fun sslChanges(): StateFlow<SslState>
+
+    /**
+     * The loading progress for the current webpage on a scale of 0-100. If the page is completely
+     * loaded, then the progress will be 100.
+     */
+    val loadingProgress: Int
+
+    /**
+     * Emits changes to [sslState].
+     */
+    fun loadingProgress(): Flow<Int>
+
+    // Lifecycle
+
+    /**
+     * Emits requests to download a file represented by [PendingDownload] that are triggered by the
+     * browser.
+     */
+    fun downloadRequests(): Flow<PendingDownload>
+
+    /**
+     * Emits requests to open the file chooser that are triggered by the browser.
+     */
+    fun fileChooserRequests(): Flow<Intent>
+
+    /**
+     * Handle a resulting file to upload after selecting a file from the file chooser.
+     */
+    fun handleFileChooserResult(activityResult: ActivityResult)
+
+    /**
+     * Emits requests by the browser to display a custom view (i.e. full screen video) over the
+     * regular webpage content.
+     */
+    fun showCustomViewRequests(): Flow<Unit>
+
+    /**
+     * Emits requests by the browser to hide the custom view it previously requested to display via
+     * [showCustomViewRequests].
+     */
+    fun hideCustomViewRequests(): Flow<Unit>
+
+    /**
+     * Notify the browser that we are manually hiding the custom view requested to be shown by
+     * [showCustomViewRequests].
+     */
+    fun hideCustomView()
+
+    /**
+     * Handle a message produced by another tab emitting to [createWindowRequests].
+     */
+    suspend fun handleMessage(message: Message)
+
+    /**
+     * Emits requests by the browser to automatically open a new tab and load the URL provided by
+     * the [TabInitializer].
+     */
+    fun createWindowRequests(): Flow<TabInitializer>
+
+    /**
+     * Emits requests by the browser to automatically close the current tab.
+     */
+    fun closeWindowRequests(): Flow<Unit>
+
+    /**
+     * Emits requests to focus the tab.
+     */
+    fun focusRequests(): Flow<Unit>
+
+    /**
+     * Emits the toolbar visibility desired by the tab's scroll position. True if it wants the
+     * toolbar shown, false if it wants it hidden.
+     */
+    fun showHideToolbar(): Flow<Boolean>
+
+    /**
+     * Move the tab to the foreground.
+     */
+    suspend fun foreground()
+
+    /**
+     * Move the tab to the background. Used to prevent background tabs from consuming
+     * disproportionate amounts of resources when they are unused.
+     *
+     * @param backgroundAll True if all tabs should enter background, false if only this tab should
+     * enter background.
+     */
+    suspend fun background(backgroundAll: Boolean)
+
+    /**
+     * Release resources held by the current tab without destroying it.
+     */
+    suspend fun freeze()
+
+    /**
+     * Teardown the current tab and release held resources.
+     */
+    suspend fun destroy()
+
+    /**
+     * Restore the tab state from a bundle created by [save].
+     */
+    suspend fun restore(bundle: Bundle)
+
+    /**
+     * Save the current state of the tab and return it as a [Bundle].
+     */
+    suspend fun save(): Bundle
+
+    /**
+     * Potential favicon states.
+     */
+    sealed interface Favicon {
+        object None : Favicon
+
+        object Frozen : Favicon
+
+        data class Icon(val bitmap: ImageBitmap) : Favicon
+    }
+
+    /**
+     * Represents the tab preview states.
+     */
+    sealed interface Preview {
+        object None : Preview
+
+        data class Image(val path: String, val time: Long) : Preview
+    }
+
+    /**
+     * The type of tab controls how the browser responds when the tab is closed or the browser
+     * navigates back.
+     * - [NORMAL]: The browser behaves normally. When the tab is closed, nothing else happens. When
+     * the user goes back via the OS back gesture/button and there is no history item to go back to,
+     * the app will enter the background.
+     * - [EPHEMERAL]: When the tab is closed, the app will enter the background. This is because
+     * ephemeral tabs are considered started from an external source. When the user goes back via
+     * the OS back gesture/button and there is no history item to go back to, the browser will close
+     * the tab.
+     * - [POP_UP]: When the tab is closed, nothing else will happen. Pop-up tabs are considered to
+     * have been started from an internal source. When the user goes back via the OS back
+     * gesture/button and there is no history item to go back to, the browser will close the tab.
+     */
+    enum class Type {
+        NORMAL,
+        EPHEMERAL,
+        POP_UP
+    }
+}

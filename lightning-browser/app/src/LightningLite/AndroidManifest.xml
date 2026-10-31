@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:installLocation="auto">
+
+    <application
+        android:icon="@mipmap/ic_launcher_blue"
+        android:roundIcon="@mipmap/ic_launcher_blue"
+        tools:replace="icon,roundIcon">
+
+        <activity-alias
+            android:name="acr.browser.lightning.DefaultBrowserActivityOrange"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_orange"
+            android:targetActivity="acr.browser.lightning.DefaultBrowserActivity">
+            <intent-filter tools:ignore="AppLinkUrlError">
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.APP_BROWSER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name="acr.browser.lightning.DefaultBrowserActivityBlue"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_blue"
+            android:targetActivity="acr.browser.lightning.DefaultBrowserActivity">
+            <intent-filter tools:ignore="AppLinkUrlError">
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.APP_BROWSER" />
+            </intent-filter>
+        </activity-alias>
+    </application>
+
+</manifest>

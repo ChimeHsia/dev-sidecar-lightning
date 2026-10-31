@@ -1,0 +1,25 @@
+package acr.browser.lightning.browser.tab.bundle
+
+import acr.browser.lightning.browser.tab.FreezableInitializer
+import acr.browser.lightning.browser.tab.TabModel
+
+/**
+ * Used to save tab data for future restoration when the browser goes into hibernation.
+ */
+interface BundleStore {
+
+    /**
+     * Save the tab data for the list of [tabs].
+     */
+    suspend fun save(tabs: List<TabModel>)
+
+    /**
+     * Synchronously previously stored tab data.
+     */
+    suspend fun retrieve(): List<FreezableInitializer>
+
+    /**
+     * Synchronously delete all stored tabs.
+     */
+    suspend fun deleteAll()
+}

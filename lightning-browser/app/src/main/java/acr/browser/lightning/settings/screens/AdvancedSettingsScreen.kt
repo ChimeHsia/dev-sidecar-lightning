@@ -1,0 +1,173 @@
+package acr.browser.lightning.settings.screens
+
+import acr.browser.lightning.R
+import acr.browser.lightning.browser.search.SearchBoxDisplayChoice
+import acr.browser.lightning.browser.tab.settings.RenderingMode
+import acr.browser.lightning.constant.TEXT_ENCODINGS
+import acr.browser.lightning.extensions.activeTabLimit
+import acr.browser.lightning.preference.UserPreferencesDataStore
+import acr.browser.lightning.resources.ResourceProvider
+import acr.browser.lightning.settings.framework.ClickableOnClick
+import acr.browser.lightning.settings.framework.ClickableState
+import acr.browser.lightning.settings.framework.SettingsBottomSheetChooserState
+import acr.browser.lightning.settings.framework.SettingsFrameworkState
+import acr.browser.lightning.settings.framework.ToggleState
+import android.app.ActivityManager
+import javax.inject.Inject
+
+class AdvancedSettingsScreen @Inject constructor(
+    private val resourceProvider: ResourceProvider,
+    private val userPreferencesDataStore: UserPreferencesDataStore,
+    private val activityManager: ActivityManager,
+) {
+    fun createSettingsFrameworkState(): SettingsFrameworkState = SettingsFrameworkState(
+        title = resourceProvider.stringResource(R.string.settings_advanced),
+        content = listOf(
+            ToggleState(
+                title = resourceProvider.stringResource(R.string.window),
+                summary = { resourceProvider.stringResource(R.string.recommended) },
+                isChecked = { userPreferencesDataStore.popupsEnabled.get() },
+                onToggle = {
+                    userPreferencesDataStore.popupsEnabled.set(it)
+                    null
+                }
+            ),
+            ToggleState(
+                title = resourceProvider.stringResource(R.string.cookies),
+                summary = { resourceProvider.stringResource(R.string.recommended) },
+                isChecked = { userPreferencesDataStore.cookiesEnabled.get() },
+                onToggle = {
+                    userPreferencesDataStore.cookiesEnabled.set(it)
+                    null
+                }
+            ),
+            ToggleState(
+                title = resourceProvider.stringResource(R.string.restore),
+                summary = { resourceProvider.stringResource(R.string.recommended) },
+                isChecked = { userPreferencesDataStore.restoreLostTabsEnabled.get() },
+                onToggle = {
+                    userPreferencesDataStore.restoreLostTabsEnabled.set(it)
+                    null
+                }
+            ),
+            ToggleState(
+                title = resourceProvider.stringResource(R.string.open_available_apps),
+                summary = { resourceProvider.stringResource(R.string.recommended) },
+                isChecked = { userPreferencesDataStore.openAvailableAppsEnabled.get() },
+                onToggle = {
+                    userPreferencesDataStore.openAvailableAppsEnabled.set(it)
+                    null
+                }
+            ),
+            ToggleState(
+                title = resourceProvider.stringResource(R.string.limit_active_tabs),
+                summary = {
+                    resourceProvider.stringResource(
+                        R.string.limit_active_tabs_summary,
+                        activityManager.activeTabLimit()
+                    )
+                },
+                isChecked = { userPreferencesDataStore.limitActiveTabs.get() },
+                onToggle = {
+                    userPreferencesDataStore.limitActiveTabs.set(it)
+                    null
+                }
+            ),
+            ClickableState(
+                title = resourceProvider.stringResource(R.string.text_encoding),
+                summary = { userPreferencesDataStore.textEncoding.get() },
+                onClick = ClickableOnClick.ItemSelector(
+                    produceState = {
+                        SettingsBottomSheetChooserState(
+                            title = resourceProvider.stringResource(R.string.text_encoding),
+                            values = TEXT_ENCODINGS.toList().map {
+                                SettingsBottomSheetChooserState.ChooserEntry(it)
+                            },
+                            selected = TEXT_ENCODINGS.indexOf(userPreferencesDataStore.textEncoding.get())
+                        )
+                    },
+                    onSelected = {
+                        ClickableOnClick.Action {
+                            userPreferencesDataStore.textEncoding.set(TEXT_ENCODINGS[it])
+                        }
+                    }
+                )
+            ),
+            ClickableState(
+                title = resourceProvider.stringResource(R.string.rendering_mode),
+                summary = {
+                    userPreferencesDataStore.renderingMode.get().toDisplayString(resourceProvider)
+                },
+                onClick = ClickableOnClick.ItemSelector(
+                    produceState = {
+                        SettingsBottomSheetChooserState(
+                            title = resourceProvider.stringResource(R.string.rendering_mode),
+                            values = RenderingMode.entries.map {
+                                SettingsBottomSheetChooserState.ChooserEntry(
+                                    it.toDisplayString(resourceProvider)
+                                )
+                            },
+                            selected = RenderingMode.entries.indexOf(
+                                userPreferencesDataStore.renderingMode.get()
+                            )
+                        )
+                    },
+                    onSelected = {
+                        ClickableOnClick.Action {
+                            userPreferencesDataStore.renderingMode.set(RenderingMode.entries[it])
+                        }
+                    }
+                )
+            ),
+            ClickableState(
+                title = resourceProvider.stringResource(R.string.url_contents),
+                summary = {
+                    userPreferencesDataStore.urlBoxContentChoice.get()
+                        .toDisplayString(resourceProvider)
+                },
+                onClick = ClickableOnClick.ItemSelector(
+                    produceState = {
+                        SettingsBottomSheetChooserState(
+                            title = resourceProvider.stringResource(R.string.url_contents),
+                            values = SearchBoxDisplayChoice.entries.map {
+                                SettingsBottomSheetChooserState.ChooserEntry(
+                                    it.toDisplayString(resourceProvider)
+                                )
+                            },
+                            selected = SearchBoxDisplayChoice.entries.indexOf(
+                                userPreferencesDataStore.urlBoxContentChoice.get()
+                            )
+                        )
+                    },
+                    onSelected = {
+                        ClickableOnClick.Action {
+                            userPreferencesDataStore.urlBoxContentChoice.set(
+                                SearchBoxDisplayChoice.entries[it]
+                            )
+                        }
+                    }
+                )
+            )
+        )
+    )
+}
+
+private fun SearchBoxDisplayChoice.toDisplayString(resourceProvider: ResourceProvider): String {
+    val stringArray = resourceProvider.stringArrayResource(R.array.url_content_array)
+    return when (this) {
+        SearchBoxDisplayChoice.DOMAIN -> stringArray[0]
+        SearchBoxDisplayChoice.URL -> stringArray[1]
+        SearchBoxDisplayChoice.TITLE -> stringArray[2]
+    }
+}
+
+private fun RenderingMode.toDisplayString(resourceProvider: ResourceProvider): String =
+    resourceProvider.stringResource(
+        when (this) {
+            RenderingMode.NORMAL -> R.string.name_normal
+            RenderingMode.INVERTED -> R.string.name_inverted
+            RenderingMode.GRAYSCALE -> R.string.name_grayscale
+            RenderingMode.INVERTED_GRAYSCALE -> R.string.name_inverted_grayscale
+            RenderingMode.INCREASE_CONTRAST -> R.string.name_increase_contrast
+        }
+    )

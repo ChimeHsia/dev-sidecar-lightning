@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">边车浏览器</string>
+    <string name="url_hint">输入网址或搜索</string>
+    <string name="action_back">后退</string>
+    <string name="action_forward">前进</string>
+    <string name="action_reload">刷新</string>
+    <string name="home_page">https://github.com</string>
+    <string name="accel_off">加速：关闭 · 点击开启（GitHub 优选 IP）</string>
+    <string name="accel_unsupported">加速：当前 WebView 版本不支持代理设置</string>
+    <string name="accel_starting">加速：启动中…</string>
+    <string name="accel_on">加速中 · 端口 %1$d · 请求 %2$d · 加速 %3$d</string>
+    <string name="accel_last">最近：%1$s → %2$s（%3$d ms）</string>
+</resources>

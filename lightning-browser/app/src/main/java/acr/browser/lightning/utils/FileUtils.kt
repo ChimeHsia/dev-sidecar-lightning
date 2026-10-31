@@ -1,0 +1,51 @@
+package acr.browser.lightning.utils
+
+import android.os.Environment
+import android.util.Log
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.PrintStream
+
+/**
+ * A utility class containing helpful methods pertaining to file storage.
+ */
+object FileUtils {
+    private const val TAG = "FileUtils"
+
+    val DEFAULT_DOWNLOAD_PATH: String =
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).path
+
+    /**
+     * Writes a stacktrace to the downloads folder with
+     * the following filename: [EXCEPTION]_[TIME OF CRASH IN MILLIS].txt
+     * 
+     * @param throwable the Throwable to log to external storage
+     */
+    fun writeCrashToStorage(throwable: Throwable) {
+        val fileName = "${throwable.javaClass.simpleName}_${System.currentTimeMillis()}.txt"
+        val outputFile = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            fileName
+        )
+
+        try {
+            FileOutputStream(outputFile).use { outputStream ->
+                throwable.printStackTrace(PrintStream(outputStream))
+                outputStream.flush()
+            }
+        } catch (e: IOException) {
+            Log.e(TAG, "Unable to write bundle to storage")
+        }
+    }
+
+    /**
+     * Converts megabytes to bytes.
+     * 
+     * @param megaBytes the number of megabytes.
+     * @return the converted bytes.
+     */
+    fun megabytesToBytes(megaBytes: Long): Long {
+        return megaBytes * 1024 * 1024
+    }
+}

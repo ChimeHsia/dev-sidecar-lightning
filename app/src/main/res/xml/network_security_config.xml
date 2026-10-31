@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  浏览器需要能打开 http 站点；同时本地转发器走 127.0.0.1 明文 HTTP 代理。
+  dsha_ca 是我们自己签发的 CA：dev-sidecar 核心用它对 https 做 MITM，
+  只有本 App 信任它（不装系统证书，也不影响其它 App）。
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/dsha_ca" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

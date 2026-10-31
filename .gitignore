@@ -1,0 +1,40 @@
+# ---- Gradle / IDE ----
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+captures/
+.externalNativeBuild/
+.cxx/
+tools/
+.jdk/
+
+# ---- 构建产物 ----
+*.apk
+*.aab
+output-metadata.json
+shots/
+
+# ---- 内嵌 Node 运行时与负载（体积 76MB+，由 port/build-payload.py 生成，不进版本库）----
+*.zip
+app/src/main/assets/cacert.pem
+app/src/main/assets/dsha_ca.*
+lightning-browser/app/src/main/assets/cacert.pem
+lightning-browser/app/src/main/assets/dsha_ca.*
+**/jniLibs/
+
+# 重建方式见 PORT.md：
+#   python port/build-payload.py   （需要 Termux nodejs-lts aarch64 + dev-sidecar 源码）
+
+# ---- 移植验证临时目录 ----
+port/.run/
+
+# ---- EinkBro 对照实验（不可用版本，仅存档改动）----
+# 完整源码不入库；改动见 patches/einkbro-integration.patch
+einkbro/
+
+# ---- 第三方发行版下载 ----
+fulguris-*.apk
+lightning-arm64-release.apk
+einkbro-arm64-release.apk

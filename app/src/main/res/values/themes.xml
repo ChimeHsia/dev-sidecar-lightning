@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.DshaSidecar" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/brand</item>
+        <item name="colorPrimaryDark">@color/bg</item>
+        <item name="colorAccent">@color/brand</item>
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg_elevated</item>
+        <item name="android:navigationBarColor">@color/bg_elevated</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+    </style>
+</resources>
