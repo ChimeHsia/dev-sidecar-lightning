@@ -79,4 +79,4 @@ JAVA_HOME=../.jdk/jdk-21.0.2 ./gradlew assembleLightningPlusRelease
 - **`gradle.properties` 里的 `org.gradle.java.home` 是全仓库唯一写死的绝对路径**，移动/重命名工作区后必须同步改。
 - 本机 git 走 dev-sidecar 的 HTTPS 代理（`127.0.0.1:31182`），且需要
   `git config --global http.schannelCheckRevoke false`——MITM 证书没法查吊销，schannel 会直接拒绝握手。
-- 仓库地址：<https://github.com/ChimeHsia/dsha-sidecar>（private）
+- 仓库地址：<https://github.com/ChimeHsia/dev-sidecar-lightning>（private）

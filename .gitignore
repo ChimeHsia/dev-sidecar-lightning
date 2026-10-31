@@ -33,11 +33,10 @@ lightning-browser/app/src/main/assets/dsha_ca.*
 # ---- 移植验证临时目录 ----
 port/.run/
 
-# ---- EinkBro 对照实验（不可用版本，仅存档改动）----
-# 完整源码不入库；改动见 patches/einkbro-integration.patch
+# ---- 已弃用的对照实验（源码已删，改动见 patches/einkbro-integration.patch）----
 einkbro/
 
-# ---- 第三方发行版下载 ----
+# ---- 构建产物 / 下载的第三方包 ----
 fulguris-*.apk
 lightning-arm64-release.apk
 einkbro-arm64-release.apk

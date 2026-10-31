@@ -1,5 +1,11 @@
 # EinkBro 版（info.plateaukao.einkbro）集成记录
 
+> ⚠️ **这一版已弃用，源码也已删除**（2026-11-01）。
+> 主产物换成了 Lightning（见 `LIGHTNING.md`）。本文档只保留结论：
+> 它证明了"WebView 是裸 `WebView` 子类时代理能生效"，用来对照 Lightning 的失败原因。
+> 若要重建：clone EinkBro 16.7.1 后 `git apply patches/einkbro-integration.patch`，
+> 再按 LIGHTNING.md 的方式准备 payload（`port/sync-payload.sh einkbro`）。
+
 > 目标：用成熟浏览器外壳（EinkBro，GPL-3.0，6000+★，原生 Activity + WebView）
 > + 内嵌 dev-sidecar 核心。**这一版代理真的通了。**
 
