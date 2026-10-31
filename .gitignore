@@ -16,6 +16,9 @@ tools/
 output-metadata.json
 shots/
 
+# ---- 工具生成的工作记忆/缓存（不是项目资产）----
+.workbuddy/
+
 # ---- 内嵌 Node 运行时与负载（体积 76MB+，由 port/build-payload.py 生成，不进版本库）----
 *.zip
 app/src/main/assets/cacert.pem

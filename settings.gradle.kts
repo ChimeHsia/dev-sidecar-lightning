@@ -26,7 +26,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "dsha-sidecar"
+rootProject.name = "dev-sidecar-lightning"
 
 include(":app")
 include(":netcore")
