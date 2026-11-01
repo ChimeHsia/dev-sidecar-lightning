@@ -18,6 +18,7 @@ production Node payload or device configuration.
   including an independent 14-case response-transform oracle.
 - Standalone bounded cache, retry and backup scheduling APIs, not yet wired
   into the proxy engine.
+- Bounded JSON5-subset configuration parsing and atomic layered snapshots.
 - HTTP/CONNECT MITM engine, WebSocket handoff, Expect/early-response handling,
   injected TLS dialer and explicit trusted request/response-head hooks.
 
@@ -29,7 +30,7 @@ material is gathered.
 ## Aggregate result
 
 The frozen sources above compile together with cached Kotlin 2.0.21, JDK 21
-and BC 1.79. The direct runner completed **594 tests: 592 passed, 2 external
+and BC 1.79. The direct runner completed **637 tests: 635 passed, 2 external
 network checks skipped by assumption, zero failures**. Its machine-readable
 JUnit report counts assumption skips separately from passing tests.
 
@@ -43,6 +44,9 @@ runner used the repository root as working directory; three legacy TLS tests
 could not find their module-relative fixture. The runner now uses `netcore/`,
 matching Gradle's test working directory. The HTTPS/SVCB test fixture loads
 from the test classpath so it does not depend on the working directory.
+The first configuration-inclusive run exposed a concurrent socket-cleanup
+iteration failure; the cleanup loop and a deterministic regression test were
+fixed before the successful aggregate run.
 
 This count includes existing reference-proxy tests and pure prerequisites;
 it is not a count of fully migrated browsing features. It does not include
@@ -50,11 +54,12 @@ the separate Conscrypt independent-peer suite or Android device acceptance.
 
 ## Pending integration
 
-Live configuration loading, retry/cache wiring and the released ECH provider
-are still being reviewed separately. Their later snapshots require new aggregate
-checks. The gathered engine has no retries, HTTP cache or production
-configuration entry point yet. ECH configuration resolution does not perform an
-ECH handshake; the separate Android provider probe remains unverified.
+Production configuration wiring, retry/cache wiring and the released ECH
+provider remain separate integration steps. The gathered engine has no retries,
+HTTP cache or production configuration entry point yet. ECH configuration
+resolution does not perform an ECH handshake. A separate Conscrypt probe passed
+accepted, rejected and wrong-certificate cases on Android 16 in debug and R8
+builds; neither those results nor its provider is part of this aggregate.
 
 JDK tests do not establish Android API/provider compatibility. Actual browser
 integration must preserve the supported rule and network capabilities before

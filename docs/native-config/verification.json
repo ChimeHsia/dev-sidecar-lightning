@@ -1,0 +1,211 @@
+{
+  "verified_utc": "2026-11-01T20:27:05.321590+00:00",
+  "source_commit": "d3bed938b7e9660f0f91af70a17add6704d5e3da",
+  "source_git_tree": "4a25a3cc57bf82b7d6fbc066148227c09a4d1b1c",
+  "base_commit": "05d3ae33edba11d70c95e8d18d4b011e9c0da533",
+  "source_sha256": {
+    "docs/native-config/ConsumerSmoke.kt": "5657581046535682bc57ecdfcbb0ebd46e36deef2a5f786e5a8c481215be6556",
+    "docs/native-config/README.md": "06720a1c00455d6e4a8f5a1a054c68fcf4809574c98949acfa8ad422ad0bf6c4",
+    "docs/native-config/oracle.cjs": "caa4bcd09cc485f12e9b3106071b3a7c8786e7622a514e9f80a0904ee1c1d399",
+    "docs/native-config/run-consumers.ps1": "5aee5f9a60e6ad1034bdd8b6c69eaf30f99887a63ec06178354507e654848bf7",
+    "docs/native-config/run-oracle.ps1": "f8dac77a6a4ad41836ce136874bbf2158a0a5ca91aaa1503f81a4acd21a5e13c",
+    "docs/native-config/run-tests.ps1": "4ad22876d01452bbe292d876e8ee90d33e661abdad2c97b2057e389bf39b1f94",
+    "docs/native-config/verify-evidence.py": "279a0c7ae1520f8792c75d66ca4048c0168221dd60d1e49bee09a1e1c543ef83",
+    "netcore/src/main/kotlin/com/dsha/sidecar/net/config/native/BoundedJson5.kt": "07183ce87b0091808753b73533309aea597494b692eef3b8fc396bb3bc0803fb",
+    "netcore/src/main/kotlin/com/dsha/sidecar/net/config/native/ConfigFileStore.kt": "4b98af66ccdf7877a3d97afbeb1264360a7365e61f7cb72b40af17cb6ee1a9b3",
+    "netcore/src/main/kotlin/com/dsha/sidecar/net/config/native/NativeConfigRepository.kt": "b16e7b37593014df3c37dde24d228eea6364313ee7a4338484bf9ce87598aa4e",
+    "netcore/src/main/kotlin/com/dsha/sidecar/net/config/native/RemoteConfigPolicy.kt": "acec4889c3138e3304d7ecebb5b3d195eae1677b2f312dc709de6aab9c544d31",
+    "netcore/src/test/fixtures/native-config/library-audit.json": "11abfe0a09031dd96830e550c93826dd474e5f9e91c08175e3a41fe73e777da9",
+    "netcore/src/test/fixtures/native-config/oracle-cases.json": "f7fdc03135d444feeea1f607438f04a9870c5a949b553de6f608b72c26667135",
+    "netcore/src/test/fixtures/native-config/upstream-provenance.json": "426a29e08723a004a393acb0fa370cc6434f4f6afe66098c1cbc5245cee26ba5",
+    "netcore/src/test/kotlin/com/dsha/sidecar/net/config/native/BoundedJson5Test.kt": "edb207e17c0aa44d65593027f7523720c186c79ac2e0bb411234fe2fbb0e47b5",
+    "netcore/src/test/kotlin/com/dsha/sidecar/net/config/native/LegacyFileCompatibilityTest.kt": "9f0d1872df5345f752e540e2ec48ab367d545ee71b6a52bfaa060cd2087f4e7c",
+    "netcore/src/test/kotlin/com/dsha/sidecar/net/config/native/NativeConfigOracleMain.kt": "fb75a128ccc70dff9f112cdc55dcb9d9463caac242449c7635003887a5a3775b",
+    "netcore/src/test/kotlin/com/dsha/sidecar/net/config/native/NativeConfigRepositoryTest.kt": "c7372c39bc7f1772eb66d005ad7bd7651fbfd45f8cf27203b868a3410e87c5b0",
+    "netcore/src/test/kotlin/com/dsha/sidecar/net/config/native/RemoteConfigPolicyTest.kt": "6bc03522d2b5dc053e8718028d909b932e03e3cc67edbf93fbdf70d2e23a69e7"
+  },
+  "source_tree_sha256": "fd7f898dc15071768f015dd94c1ab961121ff05d2f9b53f6f91a3f5711698c6d",
+  "source_digest_format": "SHA256(sorted(path + NUL + raw-content-sha256 + LF), UTF-8); excludes report itself",
+  "production_source_sha256": {
+    "netcore/src/main/kotlin/com/dsha/sidecar/net/config/native/BoundedJson5.kt": "07183ce87b0091808753b73533309aea597494b692eef3b8fc396bb3bc0803fb",
+    "netcore/src/main/kotlin/com/dsha/sidecar/net/config/native/ConfigFileStore.kt": "4b98af66ccdf7877a3d97afbeb1264360a7365e61f7cb72b40af17cb6ee1a9b3",
+    "netcore/src/main/kotlin/com/dsha/sidecar/net/config/native/NativeConfigRepository.kt": "b16e7b37593014df3c37dde24d228eea6364313ee7a4338484bf9ce87598aa4e",
+    "netcore/src/main/kotlin/com/dsha/sidecar/net/config/native/RemoteConfigPolicy.kt": "acec4889c3138e3304d7ecebb5b3d195eae1677b2f312dc709de6aab9c544d31"
+  },
+  "changed_paths": [
+    "docs/native-config/ConsumerSmoke.kt",
+    "docs/native-config/README.md",
+    "docs/native-config/oracle.cjs",
+    "docs/native-config/run-consumers.ps1",
+    "docs/native-config/run-oracle.ps1",
+    "docs/native-config/run-tests.ps1",
+    "docs/native-config/verify-evidence.py",
+    "netcore/src/main/kotlin/com/dsha/sidecar/net/config/native/BoundedJson5.kt",
+    "netcore/src/main/kotlin/com/dsha/sidecar/net/config/native/ConfigFileStore.kt",
+    "netcore/src/main/kotlin/com/dsha/sidecar/net/config/native/NativeConfigRepository.kt",
+    "netcore/src/main/kotlin/com/dsha/sidecar/net/config/native/RemoteConfigPolicy.kt",
+    "netcore/src/test/fixtures/native-config/library-audit.json",
+    "netcore/src/test/fixtures/native-config/oracle-cases.json",
+    "netcore/src/test/fixtures/native-config/upstream-provenance.json",
+    "netcore/src/test/kotlin/com/dsha/sidecar/net/config/native/BoundedJson5Test.kt",
+    "netcore/src/test/kotlin/com/dsha/sidecar/net/config/native/LegacyFileCompatibilityTest.kt",
+    "netcore/src/test/kotlin/com/dsha/sidecar/net/config/native/NativeConfigOracleMain.kt",
+    "netcore/src/test/kotlin/com/dsha/sidecar/net/config/native/NativeConfigRepositoryTest.kt",
+    "netcore/src/test/kotlin/com/dsha/sidecar/net/config/native/RemoteConfigPolicyTest.kt"
+  ],
+  "shared_config_merge_unchanged": true,
+  "jvm": {
+    "total": 55,
+    "passed": 55,
+    "failed": 0,
+    "skipped": 0,
+    "existing_config_merge": 14,
+    "new_native_config": 41
+  },
+  "independent_oracle": {
+    "json5_version": "2.2.3",
+    "parse": 55,
+    "strict_rejections": 17,
+    "layer_and_key_order": 40,
+    "total": 112
+  },
+  "upstream_provenance": {
+    "json5Version": "2.2.3",
+    "packageVersion": "2.3.1",
+    "sourceSha256": {
+      "node_modules/@blue-frontier/dev-sidecar/src/config/local-config-loader.js": "ee44e8c850bd84e202f4f16a300048d7807399ed992826616831fd771c23a008",
+      "node_modules/@blue-frontier/dev-sidecar/src/config/remote-config-rule.js": "09f82b54647e8681e96412edc7e3936a9dc14011b9e45a9649f5957bcda00419",
+      "node_modules/@blue-frontier/dev-sidecar/src/config/remote-config-url.js": "0506473b203a2c2edb1c66bd117c3a9f3b73dd628bdd87ff348153c39f474e5e",
+      "node_modules/@blue-frontier/dev-sidecar/src/merge.js": "2ea04ddbb229f7bfeab0856ecf42a8dae6826765f9b3335023d4d98dee8d6207",
+      "node_modules/@blue-frontier/dev-sidecar/src/modules/server/index.js": "0c186b8830c33e918f982baab882fcfdb695cdcb9ad9e7194c11a5463198f159",
+      "node_modules/@blue-frontier/mitmproxy/src/json.js": "f5c5c7b06f065922afa117f0a8ef6c8944cdbd9202b7b585c6d2b867fe7a17f4",
+      "node_modules/json5/lib/parse.js": "a0a7c71884a9b55f336da99227c901993b5c4af975adfa21ad1af1e873e605ba",
+      "node_modules/json5/lib/index.js": "e7b7e397d488b168e08e867d599f2ea4ce8e64a65a94cb91bb26584df3234700",
+      "node_modules/json5/lib/stringify.js": "2da4304f0fd2eeb02bde5914abc3ed03fad91f9f7972d96e407b927a8d209609",
+      "node_modules/json5/lib/util.js": "2a72dabfd1dc982a11749b561809de1e4eb1f47a5baa17520633693bbce4679d",
+      "node_modules/json5/lib/unicode.js": "13b9e922ff410bec1cc288cf229e6e3b30941ccd86e910cd507fb72a8eac7fe1",
+      "node_modules/json5/package.json": "5fbbe265e5a892d50a325ed169f0ef8927404c35dbb35198e1c28160fef1239e",
+      "node_modules/lodash/lodash.js": "f5465f55566bf544aad0a31c6135889ca1ed81eea8f53ec61c6cbe86926f07cf",
+      "node_modules/lodash/package.json": "26c94bdd04a02e9e1ad9b4c6770bdcf7049a8b9e725c415e7dca7472113e6c07"
+    },
+    "generatedCases": {
+      "parse": 55,
+      "rejectedSubsetOrInvalid": 17,
+      "layers": 40
+    },
+    "personalConfigurationRead": false,
+    "productionNodeRequired": false,
+    "oracleSyntheticSubstitutions": [
+      "CLOUDFLARE_DOH_SERVER literal -> synthetic .test HTTPS endpoint",
+      "provider server.includes hostname literal -> synthetic .test hostname",
+      "preset policy -> caller-supplied 192.0.2.0/24 fixture"
+    ]
+  },
+  "consumer_tests": {
+    "rule_planner_302": true,
+    "dns_catalog": true,
+    "native_runtime_decode": true,
+    "native_consumer_rejection_rollback": true,
+    "source_before_after_hashes": {
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\dns\\IpAddress.kt": "79329b98391b0fecfbef9a298f43ee9dfd36f2c4d2484345fe40e68b664410b2",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\rules\\PathRuleMatcher.kt": "b6cb1f8bff8f16968544ae0dd91a9e47d1cbb7fa19047a61f597c6695b39481f",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\rules\\native\\RulePlanner.kt": "84205ba09d7b61c7847f2c5a137e7b78b464e26cc618156d8fd46ad7a55f929e",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\http\\HeaderTransforms.kt": "5fe297c104f7ccf60ddd568bb22e8c56077f077d36d886c65e767022bc3ba51b",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\rules\\HostnameMatcher.kt": "f22620e7f6d6f3d932fe829756308c31870ae94f580edcfdeec3ea9dafa19630",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-config-repository\\dev-sidecar-lightning\\docs\\native-config\\ConsumerSmoke.kt": "5657581046535682bc57ecdfcbb0ebd46e36deef2a5f786e5a8c481215be6556",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\rules\\HostnameAllMatcher.kt": "701dce301cf548941653f8714544f43190a585786e727dc149513511dfcfe4cf",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\http\\RequestRetryPolicy.kt": "32116f960133d41e4b22a1a478e59aac29132604f2fd16576ab726c3552ef4d4",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\rules\\native\\RulePlan.kt": "e0475cc7c31fb7f55492ac6a8bb90aa014ee6c19dfbac968eb3a329754c7c376",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\dns\\DnsProviderConfig.kt": "64c944d589c7f70b213ba45dc131859584216dbf8f3e94a02f76d11e99a84f15",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-runtime-assembly\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\runtime\\NativeRuntimeConfig.kt": "3106b6566dd71556f3bb85bc865555921557d460ab90f0b82fde6506d3c48ebd",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\rules\\native\\RulePlannerSupport.kt": "f472ac0375989e4de218814b67e4b4b99413d380b5f7bc7d09ef688d2c256e16"
+    },
+    "pinned_source_copies": {
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\dns\\IpAddress.kt": "C:\\Users\\HONOR\\.codex\\worktrees\\native-config-repository\\dev-sidecar-lightning\\build\\native-config\\consumer-inputs\\9\\IpAddress.kt",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\rules\\PathRuleMatcher.kt": "C:\\Users\\HONOR\\.codex\\worktrees\\native-config-repository\\dev-sidecar-lightning\\build\\native-config\\consumer-inputs\\5\\PathRuleMatcher.kt",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\rules\\native\\RulePlanner.kt": "C:\\Users\\HONOR\\.codex\\worktrees\\native-config-repository\\dev-sidecar-lightning\\build\\native-config\\consumer-inputs\\1\\RulePlanner.kt",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\http\\HeaderTransforms.kt": "C:\\Users\\HONOR\\.codex\\worktrees\\native-config-repository\\dev-sidecar-lightning\\build\\native-config\\consumer-inputs\\6\\HeaderTransforms.kt",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\rules\\HostnameMatcher.kt": "C:\\Users\\HONOR\\.codex\\worktrees\\native-config-repository\\dev-sidecar-lightning\\build\\native-config\\consumer-inputs\\4\\HostnameMatcher.kt",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-config-repository\\dev-sidecar-lightning\\docs\\native-config\\ConsumerSmoke.kt": "C:\\Users\\HONOR\\.codex\\worktrees\\native-config-repository\\dev-sidecar-lightning\\build\\native-config\\consumer-inputs\\11\\ConsumerSmoke.kt",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\rules\\HostnameAllMatcher.kt": "C:\\Users\\HONOR\\.codex\\worktrees\\native-config-repository\\dev-sidecar-lightning\\build\\native-config\\consumer-inputs\\3\\HostnameAllMatcher.kt",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\http\\RequestRetryPolicy.kt": "C:\\Users\\HONOR\\.codex\\worktrees\\native-config-repository\\dev-sidecar-lightning\\build\\native-config\\consumer-inputs\\7\\RequestRetryPolicy.kt",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\rules\\native\\RulePlan.kt": "C:\\Users\\HONOR\\.codex\\worktrees\\native-config-repository\\dev-sidecar-lightning\\build\\native-config\\consumer-inputs\\0\\RulePlan.kt",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\dns\\DnsProviderConfig.kt": "C:\\Users\\HONOR\\.codex\\worktrees\\native-config-repository\\dev-sidecar-lightning\\build\\native-config\\consumer-inputs\\8\\DnsProviderConfig.kt",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-runtime-assembly\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\runtime\\NativeRuntimeConfig.kt": "C:\\Users\\HONOR\\.codex\\worktrees\\native-config-repository\\dev-sidecar-lightning\\build\\native-config\\consumer-inputs\\10\\NativeRuntimeConfig.kt",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\native-core-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\rules\\native\\RulePlannerSupport.kt": "C:\\Users\\HONOR\\.codex\\worktrees\\native-config-repository\\dev-sidecar-lightning\\build\\native-config\\consumer-inputs\\2\\RulePlannerSupport.kt"
+    },
+    "later_peer_source_drift": {}
+  },
+  "compatibility": {
+    "public_file_boundary": "java.io.File",
+    "nio_file_static_class_references": 0,
+    "audited_production_classes": 27,
+    "legacy_classloader_no_nio_actual_read_and_reload": "passed",
+    "android_api24_runtime_executed": false
+  },
+  "resource_checks": [
+    "document_bytes",
+    "aggregate_bytes",
+    "depth",
+    "keys",
+    "nodes",
+    "string_chars",
+    "number_chars",
+    "path_and_file_alias",
+    "immutable_snapshot",
+    "serialized_writers_atomic_readers",
+    "failure_preserves_previous",
+    "consumer_validator_rollback",
+    "reentrant_write_rejection"
+  ],
+  "production_parser_dependency_added": false,
+  "library_audit": {
+    "readme_primary_url": "https://raw.githubusercontent.com/marhali/json5-java/master/README.md",
+    "readme_sha256": "71c7d4e9a3e66ded4c857058e4b5455063e54f33a1424ca2034dc7ac91f3541a",
+    "selected_readme_lines": [
+      "This is a reference implementation of the [JSON5 standard](https://json5.org/) in Java 11+, ",
+      "        <groupId>de.marhali</groupId>",
+      "        <artifactId>json5-java</artifactId>",
+      "  implementation(\"de.marhali:json5-java:3.0.0\")"
+    ],
+    "json5-java-3.0.0.pom": {
+      "primary_url": "https://repo.maven.apache.org/maven2/de/marhali/json5-java/3.0.0/json5-java-3.0.0.pom",
+      "sha256": "a3dc3d22e50be4677030f2d7394fcd03cf9f8cfe63326a7cf2effbb4bee6d8c4"
+    },
+    "json5-java-3.0.0-sources.jar": {
+      "primary_url": "https://repo.maven.apache.org/maven2/de/marhali/json5-java/3.0.0/json5-java-3.0.0-sources.jar",
+      "sha256": "461bb172d7128fe9842fd68debe59885cbb534ea220d2b9dcec6e25e461ce845"
+    },
+    "java11_source_boundary_observations": [],
+    "dependency_decision": "Not added. Use explicitly bounded native subset; upstream JSON5 2.2.3 remains independent test oracle. Java11 library needs separate min24 linkage/budget audit, not assumed Android compatible."
+  },
+  "tooling": {
+    "jdk": "21.0.2",
+    "kotlin_compiler": "2.0.21",
+    "compiler_heap": "256m",
+    "test_heap": "256m",
+    "gradle_used": false,
+    "device_access": false,
+    "network_config_fetch_executed": false,
+    "production_node_or_eval": false
+  },
+  "artifact_sha256": {
+    "config-tests.jar": "9ecdd00ca75714965758d043d300ac84d337b392a28ee124e3e8c242a4196fc5",
+    "consumer-smoke.jar": "45d821909b6c33ba6fd819d48b7d1f4acf157fb58f5321b88470c18607ef3fdc",
+    "compile.log": "9710c4958e4f8d3c333f9822df133393f62fa9d757137d96d5f7cc57e2ffb09e",
+    "junit.log": "705e1cb3318b9b631705fad4c7e0d6078e8eef734c7a55e542940f999f21d0e8",
+    "oracle-verify.log": "5af37cdc318948f3d287953e8a3e2e77d6f15f94a4117a2463009de63faae0a4",
+    "kotlin-oracle-results.json": "c4b967726caad27b36665b37aff61c1e88fb25395e47f5ee5c9020244aefc9d6",
+    "consumer-compile.log": "e77a94a22314d6862e995f26b4913e6188a3a8052673b6dbf7ab72c707d6c8c2",
+    "consumer-smoke.log": "16401e10370599e38e44611177a41e2559d2f5bf70af3e54454bd04f3dc8dbe3",
+    "compiler.args": "8f49cca4754dfbe8587a490c630f2344afd5484a40463da5236c90590619656f",
+    "consumer-compiler.args": "5fcdcd94b2c9601c0a36e51d8624cf8fcdd74d609afdfb2323575cbedea6be75"
+  },
+  "limitations": [
+    "Explicit JSON5 subset; Unicode unquoted names, duplicates, non-finite values and other stated inputs reject",
+    "Trusted private root required; canonical checks are not an openat/O_NOFOLLOW hostile-race sandbox",
+    "No actual Android API24/device run or running-engine activation",
+    "No built-in HTTPS transport, refresh scheduling, redirects or TLS policy",
+    "Bootstrap endpoints/preset lists must be provided explicitly by caller"
+  ]
+}
