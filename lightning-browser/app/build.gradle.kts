@@ -112,6 +112,7 @@ android {
     namespace = "acr.browser.lightning"
 
     testOptions {
+        unitTests.isIncludeAndroidResources = true
         unitTests.all {
             it.jvmArgs = listOf(
                 "--add-opens=java.base/java.lang=ALL-UNNAMED",

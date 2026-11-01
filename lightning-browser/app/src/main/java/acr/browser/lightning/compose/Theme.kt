@@ -1,6 +1,8 @@
 package acr.browser.lightning.compose
 
 import acr.browser.lightning.AppTheme
+import acr.browser.lightning.R
+import androidx.annotation.StyleRes
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -132,6 +134,19 @@ fun AppTheme.asColorScheme(systemDarkTheme: Boolean): ColorScheme = when (this) 
         darkScheme
     } else {
         lightScheme
+    }
+}
+
+/** The View-system theme whose colors mirror [asColorScheme]. */
+@StyleRes
+fun AppTheme.styleRes(systemDarkTheme: Boolean): Int = when (this) {
+    AppTheme.LIGHT -> R.style.Theme_Browser_Light
+    AppTheme.DARK -> R.style.Theme_Browser_Dark
+    AppTheme.BLACK -> R.style.Theme_Browser_Black
+    AppTheme.SYSTEM -> if (systemDarkTheme) {
+        R.style.Theme_Browser_Dark
+    } else {
+        R.style.Theme_Browser_Light
     }
 }
 

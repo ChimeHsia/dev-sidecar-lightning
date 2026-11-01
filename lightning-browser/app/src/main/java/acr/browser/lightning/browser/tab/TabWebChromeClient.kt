@@ -25,7 +25,6 @@ import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import androidx.activity.result.ActivityResult
-import androidx.appcompat.app.AlertDialog
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -35,6 +34,7 @@ import androidx.palette.graphics.Palette
 import coil3.decode.DecodeUtils
 import coil3.size.Scale
 import coil3.size.Size
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.permissionx.guolindev.PermissionX
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -300,7 +300,7 @@ class TabWebChromeClient @AssistedInject constructor(
             .request { allGranted, _, _ ->
                 if (allGranted) {
                     val remember = true
-                    AlertDialog.Builder(activity).apply {
+                    MaterialAlertDialogBuilder(activity).apply {
                         setTitle(activity.getString(R.string.location))
                         val org = if (origin.length > 50) {
                             "${origin.subSequence(0, 50)}..."

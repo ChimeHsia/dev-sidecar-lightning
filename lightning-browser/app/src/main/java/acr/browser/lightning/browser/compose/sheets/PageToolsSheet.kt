@@ -26,11 +26,7 @@ fun PageToolsSheet(
             ),
             DialogItem(
                 icon = R.drawable.ic_block,
-                colorTint = if (areAdsAllowed) {
-                    R.color.error_red
-                } else {
-                    null
-                },
+                isDestructive = areAdsAllowed,
                 title = if (areAdsAllowed) {
                     R.string.dialog_adblock_enable_for_site
                 } else {
