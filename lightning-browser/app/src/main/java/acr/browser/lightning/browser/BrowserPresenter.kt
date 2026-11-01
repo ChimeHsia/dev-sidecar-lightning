@@ -682,6 +682,12 @@ class BrowserPresenter @Inject constructor(
                 ?.let { showAddBookmarkDialog() }
 
             MenuSelection.SETTINGS -> navigator.openSettings()
+            MenuSelection.EXIT_INCOGNITO -> {
+                model.deleteAllTabs()
+                state.updateSelf { updateTabViewState() }
+                navigator.exitIncognito()
+            }
+
             MenuSelection.BACK -> onBackClick()
             MenuSelection.FORWARD -> onForwardClick()
         }
