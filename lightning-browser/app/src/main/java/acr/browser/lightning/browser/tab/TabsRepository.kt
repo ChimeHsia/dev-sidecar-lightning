@@ -1,6 +1,8 @@
 package acr.browser.lightning.browser.tab
 
 import acr.browser.lightning.browser.BrowserContract
+import acr.browser.lightning.browser.BrowserSessionHandoff
+import acr.browser.lightning.browser.BrowserSessionLifecycle
 import acr.browser.lightning.browser.tab.bundle.BundleStore
 import acr.browser.lightning.browser.tab.settings.TabSettings
 import acr.browser.lightning.concurrency.AppCoroutineScope
@@ -18,6 +20,7 @@ import acr.browser.lightning.useragent.UserAgentProvider
 import acr.browser.lightning.utils.isFileUrl
 import android.app.ActivityManager
 import android.webkit.WebView
+import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -44,11 +47,22 @@ class TabsRepository @Inject constructor(
     private val searchEngineProvider: SearchEngineProvider,
     private val viewIdGenerator: ViewIdGenerator,
     private val activityManager: ActivityManager,
+    private val activity: FragmentActivity,
     appCoroutineScope: AppCoroutineScope,
 ) : BrowserContract.Model {
 
     private val isInitialized = CompletableDeferred<Unit>()
     private val tabsListStateFlow = MutableStateFlow<List<TabModel>>(emptyList())
+    private val sessionLifecycle = BrowserSessionLifecycle(
+        tabs = { tabsList },
+        selectedId = { selectedTab?.id },
+        save = {
+            if (userPreferencesDataStore.restoreLostTabsEnabled.get()) {
+                bundleStore.save(it)
+            }
+        },
+        publish = { BrowserSessionHandoff.from(activity).put(it) },
+    )
     private val webViewPool: Deferred<ObjectPool<WebView>> = appCoroutineScope.async {
         if (userPreferencesDataStore.limitActiveTabs.get()) {
             LimitedObjectPool(
@@ -124,6 +138,10 @@ class TabsRepository @Inject constructor(
             tabSettings = tabSettings,
             foreground = foreground,
         )
+        if (tabInitializer is FreezableInitializer) {
+            tabModel.searchQuery = tabInitializer.snapshot.searchQuery
+            tabModel.searchQuerySelection = tabInitializer.snapshot.searchQuerySelection
+        }
         tabsList = tabsList + tabModel
 
         if (emitUpdate) {
@@ -134,7 +152,12 @@ class TabsRepository @Inject constructor(
     }
 
     override suspend fun reopenTab(): TabModel? = withContext(coroutineDispatchers.main) {
-        recentTabModel.lastClosed()?.let { createTab(BundleInitializer(it)) }
+        recentTabModel.lastClosed()?.let {
+            createTab(
+                FreezableInitializer(TabSnapshot.capture(it)),
+                foreground = false,
+            )
+        }
     }
 
     override fun selectTab(id: Int): TabModel {
@@ -149,8 +172,34 @@ class TabsRepository @Inject constructor(
 
     override fun tabsListChanges(): Flow<List<TabModel>> = tabsListStateFlow
 
+    override var restoredSearchBarExpanded: Boolean = false
+        private set
+
     override suspend fun initializeTabs(): List<TabModel> =
         withContext(coroutineDispatchers.default) {
+            val session = withContext(coroutineDispatchers.main) {
+                BrowserSessionHandoff.from(activity).take()
+            }
+            if (session != null) {
+                viewIdGenerator.claimViewIds(session.tabs.map { it.id })
+                val restoredTabs = session.tabs.map {
+                    createTabUnsafe(
+                        tabInitializer = it.initializer(),
+                        tabType = it.type,
+                        foreground = false,
+                        emitUpdate = false,
+                    )
+                }
+                return@withContext withContext(coroutineDispatchers.main) {
+                    tabsList = restoredTabs
+                    selectedTab = restoredTabs.find { it.id == session.selectedId }
+                    restoredSearchBarExpanded = session.isSearchBarExpanded
+                    isInitialized.complete(Unit)
+                    sessionLifecycle.initialized()
+                    tabsListStateFlow.emit(restoredTabs)
+                    restoredTabs
+                }
+            }
             val oldTabsDeferred = bundleStore.retrieve()
                 .also { initializers -> viewIdGenerator.claimViewIds(initializers.map { it.id }) }
                 .map {
@@ -196,6 +245,7 @@ class TabsRepository @Inject constructor(
                 oldTabs
             }
             isInitialized.complete(Unit)
+            sessionLifecycle.initialized()
 
             tabsListStateFlow.emit(tabsList)
 
@@ -206,11 +256,23 @@ class TabsRepository @Inject constructor(
         tabsList.forEach { it.tabType = TabModel.Type.NORMAL }
     }
 
-    override suspend fun pause() {
-        if (userPreferencesDataStore.restoreLostTabsEnabled.get()) {
-            bundleStore.save(tabsList)
+    override suspend fun prepareForRecreation(isSearchBarExpanded: Boolean) =
+        withContext(coroutineDispatchers.main) {
+            sessionLifecycle.prepareForRecreation(isSearchBarExpanded)
         }
-        tabsList.forEach { it.background(backgroundAll = true) }
+
+    override suspend fun pause() = withContext(coroutineDispatchers.main) {
+        sessionLifecycle.pause()
+    }
+
+    override suspend fun destroy() = withContext(coroutineDispatchers.main) {
+        try {
+            sessionLifecycle.destroy()
+        } finally {
+            selectedTab = null
+            tabsList = emptyList()
+            tabsListStateFlow.emit(emptyList())
+        }
     }
 
     override suspend fun clean() {

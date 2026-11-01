@@ -58,6 +58,11 @@
     <string name="agent_custom">Custom</string>
     <string name="title_search_engine">Search engine</string>
     <string name="action_ok">OK</string>
+    <string name="title_js_dialog">%1$s says</string>
+    <string name="title_js_before_unload">Leave this page?</string>
+    <string name="message_js_before_unload">Changes you made may not be saved.</string>
+    <string name="action_leave">Leave</string>
+    <string name="action_stay">Stay</string>
     <string name="dialog_download">Do you want to download this file? (%1$s)</string>
     <string name="unknown_size">Unknown size</string>
     <string name="action_cancel">Cancel</string>
@@ -86,6 +91,7 @@
     <string name="title_edit_bookmark">Edit bookmark</string>
     <string name="action_edit">Edit</string>
     <string name="action_incognito">New incognito tab</string>
+    <string name="action_exit_incognito">Exit incognito</string>
     <string name="action_homepage">Default</string>
     <string name="action_back">Back</string>
     <string name="action_find">Find in page</string>

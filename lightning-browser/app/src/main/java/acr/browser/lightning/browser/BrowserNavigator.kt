@@ -1,5 +1,6 @@
 package acr.browser.lightning.browser
 
+import acr.browser.lightning.DefaultBrowserActivity
 import acr.browser.lightning.IncognitoBrowserActivity
 import acr.browser.lightning.browser.cleanup.ExitCleanup
 import acr.browser.lightning.concurrency.AppCoroutineScope
@@ -84,6 +85,11 @@ class BrowserNavigator @Inject constructor(
 
     override fun launchIncognito(url: String?) {
         IncognitoBrowserActivity.launch(activity, url)
+    }
+
+    override suspend fun exitIncognito() {
+        activity.startActivity(Intent(activity, DefaultBrowserActivity::class.java))
+        closeBrowser()
     }
 
     companion object {

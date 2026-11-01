@@ -55,6 +55,11 @@
     <string name="agent_custom">自訂</string>
     <string name="title_search_engine">搜尋引擎</string>
     <string name="action_ok">確定</string>
+    <string name="title_js_dialog">%1$s 顯示</string>
+    <string name="title_js_before_unload">要離開這個網頁嗎？</string>
+    <string name="message_js_before_unload">系統可能不會儲存你所做的變更。</string>
+    <string name="action_leave">離開</string>
+    <string name="action_stay">留下</string>
     <string name="dialog_download">您是否想下載此檔案？（%1$s）</string>
     <string name="unknown_size">未知大小</string>
     <string name="action_cancel">取消</string>
@@ -83,6 +88,7 @@
     <string name="title_edit_bookmark">編輯書籤</string>
     <string name="action_edit">編輯</string>
     <string name="action_incognito">新增無痕式分頁</string>
+    <string name="action_exit_incognito">退出無痕模式</string>
     <string name="action_homepage">預設</string>
     <string name="action_back">返回</string>
     <string name="action_find">在網頁中尋找</string>

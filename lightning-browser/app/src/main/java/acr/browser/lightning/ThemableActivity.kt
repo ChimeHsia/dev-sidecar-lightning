@@ -2,11 +2,11 @@ package acr.browser.lightning
 
 import acr.browser.lightning.compose.asColorScheme
 import acr.browser.lightning.compose.isDark
+import acr.browser.lightning.compose.styleRes
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.R
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -38,17 +38,7 @@ abstract class ThemableActivity : AppCompatActivity() {
             appThemeStateFlow.filterNotNull()
                 .combine(useBlackStatusBarStateFlow.filterNotNull()) { a, b -> a to b }
                 .collectLatest { (appTheme, useBlackStatusBar) ->
-                    when (appTheme) {
-                        AppTheme.LIGHT -> setTheme(R.style.Theme_AppCompat_Light_NoActionBar)
-                        AppTheme.DARK -> setTheme(R.style.Theme_AppCompat_NoActionBar)
-                        AppTheme.BLACK -> setTheme(R.style.Theme_AppCompat_NoActionBar)
-                        AppTheme.SYSTEM ->
-                            if (systemDarkTheme) {
-                                setTheme(R.style.Theme_AppCompat_NoActionBar)
-                            } else {
-                                setTheme(R.style.Theme_AppCompat_Light_NoActionBar)
-                            }
-                    }
+                    setTheme(appTheme.styleRes(systemDarkTheme))
 
                     val colorScheme = appTheme.asColorScheme(systemDarkTheme)
                     val isDarkColorScheme = appTheme.isDark(systemDarkTheme)

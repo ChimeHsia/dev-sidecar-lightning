@@ -128,12 +128,14 @@ class ResultMessageInitializer(private val resultMessage: Message) : TabInitiali
 }
 
 /**
- * An initializer that restores the [TabModel] state using the [bundle].
+ * An initializer that restores the [TabModel] from an immutable navigation snapshot.
  */
-class BundleInitializer(private val bundle: Bundle) : TabInitializer {
+class BundleInitializer(internal val snapshot: TabSnapshot) : TabInitializer {
+
+    constructor(bundle: Bundle) : this(TabSnapshot.capture(bundle))
 
     override suspend fun initialize(tab: TabModel) {
-        tab.restore(bundle)
+        snapshot.initialize(tab)
     }
 
 }
@@ -142,12 +144,54 @@ class BundleInitializer(private val bundle: Bundle) : TabInitializer {
  * An initializer that can be delayed until the view is attached. [initialTitle] is the title that
  * should be initially set on the tab.
  */
-class FreezableInitializer(
-    val bundle: Bundle,
-    val delegate: TabInitializer,
-    val initialTitle: String,
+class FreezableInitializer private constructor(
+    val snapshot: TabSnapshot,
+    delegate: TabInitializer,
     val id: Int,
 ) : TabInitializer {
+
+    val delegate: TabInitializer = if (delegate is BundleInitializer) {
+        BundleInitializer(snapshot)
+    } else {
+        delegate
+    }
+
+    constructor(
+        bundle: Bundle,
+        delegate: TabInitializer,
+        initialTitle: String,
+        id: Int,
+        initialUrl: String? = null,
+    ) : this(
+        snapshot = if (delegate is BundleInitializer) {
+            delegate.snapshot.withTabState(
+                title = initialTitle,
+                url = initialUrl ?: delegate.snapshot.url,
+            )
+        } else {
+            TabSnapshot.capture(bundle, title = initialTitle, url = initialUrl)
+        },
+        delegate = delegate,
+        id = id,
+    )
+
+    constructor(snapshot: TabSnapshot, id: Int = -1) : this(
+        snapshot = snapshot,
+        delegate = BundleInitializer(snapshot),
+        id = id,
+    )
+
+    val bundle: Bundle
+        get() = snapshot.newBundle()
+
+    val initialTitle: String
+        get() = snapshot.title
+
+    val initialUrl: String
+        get() = snapshot.url
+
+    // Preview files belong to a tab id and can be overwritten or pruned by the source tab.
+    val initialPreview: TabModel.Preview = TabModel.Preview.None
 
     override suspend fun initialize(
         tab: TabModel

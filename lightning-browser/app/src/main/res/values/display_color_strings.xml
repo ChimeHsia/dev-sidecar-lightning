@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="display_wide_color_gamut_title">Wide color gamut</string>
+    <string name="display_wide_color_gamut_summary">On: request wide color gamut on compatible displays. Off: use standard color. Applies when you return to the browser.</string>
+    <string name="display_wide_color_gamut_summary_legacy">On: request wide color gamut on compatible displays. Off: use standard color. Changing this recreates the browser window when you return; pages may reload.</string>
+    <string name="display_wide_color_gamut_unavailable">Requires Android 8.0 or later and a compatible display.</string>
+</resources>

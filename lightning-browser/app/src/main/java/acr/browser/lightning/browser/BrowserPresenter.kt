@@ -9,15 +9,18 @@ import acr.browser.lightning.browser.menu.MenuSelection
 import acr.browser.lightning.browser.notification.TabCountNotifier
 import acr.browser.lightning.browser.search.SearchBoxModel
 import acr.browser.lightning.browser.tab.DownloadPageInitializer
+import acr.browser.lightning.browser.tab.FreezableInitializer
 import acr.browser.lightning.browser.tab.HistoryPageInitializer
 import acr.browser.lightning.browser.tab.HomePageInitializer
 import acr.browser.lightning.browser.tab.NoOpInitializer
 import acr.browser.lightning.browser.tab.TabInitializer
 import acr.browser.lightning.browser.tab.TabModel
+import acr.browser.lightning.browser.tab.TabSnapshotPool
 import acr.browser.lightning.browser.tab.TabViewState
 import acr.browser.lightning.browser.tab.UrlInitializer
 import acr.browser.lightning.browser.ui.TabConfiguration
 import acr.browser.lightning.browser.view.LongPress
+import acr.browser.lightning.concurrency.AppCoroutineScope
 import acr.browser.lightning.concurrency.BrowserCoroutineScope
 import acr.browser.lightning.concurrency.CoroutineDispatchers
 import acr.browser.lightning.concurrency.combineMultiple
@@ -51,6 +54,7 @@ import androidx.activity.result.ActivityResult
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.core.net.toUri
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
@@ -63,15 +67,15 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.system.exitProcess
 
 /**
  * The monolithic (oops) presenter that governs the behavior of the browser UI and interactions by
- * the user for both default and incognito browsers. This presenter should live for the entire
- * duration of the browser activity, which itself should not be recreated during configuration
- * changes.
+ * the user for both default and incognito browsers. It lives for one Activity instance; explicit
+ * color-mode recreations hand off navigation state before destroying this instance's tabs.
  */
 @BrowserScope
 class BrowserPresenter @Inject constructor(
@@ -97,6 +101,7 @@ class BrowserPresenter @Inject constructor(
     private val numberFormatter: NumberFormatter,
     private val userPreferencesDataStore: UserPreferencesDataStore,
     private val themeProvider: ThemeProvider,
+    private val appCoroutineScope: AppCoroutineScope,
 ) {
 
     private val browserCoroutineScope = BrowserCoroutineScope(
@@ -105,8 +110,10 @@ class BrowserPresenter @Inject constructor(
 
     private var view: BrowserContract.View? = null
     private var currentTab: TabModel? = null
-    private val visibilityController = BrowserVisibilityController(
-        scope = browserCoroutineScope,
+    private val initializationJob: Deferred<Unit>
+    private var recreationPrepared = false
+    private val visibilityController = BrowserSessionVisibility(
+        owner = appCoroutineScope,
         pause = { model.pause() },
         resume = { currentTab?.foreground() },
     )
@@ -118,6 +125,7 @@ class BrowserPresenter @Inject constructor(
 
     private val tabJobs: MutableList<Job> = mutableListOf()
     private val allTabsJobMap: MutableMap<Int, Job> = mutableMapOf()
+    private val duplicationSnapshotPool = TabSnapshotPool()
 
     private val untitled = resourceProvider.stringResource(R.string.untitled)
 
@@ -149,13 +157,13 @@ class BrowserPresenter @Inject constructor(
     )
 
     init {
-        browserCoroutineScope.launch {
+        initializationJob = browserCoroutineScope.async {
             val bookmarks = async {
                 bookmarkRepository.bookmarksAndFolders(folder = Bookmark.Folder.Root)
             }
 
             val tabs = model.initializeTabs()
-            val lastTab = if (tabs.isEmpty()) {
+            val lastTab = model.selectedTab ?: if (tabs.isEmpty()) {
                 model.createTab(homePageInitializer)
             } else {
                 tabs.last()
@@ -165,10 +173,13 @@ class BrowserPresenter @Inject constructor(
             state.updateSelf {
                 updateTabViewState().copy(
                     bookmarks = bookmarkListItems,
-                    isRootFolder = true
+                    isRootFolder = true,
                 )
             }
             selectTab(model.selectTab(lastTab.id))
+            if (model.restoredSearchBarExpanded) {
+                state.updateSelf { copy(isSearchBarExpanded = true) }
+            }
         }
 
         browserCoroutineScope.launch {
@@ -205,19 +216,37 @@ class BrowserPresenter @Inject constructor(
         tabJobs.forEach { it.cancel() }
         allTabsJobMap.values.forEach { it.cancel() }
         browserCoroutineScope.cancel()
+        visibilityController.detach { model.destroy() }
+    }
+
+    /**
+     * Quiesce callbacks before taking navigation state, and release every old WebView before
+     * Android starts the replacement Activity. onViewDetached also performs idempotent cleanup.
+     */
+    suspend fun prepareForRecreation() {
+        initializationJob.await()
+        if (recreationPrepared) return
+        recreationPrepared = true
+        visibilityController.stopForRecreation()
+        val jobs = browserCoroutineScope.coroutineContext[Job]?.children?.toList().orEmpty()
+        jobs.forEach { it.cancel() }
+        jobs.joinAll()
+        model.prepareForRecreation(state.value.isSearchBarExpanded)
+        model.destroy()
     }
 
     /**
      * Call when the view is shown (i.e. the browser is moved to the foreground).
      */
     fun onViewShown() {
-        visibilityController.show()
+        if (!recreationPrepared) visibilityController.show()
     }
 
     /**
      * Call when the view is hidden (i.e. the browser is sent to the background).
      */
     fun onViewHidden() {
+        if (recreationPrepared) return
         model.markAllNonEphemeral()
         visibilityController.hide()
     }
@@ -226,6 +255,7 @@ class BrowserPresenter @Inject constructor(
      * Call when a [browserUiEvent] is triggered by the user in the UI.
      */
     fun onEvent(browserUiEvent: BrowserUiEvent) {
+        if (recreationPrepared) return
         browserCoroutineScope.launch {
             when (browserUiEvent) {
                 BrowserUiEvent.SnackbarActionPerformed -> onSnackbarActionPerformed()
@@ -608,6 +638,14 @@ class BrowserPresenter @Inject constructor(
     private suspend fun onMenuClick(menuSelection: MenuSelection) {
         when (menuSelection) {
             MenuSelection.NEW_TAB -> onNewTabClick()
+            MenuSelection.DUPLICATE_TAB -> currentTab?.let { source ->
+                createNewTabAndSelect(
+                    tabInitializer = FreezableInitializer(
+                        source.duplicationSnapshot().shareStorage(duplicationSnapshotPool)
+                    ),
+                    shouldSelect = false,
+                )
+            }
             MenuSelection.NEW_INCOGNITO_TAB -> navigator.launchIncognito(url = null)
             MenuSelection.SHARE -> currentTab?.url?.takeIf { !it.isSpecialUrl() }?.let {
                 navigator.sharePage(url = it, title = currentTab?.title)
@@ -644,6 +682,12 @@ class BrowserPresenter @Inject constructor(
                 ?.let { showAddBookmarkDialog() }
 
             MenuSelection.SETTINGS -> navigator.openSettings()
+            MenuSelection.EXIT_INCOGNITO -> {
+                model.deleteAllTabs()
+                state.updateSelf { updateTabViewState() }
+                navigator.exitIncognito()
+            }
+
             MenuSelection.BACK -> onBackClick()
             MenuSelection.FORWARD -> onForwardClick()
         }
@@ -670,6 +714,10 @@ class BrowserPresenter @Inject constructor(
         tabType: TabModel.Type = TabModel.Type.NORMAL
     ) {
         val tab = model.createTab(tabInitializer, tabType = tabType, foreground = shouldSelect)
+        if (tabInitializer is FreezableInitializer) {
+            tab.searchQuery = tabInitializer.snapshot.searchQuery
+            tab.searchQuerySelection = tabInitializer.snapshot.searchQuerySelection
+        }
         state.updateSelf { updateTabViewState() }
         if (shouldSelect) {
             selectTab(model.selectTab(tab.id))

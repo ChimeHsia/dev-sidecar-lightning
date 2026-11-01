@@ -74,6 +74,22 @@ interface BrowserContract {
         suspend fun initializeTabs(): List<TabModel>
 
         /**
+         * Search-box state restored by a process-local Activity recreation.
+         */
+        val restoredSearchBarExpanded: Boolean
+
+        /**
+         * Await initialization and hand off immutable navigation snapshots before recreation.
+         * This is independent of persistent tab restoration and never persists incognito state.
+         */
+        suspend fun prepareForRecreation(isSearchBarExpanded: Boolean)
+
+        /**
+         * Release this Activity's tabs and their WebViews. Safe to call more than once.
+         */
+        suspend fun destroy()
+
+        /**
          * Mark all tabs as being permanent tabs so that they won't be deleted during navigation
          * events.
          */
@@ -147,6 +163,11 @@ interface BrowserContract {
          * launch the incognito browser and load the provided [url].
          */
         fun launchIncognito(url: String?)
+
+        /**
+         * End the incognito session and return to the regular browser.
+         */
+        suspend fun exitIncognito()
     }
 
     /**

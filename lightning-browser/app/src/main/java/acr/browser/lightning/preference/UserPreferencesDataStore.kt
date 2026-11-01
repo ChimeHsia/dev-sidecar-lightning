@@ -42,7 +42,13 @@ class UserPreferencesDataStore @Inject constructor(
     private val application: Application,
     screenSize: ScreenSize,
     buildInfo: BuildInfo,
+    displayColorPreferences: DisplayColorPreferences,
 ) {
+    /**
+     * Shared with the separate incognito process, independently of the legacy settings store.
+     */
+    val wideColorGamutEnabled = displayColorPreferences.wideColorGamutEnabled
+
     private val dataStore = PreferenceDataStoreFactory.create(
         migrations = listOf(
             SharedPreferencesMigration(

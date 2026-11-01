@@ -5,6 +5,7 @@ package acr.browser.lightning.browser.menu
  */
 enum class MenuSelection {
     NEW_TAB,
+    DUPLICATE_TAB,
     NEW_INCOGNITO_TAB,
     SHARE,
     HISTORY,
@@ -15,6 +16,7 @@ enum class MenuSelection {
     BOOKMARKS,
     ADD_BOOKMARK,
     SETTINGS,
+    EXIT_INCOGNITO,
     BACK,
     FORWARD
 }
