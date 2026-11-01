@@ -1,0 +1,21 @@
+commit 640e93740c75fc0d73e73becc8a3b9a8d1d9c12b
+Author:     ChimeHsia <137911088+ChimeHsia@users.noreply.github.com>
+AuthorDate: Mon Nov 2 02:03:50 2026 +0800
+Commit:     ChimeHsia <137911088+ChimeHsia@users.noreply.github.com>
+CommitDate: Mon Nov 2 02:03:50 2026 +0800
+
+    build: use accepted payload8 marker for style integration
+
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/accel/DshaAccel.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/accel/DshaAccel.kt
+index 2c7395b..8992733 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/accel/DshaAccel.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/accel/DshaAccel.kt
+@@ -33,7 +33,7 @@ object DshaAccel {
+     private const val MARKER_READY = "[android] READY 127.0.0.1:$PORT"
+     private const val MARKER_FAILED = "[android] FAILED"
+     /** 负载版本：改了 assets 里的 zip 就 +1，保证升级后会重新解压。 */
+-    private const val PAYLOAD_VERSION = "9"
++    private const val PAYLOAD_VERSION = "8"
+ 
+     @Volatile
+     private var started = false

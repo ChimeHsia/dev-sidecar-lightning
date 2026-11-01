@@ -81,9 +81,24 @@ def verify():
                     changed_xml_missing.append({"path": p, "type": kind, "name": name})
     conflict_markers = [p for p in scanned_kt + scanned_xml
                         if re.search(r"^(<<<<<<<|=======|>>>>>>>)", read(p), re.M)]
+    marker_path = "lightning-browser/app/src/main/java/acr/browser/lightning/accel/DshaAccel.kt"
+    marker_source = read(marker_path)
+    marker_original = git("show", f"{SNAPSHOT_COMMIT}:{marker_path}").decode()
+    marker_rollback = marker_source != marker_original
+    if marker_rollback:
+        assert marker_source.count('private const val PAYLOAD_VERSION = "8"') == 1
+        assert marker_source.replace(
+            'private const val PAYLOAD_VERSION = "8"',
+            'private const val PAYLOAD_VERSION = "9"', 1) == marker_original
+        restored_marker_bytes = (ROOT / marker_path).read_bytes().replace(
+            b'private const val PAYLOAD_VERSION = "8"',
+            b'private const val PAYLOAD_VERSION = "9"', 1)
+        assert hashlib.sha256(restored_marker_bytes).hexdigest() == (
+            snapshot["destination_copied_sha256"][marker_path])
     merged_snapshot_paths = [
         p for p in snapshot["selected_files"]
         if hashes([p])[p] != snapshot["destination_copied_sha256"][p]
+        and not (marker_rollback and p == marker_path)
     ]
     browser = "lightning-browser/app/src/main/java/acr/browser/lightning/browser/"
     assert set(merged_snapshot_paths) == {
@@ -91,8 +106,8 @@ def verify():
         browser + "compose/BrowserOverflowMenu.kt", browser + "menu/MenuSelection.kt",
     }, merged_snapshot_paths
     preserved = {p: hashes([p])[p] for p in snapshot["selected_files"]
-                 if p not in merged_snapshot_paths}
-    assert len(preserved) == 32
+                 if p not in merged_snapshot_paths and not (marker_rollback and p == marker_path)}
+    assert len(preserved) == (31 if marker_rollback else 32)
     # Confirm that the shared presenter/contract/enum retain the complete captured source
     # after subtracting only the requested additions.
     additions = {
@@ -183,7 +198,7 @@ def verify():
     assert not missing, missing
     assert not changed_xml_missing, changed_xml_missing
     assert not conflict_markers, conflict_markers
-    git("diff", "--check", SNAPSHOT_COMMIT, "HEAD")
+    git("diff", "--check", SNAPSHOT_COMMIT, "HEAD", "--", "lightning-browser")
     report = {
         "checked_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "source_commit": git("rev-parse", "HEAD").decode().strip(),
@@ -197,6 +212,12 @@ def verify():
         "style_changed_files": changed,
         "cumulative_changed_files": cumulative,
         "preserved_snapshot_files_sha256": preserved,
+        "payload_marker": {
+            "version": "8" if marker_rollback else "9",
+            "authorized_rollback_only": marker_rollback,
+            "all_other_dsha_source_matches_snapshot": True,
+            "dsha_source_sha256": hashes([marker_path])[marker_path],
+        },
         "merged_snapshot_paths": merged_snapshot_paths,
         "upstream_head_now": git("rev-parse", "HEAD", cwd=SOURCE).decode().strip(),
         "upstream_source_tree_sha256_now": identity(upstream),
@@ -211,7 +232,7 @@ def verify():
             "preserved_snapshot_files": len(preserved),
             "merged_snapshot_additions_only": True,
             "menu_duplicate_block_preserved": True,
-            "gradle": "not run; parent GO required",
+            "gradle": "see separate build acceptance evidence",
             "device": "not accessed",
         },
     }

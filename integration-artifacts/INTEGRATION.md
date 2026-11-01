@@ -1,5 +1,10 @@
 # Isolated browser style integration
 
+Update: coordinator COMPILE_GO was subsequently completed with payload8.
+See `BUILD-ACCEPTANCE-V8.md` and `build-acceptance-v8.json` for the validated APK,
+marker-only build commit, current source identities, tests, and signing checks.
+The remainder of this file records the earlier source-integration handoff.
+
 Prepared for coordinator review on November 2, 2026 (Asia/Singapore).
 Source integration is complete. Terra acceptance, coordinator device validation,
 and any Gradle validation remain pending. No merge, push, device access, Gradle

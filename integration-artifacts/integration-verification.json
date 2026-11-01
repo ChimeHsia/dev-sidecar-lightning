@@ -1,12 +1,12 @@
 {
-  "checked_utc": "2026-11-01T17:56:26.539012+00:00",
-  "source_commit": "e1d4e4cc88e6842f27d2eca26d305349195f5954",
+  "checked_utc": "2026-11-01T18:15:33.612952+00:00",
+  "source_commit": "640e93740c75fc0d73e73becc8a3b9a8d1d9c12b",
   "snapshot_commit": "c8aa068d510b6714a7b50c2e382b43c3c892df55",
   "base_commit": "754ff423b59c743cf94e68b3417c1fde4a6f42b7",
   "requested_style_head": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
   "snapshot_selected_sha256": "97ecd94a3363e9805f1523135580f0e0e56425f2c78dfe54cdb5d69bbe2497a2",
   "snapshot_source_tree_sha256": "3017a8a1b075d715b882381da4a69f36fac36567140d5d06b59912fca55081ee",
-  "integrated_source_tree_sha256": "40a3e99347e9d361462e1b95f7c41824553ab634efeb91109883e7625b2e1d8c",
+  "integrated_source_tree_sha256": "2dc52b4dbc3b9babcee1167d0dbf7788e3794d4be8b79c9fb95e1a1a2eae3b57",
   "integrated_source_sha256": {
     "lightning-browser/app/build.gradle.kts": "6f2f473c4e12b66b43d50deff0bf10523843e795ba83d23570878018d02fb707",
     "lightning-browser/app/src/main/java/acr/browser/lightning/AppTheme.kt": "4526cb1f7a9575cbc44966f90c66ca8fd5e251dc3ae7a5fecb3627f1e7f3d132",
@@ -15,7 +15,7 @@
     "lightning-browser/app/src/main/java/acr/browser/lightning/DefaultBrowserActivity.kt": "eb8d5f91f3799de3cdfa8911d03931d09cd43fcf3e5fbb6565cc9e08b882a334",
     "lightning-browser/app/src/main/java/acr/browser/lightning/IncognitoBrowserActivity.kt": "1d1fa1c1a560b4f95e8a42b09511f0ed0b0cf54213f3d215745c995ba7f5f0e0",
     "lightning-browser/app/src/main/java/acr/browser/lightning/ThemableActivity.kt": "1205f8dd066fdf97138181c76c67fa4924e74c05773482f8ad365287e1f97bfe",
-    "lightning-browser/app/src/main/java/acr/browser/lightning/accel/DshaAccel.kt": "2cd04410eb38a25442943b5655efee11119cc4716e7957f5fe43385f8d6f8280",
+    "lightning-browser/app/src/main/java/acr/browser/lightning/accel/DshaAccel.kt": "e3bcd7da8b23f407bbb7d23d68602ad10c9b5688bc218cd652c446855cf38773",
     "lightning-browser/app/src/main/java/acr/browser/lightning/accel/ProxyStartupGate.kt": "8f9c149ed0abcc457eda354fa6b00e407555d6d88236768c3d493753eb2cef3c",
     "lightning-browser/app/src/main/java/acr/browser/lightning/adblock/AdBlocker.kt": "e1390af4a13021eab658466ecaa5141e0b90f31d198be5f3119df18ecd0bed10",
     "lightning-browser/app/src/main/java/acr/browser/lightning/adblock/BloomFilterAdBlocker.kt": "2560c5518ad24afb18718fa4bba8ae9ecdf7229e0d2eb535b00160b722633a2e",
@@ -434,6 +434,7 @@
     "lightning-browser/settings.gradle.kts": "1cdaedcb44b77141f1f60a68d4bfe68b42a89803ad771ff38f49550899ad1841"
   },
   "style_delta_sha256": {
+    "lightning-browser/app/src/main/java/acr/browser/lightning/accel/DshaAccel.kt": "e3bcd7da8b23f407bbb7d23d68602ad10c9b5688bc218cd652c446855cf38773",
     "lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserContract.kt": "b2e78a4dfc9aa79fd8a924482ad74ea0e3adc40a33451a1d6ae2ad17b4f70f63",
     "lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserNavigator.kt": "0a95657662b0adbca5aca452a395d54bba16d2b832ed6517536e966fce723cd5",
     "lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserPresenter.kt": "9f5cde87e7ccdb671f4606bbe3136e522841cf9aa9ad88e6ca00592d31690ab1",
@@ -480,6 +481,7 @@
     "lightning-browser/app/src/main/res/values/strings.xml": "727fa57c65748cd50970218f1ec600adba3e9b65d434c5f153daa25f636b3475"
   },
   "style_changed_files": [
+    "lightning-browser/app/src/main/java/acr/browser/lightning/accel/DshaAccel.kt",
     "lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserContract.kt",
     "lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserNavigator.kt",
     "lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserPresenter.kt",
@@ -605,7 +607,6 @@
   ],
   "preserved_snapshot_files_sha256": {
     "lightning-browser/app/build.gradle.kts": "6f2f473c4e12b66b43d50deff0bf10523843e795ba83d23570878018d02fb707",
-    "lightning-browser/app/src/main/java/acr/browser/lightning/accel/DshaAccel.kt": "2cd04410eb38a25442943b5655efee11119cc4716e7957f5fe43385f8d6f8280",
     "lightning-browser/app/src/main/java/acr/browser/lightning/accel/ProxyStartupGate.kt": "8f9c149ed0abcc457eda354fa6b00e407555d6d88236768c3d493753eb2cef3c",
     "lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserActivity.kt": "2b8e93077531bf72e6048130ad14bd7142ae994f83a3a7e079337e98a4beca13",
     "lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserSessionHandoff.kt": "7c2c6ef4f132822825247fdb3edd0f8cc0e8a725598228f60597ae60c67043f8",
@@ -637,6 +638,12 @@
     "lightning-browser/app/src/test/java/acr/browser/lightning/browser/tab/TabSnapshotTest.kt": "58097a7f73802ee6c3f20530235f3580c4411a87d40ea38aba813ae5cb3b12a8",
     "lightning-browser/app/src/test/java/acr/browser/lightning/preference/DisplayColorPreferencesTest.kt": "ae3b2b4593a132faa1f9b12e854abebcac6b15567b2b2031b56666842e4059c3"
   },
+  "payload_marker": {
+    "version": "8",
+    "authorized_rollback_only": true,
+    "all_other_dsha_source_matches_snapshot": true,
+    "dsha_source_sha256": "e3bcd7da8b23f407bbb7d23d68602ad10c9b5688bc218cd652c446855cf38773"
+  },
   "merged_snapshot_paths": [
     "lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserContract.kt",
     "lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserPresenter.kt",
@@ -653,10 +660,10 @@
     "changed_xml_missing_references": [],
     "conflict_markers": [],
     "git_diff_check": "passed",
-    "preserved_snapshot_files": 32,
+    "preserved_snapshot_files": 31,
     "merged_snapshot_additions_only": true,
     "menu_duplicate_block_preserved": true,
-    "gradle": "not run; parent GO required",
+    "gradle": "see separate build acceptance evidence",
     "device": "not accessed"
   }
 }

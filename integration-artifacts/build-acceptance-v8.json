@@ -1,0 +1,378 @@
+{
+  "verified_utc": "2026-11-01T18:14:41.804255+00:00",
+  "source_commit": "640e93740c75fc0d73e73becc8a3b9a8d1d9c12b",
+  "browser_git_tree": "5c7cb3193fd6d7fdce0b81905e711a1fb4858b84",
+  "source_eligible_tree_sha256": "2dc52b4dbc3b9babcee1167d0dbf7788e3794d4be8b79c9fb95e1a1a2eae3b57",
+  "payload_version": "8",
+  "apk_path": "C:\\Users\\HONOR\\.codex\\worktrees\\browser-style-integration\\dev-sidecar-lightning\\port\\.run\\browser-style-integration-v8-20261102\\browser-style-integration-payload8-640e937-release.apk",
+  "apk_size": 60853222,
+  "apk_sha256": "657a43d27b763189309ff73948fb55fdb4ac9b007eb4f761586985996071a888",
+  "apk_signer_certificate_sha256": "d8755927514c111bf255341f3f8171d6edc61c89be0ac4f3c45fe7909e36950b",
+  "signer_matches_accepted_v8": true,
+  "zipalign_16k_check": "passed",
+  "jvm_test_totals": {
+    "tests": 136,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "jvm_test_suites": [
+    {
+      "name": "acr.browser.lightning.accel.ProxyStartupGateTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.adblock.allowlist.SessionAllowListModelTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.adblock.HostsFileParserTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.adblock.NoOpAdBlockerTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.adblock.util.DefaultBloomFilterTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.adblock.util.integer.IntUtilsTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.browser.BrowserSessionHandoffTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.browser.BrowserSessionLifecycleTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.browser.BrowserSessionVisibilityTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.browser.BrowserVisibilityControllerTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.browser.BrowserWindowColorModeTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.browser.tab.TabAdapterLifecycleTest",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.browser.tab.TabSnapshotTest",
+      "tests": 16,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.browser.tab.TabViewStateTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.browser.webrtc.WebRtcPermissionsModelTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.database.WebPageKtTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.dialog.DialogItemTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.extensions.CloseableExtensionsTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.extensions.StringBuilderExtensionsTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.favicon.FaviconUtilsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.preference.datastore.EnumPreferenceStoreTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.preference.datastore.NonNullPreferenceStoreTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.preference.datastore.NullablePreferenceStoreTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.preference.DisplayColorPreferencesTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.search.suggestions.BaiduSuggestionsModelTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.search.suggestions.DuckSuggestionsModelTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.search.suggestions.GoogleSuggestionsModelTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.search.suggestions.KagiSuggestionsModelTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.search.suggestions.NaverSuggestionsModelTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.ssl.SessionSslWarningPreferencesTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "acr.browser.lightning.utils.ExternalAppUrlPolicyTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "assets_sha256": {
+    "baidu.png": "5aa5ef720e125bbc1e2d04295b3e1b4ce09a4534260f4018ea3ba0a415817e0e",
+    "bing.png": "fb9df70dd06f2bc7e6ad0f13d762261f75a16c9e87b96044381116372967ec3d",
+    "cacert.pem": "796f1389bfea13c0ed78f663b765baaff54a508e5483786bd6ece73c5e3e3cbe",
+    "dsha_ca.crt": "57d3ce48c8a47af405d6a7a321f02b6b7e4b8a54d3fa597ca9032bd38564ef23",
+    "dsha_ca.key.pem": "1882341f901bdf7892c63cde44cce0aa4d5994f9781feb91cb30f1c6710a8978",
+    "duckduckgo.png": "ad8e6cbfc0bb503f0f52b5963f861f79a847dbe6b29818f7feaa988f9a549d40",
+    "google.png": "b3bc2bc5e2eb632ad28b3efe9f99e7676b9ac5ed540f315a1b8b931d2a5a099b",
+    "hosts.txt": "d1ae40082c51874366c721f406dbf59c678b73a2204e543ebcb32d14756092d2",
+    "lightning.png": "11f2dbe94105f81a6d27334ccb10044b687be36917959c351b7d8049b7f78bfe",
+    "naver.png": "3c1bd7103a884158ca02c6c1a74be376def7a235c31a855d397dbdb02aacda64",
+    "node-libs.zip": "757d6d6ef6e94ffb0810a024245fce119ceefa578221b25accb114a44de870ff",
+    "nodejs-project.zip": "d7a1c8d256272831698a03192997e9e15b1823a688d136f345f51986aacba981",
+    "startpage.png": "9c4147a4e4b1794a1d964251789215f999d66ba9b8eae311ba9b13863ef1fb3d",
+    "yahoo.png": "841a8df001f4505d85e288c4bd60826b7347878460d0a87acdefd253f6149d78",
+    "yandex.png": "772c637091d77f2f0c752e180fbc1c352abff29874b060fa145102abfe3c34d1"
+  },
+  "all_15_assets_identical_to_accepted_v8_and_isolated_override": true,
+  "extra_generated_assets": [
+    "assets/PublicSuffixDatabase.list",
+    "assets/dexopt/baseline.prof",
+    "assets/dexopt/baseline.profm",
+    "assets/licensee/artifacts.json"
+  ],
+  "nested_zip_checks": {
+    "node-libs.zip": {
+      "sha256": "757d6d6ef6e94ffb0810a024245fce119ceefa578221b25accb114a44de870ff",
+      "entries": 10,
+      "crc_valid": true
+    },
+    "nodejs-project.zip": {
+      "sha256": "d7a1c8d256272831698a03192997e9e15b1823a688d136f345f51986aacba981",
+      "entries": 6333,
+      "crc_valid": true
+    }
+  },
+  "jni_sha256": "d6f38f48e0d34bd0ddae4c31ebf24dfaa8bf9f6ab6f21cb7c69556dab807c5c0",
+  "jni_matches_ui_checkout_and_accepted_v8": true,
+  "packaged_raw_ca_matches_payload_ca": true,
+  "packaged_raw_ca_archive_path": "res/tZ.pem",
+  "ca_certificate_der_sha256": "c3143689c78bd8587b5ae9e50e851735a4704f1c3aa51f15c2b3212fa4a04a1f",
+  "ca_input_checks": {
+    "ca_certificate_der_sha256": "c3143689c78bd8587b5ae9e50e851735a4704f1c3aa51f15c2b3212fa4a04a1f",
+    "ca_public_key_sha256": "14bf6951f902d5bc0dcb4f5e4f0bc48aa9e0cb5964e370b3238f1df2d229b7d8",
+    "certificate_matches_private_key": true,
+    "self_signature_valid": true,
+    "not_valid_before_utc": "2026-10-31T17:34:52+00:00",
+    "not_valid_after_utc": "2036-10-28T17:34:52+00:00",
+    "network_security_raw_ca_path": "lightning-browser\\app\\src\\main\\res\\raw\\dsha_ca.pem",
+    "network_security_raw_ca_der_sha256": "c3143689c78bd8587b5ae9e50e851735a4704f1c3aa51f15c2b3212fa4a04a1f",
+    "network_security_raw_ca_matches_payload_ca": true
+  },
+  "dex_marker_v8_present_v9_absent": true,
+  "gradle_tests": "passed",
+  "gradle_release": "passed",
+  "installed": false,
+  "device_access": false,
+  "acceptance_scope": "JVM and release packaging; device acceptance remains with coordinator",
+  "upstream_drift_checked_utc": "2026-11-01T18:15:33.612952+00:00",
+  "upstream_drift_changed_paths": [],
+  "original_browser_source_sha256_now": "3017a8a1b075d715b882381da4a69f36fac36567140d5d06b59912fca55081ee",
+  "dsha_marker_verification": {
+    "version": "8",
+    "authorized_rollback_only": true,
+    "all_other_dsha_source_matches_snapshot": true,
+    "dsha_source_sha256": "e3bcd7da8b23f407bbb7d23d68602ad10c9b5688bc218cd652c446855cf38773"
+  },
+  "build_environment": {
+    "jdk_home": "D:\\File\\User\\code\\dev-sidecar-lightning\\.jdk\\jdk-21.0.2",
+    "jdk_version": "21.0.2",
+    "gradle_version": "9.8.2",
+    "max_workers": 1,
+    "parallel": false,
+    "configuration_cache": false,
+    "isolated_projects": false,
+    "gradle_heap": "1024m",
+    "gradle_metaspace": "512m",
+    "test_heap": "384m",
+    "test_forks": 1,
+    "gc": "SerialGC",
+    "active_processors": 2,
+    "kotlin_compiler_strategy": "in-process",
+    "gradle_commands_serial": true,
+    "reused_low_memory_init": "D:\\File\\User\\code\\dev-sidecar-lightning\\port\\.run\\merged-regression-20261101-1328eb6e\\low-memory-tests.init.gradle"
+  },
+  "commands": {
+    "test": [
+      "testLightningPlusDebugUnitTest",
+      "--no-daemon",
+      "--max-workers=1",
+      "--no-parallel",
+      "--no-configuration-cache",
+      "--console=plain",
+      "-Dorg.gradle.unsafe.isolated-projects=false",
+      "-Dorg.gradle.java.home=D:/File/User/code/dev-sidecar-lightning/.jdk/jdk-21.0.2",
+      "-Dorg.gradle.jvmargs=-Xmx1024m -XX:MaxMetaspaceSize=512m -XX:+UseSerialGC -XX:ActiveProcessorCount=2 -Dfile.encoding=UTF-8",
+      "-Pkotlin.compiler.execution.strategy=in-process",
+      "-Pkotlin.incremental=false",
+      "-I",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\browser-style-integration\\dev-sidecar-lightning\\port\\.run\\browser-style-integration-v8-20261102\\low-memory-tests.init.gradle",
+      "-I",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\browser-style-integration\\dev-sidecar-lightning\\port\\.run\\browser-style-integration-v8-20261102\\assets-override.init.gradle"
+    ],
+    "release": [
+      "assembleLightningPlusRelease",
+      "--no-daemon",
+      "--max-workers=1",
+      "--no-parallel",
+      "--no-configuration-cache",
+      "--console=plain",
+      "-Dorg.gradle.unsafe.isolated-projects=false",
+      "-Dorg.gradle.java.home=D:/File/User/code/dev-sidecar-lightning/.jdk/jdk-21.0.2",
+      "-Dorg.gradle.jvmargs=-Xmx1024m -XX:MaxMetaspaceSize=512m -XX:+UseSerialGC -XX:ActiveProcessorCount=2 -Dfile.encoding=UTF-8",
+      "-Pkotlin.compiler.execution.strategy=in-process",
+      "-Pkotlin.incremental=false",
+      "-I",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\browser-style-integration\\dev-sidecar-lightning\\port\\.run\\browser-style-integration-v8-20261102\\low-memory-tests.init.gradle",
+      "-I",
+      "C:\\Users\\HONOR\\.codex\\worktrees\\browser-style-integration\\dev-sidecar-lightning\\port\\.run\\browser-style-integration-v8-20261102\\assets-override.init.gradle"
+    ]
+  },
+  "build_durations": {
+    "browser-jvm-tests": "2m 51s",
+    "release": "2m 35s"
+  },
+  "evidence_sha256": {
+    "accepted-v8-apksigner.txt": "5a57b99551ac6c63caa149f62cc9a825a3cec9ed561149c39e1c786828ec2fd5",
+    "assets-override.init.gradle": "149fc848c65aa73adc7710c1b6a56199861f5882ee207abbabfccfaaf19f75ef",
+    "browser-jvm-tests.log": "b7862ba53484d8610bed738b4224b410682cfd9262c07d6db9719904fd442296",
+    "ca-verification.json": "067e95b7da59cb637c045a3c30c7c03aa7c5f9fa2b0711ea3b1394a7468f44d6",
+    "inputs.json": "3fc8902335811a5ec6c229149f56b2a904d8f3c44ab87da4d55b01d4ce85063a",
+    "junit-xml-sha256.json": "b7b41677dc7b807517738e11089fa7dcbe15a5b112abd7fdb5aeb88b647bf9cc",
+    "low-memory-tests.init.gradle": "df1bc941a076cbd6c2cae8a739144e95f957aa67bf9aa3a2339ff87b43b18e3c",
+    "release-apksigner.txt": "5a57b99551ac6c63caa149f62cc9a825a3cec9ed561149c39e1c786828ec2fd5",
+    "release-arguments.json": "1d902fafa59ea6bc5a1f64deb7870a6b3672f112d84bf1d33a724c05db2fc765",
+    "release-badging.txt": "a295fb0065098a77e2eb5ea6563039047301adb2032068760ef2f435e8e9d18b",
+    "release-resources.txt": "7fcd11ce3e28cc5d0152c7b1136767b2cde30d1e9ca7d236e3dddcd195818c36",
+    "release.log": "655c2299b80fef3c70d8c3656c80611a40b987ad2a289b3145f4ee00b4804b4c",
+    "test-arguments.json": "6479041ad64d7e883a2074d94de5337dab7af7fa22c4db07d631dc0525d20496"
+  }
+}
