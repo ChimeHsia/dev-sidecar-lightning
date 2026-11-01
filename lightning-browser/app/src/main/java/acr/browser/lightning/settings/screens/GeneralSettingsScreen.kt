@@ -32,6 +32,7 @@ class GeneralSettingsScreen @Inject constructor(
         title = resourceProvider.stringResource(R.string.settings_general),
         content = listOf(
             ToggleState(
+                icon = R.drawable.ic_hide_image,
                 title = resourceProvider.stringResource(R.string.block),
                 isChecked = { userPreferencesDataStore.blockImagesEnabled.get() },
                 onToggle = {
@@ -40,6 +41,7 @@ class GeneralSettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_data_saver_on,
                 title = resourceProvider.stringResource(R.string.save_data),
                 isChecked = { userPreferencesDataStore.saveDataEnabled.get() },
                 onToggle = {
@@ -52,6 +54,7 @@ class GeneralSettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_javascript,
                 title = resourceProvider.stringResource(R.string.java),
                 isChecked = { userPreferencesDataStore.javaScriptEnabled.get() },
                 onToggle = {
@@ -60,6 +63,7 @@ class GeneralSettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_format_paint,
                 title = resourceProvider.stringResource(R.string.color_mode),
                 isChecked = { userPreferencesDataStore.colorModeEnabled.get() },
                 onToggle = {
@@ -68,6 +72,7 @@ class GeneralSettingsScreen @Inject constructor(
                 }
             ),
             ClickableState(
+                icon = R.drawable.ic_devices,
                 title = resourceProvider.stringResource(R.string.title_user_agent),
                 summary = {
                     userPreferencesDataStore.userAgentChoice.get()
@@ -113,6 +118,7 @@ class GeneralSettingsScreen @Inject constructor(
                 )
             ),
             ClickableState(
+                icon = R.drawable.ic_download,
                 title = resourceProvider.stringResource(R.string.download),
                 summary = {
                     "${FileUtils.DEFAULT_DOWNLOAD_PATH}/${userPreferencesDataStore.downloadDirectory.get()}"
@@ -164,6 +170,7 @@ class GeneralSettingsScreen @Inject constructor(
                 )
             ),
             ClickableState(
+                icon = R.drawable.ic_home,
                 title = resourceProvider.stringResource(R.string.home),
                 summary = {
                     resourceProvider.homePageUrlToDisplayTitle(userPreferencesDataStore.homepage.get())
@@ -233,6 +240,7 @@ class GeneralSettingsScreen @Inject constructor(
                 )
             ),
             ClickableState(
+                icon = R.drawable.ic_search,
                 title = resourceProvider.stringResource(R.string.title_search_engine),
                 summary = {
                     searchEngineProvider.provideSearchEngine()
@@ -279,6 +287,7 @@ class GeneralSettingsScreen @Inject constructor(
                 )
             ),
             ClickableState(
+                icon = R.drawable.ic_manage_search,
                 title = resourceProvider.stringResource(R.string.search_suggestions),
                 summary = {
                     userPreferencesDataStore.searchSuggestionChoice.get()

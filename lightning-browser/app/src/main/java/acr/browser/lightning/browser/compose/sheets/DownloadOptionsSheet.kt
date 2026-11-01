@@ -15,10 +15,10 @@ fun DownloadOptionsSheet(
     ListItemSheet(
         title = stringResource(R.string.action_downloads),
         items = listOf(
-            DialogItem(title = R.string.dialog_delete_all_downloads) {
+            DialogItem(icon = R.drawable.ic_delete_sweep, title = R.string.dialog_delete_all_downloads) {
                 onClick(BrowserContract.DownloadOptionEvent.DELETE_ALL)
             },
-            DialogItem(title = R.string.dialog_delete_download) {
+            DialogItem(icon = R.drawable.ic_action_delete, title = R.string.dialog_delete_download) {
                 onClick(BrowserContract.DownloadOptionEvent.DELETE)
             },
         ),

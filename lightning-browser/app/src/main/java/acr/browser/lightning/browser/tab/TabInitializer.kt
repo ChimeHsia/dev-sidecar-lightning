@@ -193,6 +193,7 @@ class PermissionInitializer @AssistedInject constructor(
     private suspend fun showDialog(): DialogChoice = suspendCancellableCoroutine { continuation ->
         MaterialAlertDialogBuilder(activity).apply {
             setTitle(R.string.title_warning)
+            setIcon(R.drawable.ic_warning)
             setMessage(R.string.message_blocked_local)
             setCancelable(false)
             setOnDismissListener {

@@ -48,7 +48,7 @@ fun BrowserFindInPage(
         ) {
             IconButton(onClick = { presenter.onEvent(BrowserUiEvent.FindInPageDismissed) }) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_action_delete),
+                    painter = painterResource(R.drawable.ic_close),
                     contentDescription = "test"
                 )
             }

@@ -7,6 +7,7 @@ import acr.browser.lightning.settings.framework.compose.SettingsBottomSheetTextS
 import acr.browser.lightning.settings.framework.compose.SettingsClickable
 import acr.browser.lightning.settings.framework.compose.SettingsLoader
 import acr.browser.lightning.settings.framework.compose.SettingsToggle
+import acr.browser.lightning.settings.framework.compose.SettingsUpButton
 import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -103,7 +104,8 @@ fun SettingsFrameworkScreen(
             TopAppBar(
                 title = {
                     Text(state.title)
-                }
+                },
+                navigationIcon = { SettingsUpButton(onUp) }
             )
         }
     ) { innerPadding ->

@@ -20,6 +20,7 @@ class BookmarkSettingsScreen @Inject constructor(
         title = resourceProvider.stringResource(R.string.bookmark_settings),
         content = listOf(
             ClickableState(
+                icon = R.drawable.ic_upload,
                 title = resourceProvider.stringResource(R.string.export_bookmarks),
                 onClick = ClickableOnClick.FileCreator(
                     fileName = "ExportedBookmarks.txt",
@@ -48,6 +49,7 @@ class BookmarkSettingsScreen @Inject constructor(
                 )
             ),
             ClickableState(
+                icon = R.drawable.ic_file_open,
                 title = resourceProvider.stringResource(R.string.import_backup),
                 onClick = ClickableOnClick.FileChooser(
                     mimeType = "text/*",
@@ -76,6 +78,7 @@ class BookmarkSettingsScreen @Inject constructor(
                 )
             ),
             ClickableState(
+                icon = R.drawable.ic_delete_forever,
                 title = resourceProvider.stringResource(R.string.action_delete_all_bookmarks),
                 onClick = ClickableOnClick.Confirmation(
                     produceState = {

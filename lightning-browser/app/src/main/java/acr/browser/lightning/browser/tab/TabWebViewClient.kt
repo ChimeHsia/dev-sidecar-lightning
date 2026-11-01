@@ -221,6 +221,7 @@ class TabWebViewClient @AssistedInject constructor(
 
             setView(dialogView.root)
             setTitle(R.string.title_sign_in)
+            setIcon(R.drawable.ic_login)
             setCancelable(true)
             setPositiveButton(R.string.title_sign_in) { _, _ ->
                 val user = name.text.toString()
@@ -238,6 +239,7 @@ class TabWebViewClient @AssistedInject constructor(
         val context = view.context
         MaterialAlertDialogBuilder(context).apply {
             setTitle(context.getString(R.string.title_form_resubmission))
+            setIcon(R.drawable.ic_refresh)
             setMessage(context.getString(R.string.message_form_resubmission))
             setCancelable(true)
             setPositiveButton(context.getString(R.string.action_yes)) { _, _ ->
@@ -278,6 +280,7 @@ class TabWebViewClient @AssistedInject constructor(
             val view = DialogSslWarningBinding.inflate(LayoutInflater.from(context))
             val dontAskAgain = view.checkBoxDontAskAgain
             setTitle(context.getString(R.string.title_warning))
+            setIcon(R.drawable.ic_unsecured)
             setMessage(alertMessage)
             setCancelable(true)
             setView(view.root)

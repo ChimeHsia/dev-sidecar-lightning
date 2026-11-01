@@ -20,25 +20,26 @@ fun LongPressImageLinkSheet(
     ListItemSheet(
         title = longPress.targetUrl?.replace(HTTP, "").orEmpty(),
         items = listOf(
-            DialogItem(title = R.string.dialog_open_new_tab) {
+            DialogItem(icon = R.drawable.ic_tab_new_right, title = R.string.dialog_open_new_tab) {
                 onClick(BrowserContract.ImageLongPressEvent.NEW_TAB)
             },
-            DialogItem(title = R.string.dialog_open_background_tab) {
+            DialogItem(icon = R.drawable.ic_tab_unselected, title = R.string.dialog_open_background_tab) {
                 onClick(BrowserContract.ImageLongPressEvent.BACKGROUND_TAB)
             },
             DialogItem(
+                icon = R.drawable.incognito_mode,
                 title = R.string.dialog_open_incognito_tab,
                 isConditionMet = !browserViewState.isIncognito
             ) {
                 onClick(BrowserContract.ImageLongPressEvent.INCOGNITO_TAB)
             },
-            DialogItem(title = R.string.action_share) {
+            DialogItem(icon = R.drawable.ic_share, title = R.string.action_share) {
                 onClick(BrowserContract.ImageLongPressEvent.SHARE)
             },
-            DialogItem(title = R.string.dialog_copy_link) {
+            DialogItem(icon = R.drawable.ic_content_copy, title = R.string.dialog_copy_link) {
                 onClick(BrowserContract.ImageLongPressEvent.COPY_LINK)
             },
-            DialogItem(title = R.string.dialog_download_image) {
+            DialogItem(icon = R.drawable.ic_download, title = R.string.dialog_download_image) {
                 onClick(BrowserContract.ImageLongPressEvent.DOWNLOAD)
             }
         ),
@@ -56,22 +57,23 @@ fun LongPressLinkSheet(
     ListItemSheet(
         title = longPress.targetUrl?.replace(HTTP, "").orEmpty(),
         items = listOf(
-            DialogItem(title = R.string.dialog_open_new_tab) {
+            DialogItem(icon = R.drawable.ic_tab_new_right, title = R.string.dialog_open_new_tab) {
                 onClick(BrowserContract.LinkLongPressEvent.NEW_TAB)
             },
-            DialogItem(title = R.string.dialog_open_background_tab) {
+            DialogItem(icon = R.drawable.ic_tab_unselected, title = R.string.dialog_open_background_tab) {
                 onClick(BrowserContract.LinkLongPressEvent.BACKGROUND_TAB)
             },
             DialogItem(
+                icon = R.drawable.incognito_mode,
                 title = R.string.dialog_open_incognito_tab,
                 isConditionMet = !browserViewState.isIncognito
             ) {
                 onClick(BrowserContract.LinkLongPressEvent.INCOGNITO_TAB)
             },
-            DialogItem(title = R.string.action_share) {
+            DialogItem(icon = R.drawable.ic_share, title = R.string.action_share) {
                 onClick(BrowserContract.LinkLongPressEvent.SHARE)
             },
-            DialogItem(title = R.string.dialog_copy_link) {
+            DialogItem(icon = R.drawable.ic_content_copy, title = R.string.dialog_copy_link) {
                 onClick(BrowserContract.LinkLongPressEvent.COPY_LINK)
             }
         ),
@@ -87,10 +89,10 @@ fun LongPressFolderLinkSheet(
     ListItemSheet(
         title = stringResource(R.string.action_folder),
         items = listOf(
-            DialogItem(title = R.string.dialog_rename_folder) {
+            DialogItem(icon = R.drawable.ic_edit, title = R.string.dialog_rename_folder) {
                 onClick(BrowserContract.FolderOptionEvent.RENAME)
             },
-            DialogItem(title = R.string.dialog_remove_folder) {
+            DialogItem(icon = R.drawable.ic_folder_delete, title = R.string.dialog_remove_folder) {
                 onClick(BrowserContract.FolderOptionEvent.REMOVE)
             }
         ),
@@ -107,28 +109,29 @@ fun LongPressBookmarkLinkSheet(
     ListItemSheet(
         title = stringResource(R.string.action_bookmarks),
         items = listOf(
-            DialogItem(title = R.string.dialog_open_new_tab) {
+            DialogItem(icon = R.drawable.ic_tab_new_right, title = R.string.dialog_open_new_tab) {
                 onClick(BrowserContract.BookmarkOptionEvent.NEW_TAB)
             },
-            DialogItem(title = R.string.dialog_open_background_tab) {
+            DialogItem(icon = R.drawable.ic_tab_unselected, title = R.string.dialog_open_background_tab) {
                 onClick(BrowserContract.BookmarkOptionEvent.BACKGROUND_TAB)
             },
             DialogItem(
+                icon = R.drawable.incognito_mode,
                 title = R.string.dialog_open_incognito_tab,
                 isConditionMet = !browserViewState.isIncognito
             ) {
                 onClick(BrowserContract.BookmarkOptionEvent.INCOGNITO_TAB)
             },
-            DialogItem(title = R.string.action_share) {
+            DialogItem(icon = R.drawable.ic_share, title = R.string.action_share) {
                 onClick(BrowserContract.BookmarkOptionEvent.SHARE)
             },
-            DialogItem(title = R.string.dialog_copy_link) {
+            DialogItem(icon = R.drawable.ic_content_copy, title = R.string.dialog_copy_link) {
                 onClick(BrowserContract.BookmarkOptionEvent.COPY_LINK)
             },
-            DialogItem(title = R.string.dialog_remove_bookmark) {
+            DialogItem(icon = R.drawable.ic_bookmark_remove, title = R.string.dialog_remove_bookmark) {
                 onClick(BrowserContract.BookmarkOptionEvent.REMOVE)
             },
-            DialogItem(title = R.string.dialog_edit_bookmark) {
+            DialogItem(icon = R.drawable.ic_edit, title = R.string.dialog_edit_bookmark) {
                 onClick(BrowserContract.BookmarkOptionEvent.EDIT)
             }
         ),
@@ -145,25 +148,26 @@ fun LongPressHistoryLinkSheet(
     ListItemSheet(
         title = stringResource(R.string.action_history),
         items = listOf(
-            DialogItem(title = R.string.dialog_open_new_tab) {
+            DialogItem(icon = R.drawable.ic_tab_new_right, title = R.string.dialog_open_new_tab) {
                 onClick(BrowserContract.HistoryOptionEvent.NEW_TAB)
             },
-            DialogItem(title = R.string.dialog_open_background_tab) {
+            DialogItem(icon = R.drawable.ic_tab_unselected, title = R.string.dialog_open_background_tab) {
                 onClick(BrowserContract.HistoryOptionEvent.BACKGROUND_TAB)
             },
             DialogItem(
+                icon = R.drawable.incognito_mode,
                 title = R.string.dialog_open_incognito_tab,
                 isConditionMet = !browserViewState.isIncognito
             ) {
                 onClick(BrowserContract.HistoryOptionEvent.INCOGNITO_TAB)
             },
-            DialogItem(title = R.string.action_share) {
+            DialogItem(icon = R.drawable.ic_share, title = R.string.action_share) {
                 onClick(BrowserContract.HistoryOptionEvent.SHARE)
             },
-            DialogItem(title = R.string.dialog_copy_link) {
+            DialogItem(icon = R.drawable.ic_content_copy, title = R.string.dialog_copy_link) {
                 onClick(BrowserContract.HistoryOptionEvent.COPY_LINK)
             },
-            DialogItem(title = R.string.dialog_remove_from_history) {
+            DialogItem(icon = R.drawable.ic_action_delete, title = R.string.dialog_remove_from_history) {
                 onClick(BrowserContract.HistoryOptionEvent.REMOVE)
             }
         ),

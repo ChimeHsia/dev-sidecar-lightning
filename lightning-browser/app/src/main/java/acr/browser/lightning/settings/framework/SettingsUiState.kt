@@ -1,17 +1,20 @@
 package acr.browser.lightning.settings.framework
 
 import android.graphics.Bitmap
+import androidx.annotation.DrawableRes
 
 sealed interface SettingsOption
 
 data class SettingsClickableState(
     val enabled: Boolean = true,
+    @param:DrawableRes val icon: Int? = null,
     val title: String,
     val summary: String? = null
 ) : SettingsOption
 
 data class SettingsToggleState(
     val enabled: Boolean = true,
+    @param:DrawableRes val icon: Int? = null,
     val title: String,
     val summary: String? = null,
     val isChecked: Boolean

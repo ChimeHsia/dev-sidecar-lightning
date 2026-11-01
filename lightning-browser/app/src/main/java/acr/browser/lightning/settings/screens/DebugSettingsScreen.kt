@@ -16,6 +16,7 @@ class DebugSettingsScreen @Inject constructor(
         title = resourceProvider.stringResource(R.string.debug_title),
         content = listOf(
             ToggleState(
+                icon = R.drawable.ic_bug_report,
                 title = resourceProvider.stringResource(R.string.debug_leak_canary),
                 isChecked = { developerPreferenceStore.useLeakCanary.get() },
                 onToggle = {

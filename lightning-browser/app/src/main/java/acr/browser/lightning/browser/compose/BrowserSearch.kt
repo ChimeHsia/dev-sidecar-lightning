@@ -266,6 +266,15 @@ fun BrowserSearchBarInputField(
 
             SslState.None -> if (browserViewState.displayUrl.isNotEmpty()) {
                 Spacer(modifier = Modifier.padding(start = 16.dp))
+            } else {
+                Icon(
+                    modifier = Modifier
+                        .padding(horizontal = 6.dp)
+                        .size(24.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    painter = painterResource(R.drawable.ic_search),
+                    contentDescription = null
+                )
             }
 
             SslState.Valid -> IconButton(
@@ -284,7 +293,10 @@ fun BrowserSearchBarInputField(
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                    .padding(
+                        start = if (browserViewState.sslState == SslState.None) 4.dp else 16.dp,
+                        end = 16.dp
+                    )
                     .weight(1f, false),
                 maxLines = 1,
                 overflow = TextOverflow.Clip,

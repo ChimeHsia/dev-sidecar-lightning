@@ -302,6 +302,7 @@ class TabWebChromeClient @AssistedInject constructor(
                     val remember = true
                     MaterialAlertDialogBuilder(activity).apply {
                         setTitle(activity.getString(R.string.location))
+                        setIcon(R.drawable.ic_my_location)
                         val org = if (origin.length > 50) {
                             "${origin.subSequence(0, 50)}..."
                         } else {

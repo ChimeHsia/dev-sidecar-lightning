@@ -2,6 +2,7 @@ package acr.browser.lightning.settings.licenses
 
 import acr.browser.lightning.R
 import acr.browser.lightning.compose.StatusBar
+import acr.browser.lightning.settings.framework.compose.SettingsUpButton
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -70,7 +71,8 @@ fun LicensesScreen(
             TopAppBar(
                 title = {
                     Text(stringResource(R.string.licenses))
-                }
+                },
+                navigationIcon = { SettingsUpButton(onUp) }
             )
         }
     ) { innerPadding ->

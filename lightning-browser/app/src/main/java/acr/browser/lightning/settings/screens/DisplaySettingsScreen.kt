@@ -30,6 +30,7 @@ class DisplaySettingsScreen @Inject constructor(
         content = listOf(
             // TODO: Delete hide status bar option?
             ToggleState(
+                icon = R.drawable.ic_visibility_off,
                 title = resourceProvider.stringResource(R.string.fullScreenOption),
                 isChecked = { userPreferencesDataStore.hideStatusBarEnabled.get() },
                 onToggle = {
@@ -38,6 +39,7 @@ class DisplaySettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_fullscreen,
                 title = resourceProvider.stringResource(R.string.fullscreen),
                 isChecked = { userPreferencesDataStore.fullScreenEnabled.get() },
                 onToggle = {
@@ -46,6 +48,7 @@ class DisplaySettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_dark_mode,
                 title = resourceProvider.stringResource(R.string.settings_black_status_bar),
                 isChecked = { userPreferencesDataStore.useBlackStatusBar.get() },
                 onToggle = {
@@ -54,6 +57,7 @@ class DisplaySettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_width_wide,
                 title = resourceProvider.stringResource(R.string.wideViewPort),
                 summary = { resourceProvider.stringResource(R.string.recommended) },
                 isChecked = { userPreferencesDataStore.useWideViewPortEnabled.get() },
@@ -63,6 +67,7 @@ class DisplaySettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_zoom_out,
                 title = resourceProvider.stringResource(R.string.overViewMode),
                 summary = { resourceProvider.stringResource(R.string.recommended) },
                 isChecked = { userPreferencesDataStore.overviewModeEnabled.get() },
@@ -72,6 +77,7 @@ class DisplaySettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_wrap_text,
                 title = resourceProvider.stringResource(R.string.reflow),
                 isChecked = { userPreferencesDataStore.textReflowEnabled.get() },
                 onToggle = {
@@ -84,6 +90,7 @@ class DisplaySettingsScreen @Inject constructor(
                     WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING) ||
                         WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)
                 },
+                icon = R.drawable.ic_dark_mode,
                 title = resourceProvider.stringResource(R.string.algorithmic_darkening_title),
                 summary = { resourceProvider.stringResource(R.string.algorithmic_darkening_summary) },
                 isChecked = { userPreferencesDataStore.algorithmicDarkeningEnabled.get() },
@@ -93,6 +100,7 @@ class DisplaySettingsScreen @Inject constructor(
                 }
             ),
             ClickableState(
+                icon = R.drawable.ic_palette,
                 title = resourceProvider.stringResource(R.string.theme),
                 summary = {
                     userPreferencesDataStore.useTheme.get().toDisplayString(resourceProvider)
@@ -117,6 +125,7 @@ class DisplaySettingsScreen @Inject constructor(
                 )
             ),
             ClickableState(
+                icon = R.drawable.ic_apps,
                 title = resourceProvider.stringResource(R.string.app_icon),
                 summary = {
                     if (buildInfo.defaultIcon() == userPreferencesDataStore.browserIcon.get()) {
@@ -157,6 +166,7 @@ class DisplaySettingsScreen @Inject constructor(
                 )
             ),
             ClickableState(
+                icon = R.drawable.ic_tab,
                 title = resourceProvider.stringResource(R.string.tab_style_title),
                 summary = {
                     userPreferencesDataStore.tabConfiguration.get()
@@ -184,6 +194,7 @@ class DisplaySettingsScreen @Inject constructor(
                 )
             ),
             ClickableState(
+                icon = R.drawable.ic_format_size,
                 title = resourceProvider.stringResource(R.string.title_text_size),
                 summary = {
                     when (userPreferencesDataStore.textSize.get()) {

@@ -3,6 +3,7 @@ package acr.browser.lightning.settings.framework
 import acr.browser.lightning.settings.navigation.SettingsNavigation
 import acr.browser.lightning.settings.navigation.SettingsNavigator
 import android.net.Uri
+import androidx.annotation.DrawableRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -20,6 +21,7 @@ sealed interface SettingsFrameworkOption
 
 class ToggleState(
     val enabled: suspend () -> Boolean = { true },
+    @param:DrawableRes val icon: Int? = null,
     val title: String,
     val summary: (suspend () -> String)? = null,
     val isChecked: suspend () -> Boolean,
@@ -28,6 +30,7 @@ class ToggleState(
 
 class ClickableState(
     val enabled: suspend () -> Boolean = { true },
+    @param:DrawableRes val icon: Int? = null,
     val title: String,
     val summary: (suspend () -> String)? = null,
     val onClick: ClickableOnClick
@@ -145,12 +148,14 @@ class SettingsFrameworkPresenter(
                 when (it) {
                     is ClickableState -> SettingsClickableState(
                         enabled = it.enabled(),
+                        icon = it.icon,
                         title = it.title,
                         summary = it.summary?.invoke()
                     )
 
                     is ToggleState -> SettingsToggleState(
                         enabled = it.enabled(),
+                        icon = it.icon,
                         title = it.title,
                         summary = it.summary?.invoke(),
                         isChecked = it.isChecked()
