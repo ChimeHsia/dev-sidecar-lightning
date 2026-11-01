@@ -6,14 +6,11 @@ import acr.browser.lightning.browser.BrowserComposeState
 import acr.browser.lightning.browser.BrowserPresenter
 import acr.browser.lightning.browser.BrowserViewState
 import acr.browser.lightning.browser.compose.sheets.BookmarksBottomSheet
-import acr.browser.lightning.browser.tab.TabModel
 import acr.browser.lightning.compose.imeInsetsPadding
 import acr.browser.lightning.search.SuggestionsModel
 import android.widget.FrameLayout
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,6 +25,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -48,10 +46,11 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -108,26 +107,21 @@ fun DrawerTabs(
             ModalDrawerSheet(modifier = Modifier.widthIn(max = 300.dp)) {
                 Row(
                     modifier = Modifier
-                        .height(56.dp)
+                        .height(64.dp)
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                        .padding(horizontal = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .padding(horizontal = 16.dp),
-                        onClick = { presenter.onEvent(BrowserUiEvent.TabMenuClick) }
-                    ) {
+                    IconButton(onClick = { presenter.onEvent(BrowserUiEvent.TabMenuClick) }) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_action_tabs),
-                            contentDescription = "more"
+                            painter = painterResource(R.drawable.ic_tab),
+                            contentDescription = stringResource(R.string.tabs)
                         )
                     }
                     Text(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(start = 8.dp),
                         text = stringResource(R.string.tabs),
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.titleMedium
                     )
                 }
                 LazyColumn(
@@ -143,10 +137,20 @@ fun DrawerTabs(
                     ) { index, tab ->
                         Row(
                             modifier = Modifier
+                                .padding(horizontal = 12.dp)
                                 .fillMaxWidth()
+                                .height(56.dp)
                                 .animateItem(
                                     fadeInSpec = null,
                                     fadeOutSpec = null
+                                )
+                                .clip(CircleShape)
+                                .background(
+                                    if (tab.isSelected) {
+                                        MaterialTheme.colorScheme.secondaryContainer
+                                    } else {
+                                        Color.Transparent
+                                    }
                                 )
                                 .combinedClickable(
                                     onClick = { presenter.onEvent(BrowserUiEvent.TabClick(index)) },
@@ -156,117 +160,32 @@ fun DrawerTabs(
                                         )
                                     }
                                 )
-                                .height(56.dp),
+                                .padding(start = 16.dp, end = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            when (tab.icon) {
-                                TabModel.Favicon.Frozen -> Icon(
-                                    modifier = Modifier
-                                        .size(56.dp)
-                                        .padding(horizontal = 16.dp),
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                    painter = painterResource(R.drawable.ic_frozen),
-                                    contentDescription = "test"
-                                )
-
-                                is TabModel.Favicon.Icon -> Image(
-                                    modifier = Modifier
-                                        .size(56.dp)
-                                        .padding(horizontal = 16.dp),
-                                    bitmap = tab.icon.bitmap,
-                                    contentDescription = "test"
-                                )
-
-                                TabModel.Favicon.None -> Icon(
-                                    modifier = Modifier
-                                        .size(56.dp)
-                                        .padding(horizontal = 16.dp),
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                    painter = painterResource(R.drawable.ic_webpage),
-                                    contentDescription = "test"
-                                )
-                            }
+                            TabFavicon(tab.icon, modifier = Modifier.size(24.dp))
                             Text(
                                 modifier = Modifier
-                                    .padding(horizontal = 16.dp)
-                                    .fillMaxWidth()
-                                    .weight(1f, false),
-                                style = MaterialTheme.typography.bodyLarge,
+                                    .padding(start = 12.dp)
+                                    .weight(1f),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = if (tab.isSelected) {
+                                    MaterialTheme.colorScheme.onSecondaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                fontWeight = if (tab.isSelected) {
-                                    FontWeight.Bold
-                                } else {
-                                    null
-                                },
                                 text = tab.title
                             )
-                            IconButton(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .padding(4.dp),
+                            TabCloseButton(
                                 onClick = { presenter.onEvent(BrowserUiEvent.TabClose(index)) }
-                            ) {
-                                Icon(
-                                    modifier = Modifier.size(20.dp),
-                                    painter = painterResource(R.drawable.ic_action_delete),
-                                    contentDescription = stringResource(R.string.close_tab)
-                                )
-                            }
+                            )
                         }
                     }
                 }
-                Row(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                        .height(56.dp)
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    IconButton(
-                        enabled = browserViewState.isBackEnabled,
-                        onClick = { presenter.onEvent(BrowserUiEvent.BackClick) }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_action_back),
-                            contentDescription = ""
-                        )
-                    }
-                    IconButton(
-                        enabled = browserViewState.isForwardEnabled,
-                        onClick = { presenter.onEvent(BrowserUiEvent.ForwardClick) }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_action_forward),
-                            contentDescription = ""
-                        )
-                    }
-                    IconButton(onClick = { presenter.onEvent(BrowserUiEvent.HomeClick) }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_action_home),
-                            contentDescription = ""
-                        )
-                    }
-                    IconButton(onClick = { presenter.onEvent(BrowserUiEvent.ToolsClick) }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_page_tools),
-                            contentDescription = ""
-                        )
-                    }
-                    IconButton(
-                        enabled = browserViewState.isBookmarkEnabled,
-                        onClick = { presenter.onEvent(BrowserUiEvent.StarClick) }
-                    ) {
-                        BookmarkIcon(browserViewState.isBookmarked)
-                    }
-                    IconButton(onClick = { presenter.onEvent(BrowserUiEvent.NewTabClick) }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_action_plus),
-                            contentDescription = ""
-                        )
-                    }
-                }
+                HorizontalDivider()
+                TabSheetToolbar(browserViewState, presenter)
             }
         }
     ) {
