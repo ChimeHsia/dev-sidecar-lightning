@@ -27,6 +27,11 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import javax.net.ssl.SSLSocket
 
+internal fun releaseConcurrentSockets(sockets: Iterable<Socket>, release: (Socket) -> Unit) {
+    // Concurrent removal can invalidate the size shortcut used by toList().
+    for (socket in sockets) release(socket)
+}
+
 data class NativeProxyOptions(
     val listenAddress: InetAddress = InetAddress.getByName("127.0.0.1"),
     val port: Int = 0,
@@ -148,7 +153,7 @@ class NativeProxyServer(
                     failure = error
                     state = NativeProxyState.FAILED
                     runCatching { bound.close() }
-                    sockets.toList().forEach(::release)
+                    releaseConcurrentSockets(sockets, ::release)
                     workers?.shutdownNow()
                     shutdownHelpers()
                     timer?.shutdownNow()
@@ -216,7 +221,7 @@ class NativeProxyServer(
             }
         }
         override fun close() {
-            owned.toList().forEach(::drop)
+            releaseConcurrentSockets(owned, ::drop)
         }
     }
 
@@ -779,7 +784,7 @@ class NativeProxyServer(
             if (state == NativeProxyState.STOPPED) return
             state = NativeProxyState.STOPPED
             runCatching { listener?.close() }
-            sockets.toList().forEach(::release)
+            releaseConcurrentSockets(sockets, ::release)
             workers?.shutdownNow()
             shutdownHelpers()
             timer?.shutdownNow()
