@@ -147,15 +147,15 @@ JAVA_HOME=../.jdk/jdk-21.0.2 ./gradlew assembleLightningPlusRelease
 首次运行时复制到 App 外部文件目录：
 
 ```text
-/sdcard/Android/data/com.dsha.browser/files/navigation-rules.json
+/sdcard/Android/data/top.panming.dsbrowser/files/navigation-rules.json
 ```
 
 后续升级保留已有文件。可通过 ADB 拉取、编辑、写回，不需要重新构建 APK：
 
 ```powershell
-adb pull /sdcard/Android/data/com.dsha.browser/files/navigation-rules.json port/.run/navigation-rules-edit.json
+adb pull /sdcard/Android/data/top.panming.dsbrowser/files/navigation-rules.json port/.run/navigation-rules-edit.json
 # 编辑 port/.run/navigation-rules-edit.json，保留需要的其他规则
-adb push port/.run/navigation-rules-edit.json /sdcard/Android/data/com.dsha.browser/files/navigation-rules.json
+adb push port/.run/navigation-rules-edit.json /sdcard/Android/data/top.panming.dsbrowser/files/navigation-rules.json
 ```
 
 例如仅保留中国域名到香港入口的规则：
