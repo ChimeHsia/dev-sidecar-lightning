@@ -1,6 +1,6 @@
 # Lightning + sidecar 真机回归基线
 
-主产物是 `lightning-browser/` 的 **LightningPlus release / arm64-v8a**，包名 `com.dsha.browser`，链路为 WebView → `127.0.0.1:31181` → 内嵌 Node/dev-sidecar。根目录 `app/`、`netcore/` 是早期壳和纯 Kotlin 参考实现；其测试通过不能证明当前 Node payload、Lightning 代理或页面正常。
+主产物是 `lightning-browser/` 的 **LightningPlus release / arm64-v8a**，包名 `top.panming.dsbrowser`，链路为 WebView → `127.0.0.1:31181` → 内嵌 Node/dev-sidecar。根目录 `app/`、`netcore/` 是早期壳和纯 Kotlin 参考实现；其测试通过不能证明当前 Node payload、Lightning 代理或页面正常。
 
 本文依据当前 `DshaAccel.kt`、`BrowserApp.kt`、清单和 `port/node/main.js` 制定检查步骤。当前已运行本地测试和真机只读采集，尚未重新执行下列页面与生命周期用例；`README.md` / `LIGHTNING.md` 记录的历史成功不等于当前 APK 已复测。
 
@@ -23,7 +23,7 @@
 
 1. 使用 JDK 21、Android SDK、支持 arm64 的实机；记录 Android / WebView 版本、网络环境、设备别名、commit、APK SHA-256、versionCode 和本地 payload 版本/来源。不要将完整序列号、账号、请求令牌、CA 私钥写入仓库。
 2. 依 `README.md` 生成并同步未跟踪 payload，再在 `lightning-browser/` 构建 `assembleLightningPlusRelease`。release 当前禁用混淆/资源压缩且使用 debug 签名，仅供本地；不要用 debug 包的 LeakCanary 启动行为代替 release 基线。
-3. 检查安装的 `com.dsha.browser`、旧壳 `com.dsha.sidecar`、对照包 `info.plateaukao.einkbro` 和其它 `com.dsha.*`。Lite 的 `acr.browser.barebones` 也可能存在。安装并不代表运行或占端口；先只读采集，再由测试者手动停止确定竞争的包。首次安装/清数据须用专用测试环境，避免丢失日常数据。
+3. 检查安装的 `top.panming.dsbrowser`、旧壳 `com.dsha.sidecar`、对照包 `info.plateaukao.einkbro` 和其它 `com.dsha.*`。Lite 的 `acr.browser.barebones` 也可能存在。安装并不代表运行或占端口；先只读采集，再由测试者手动停止确定竞争的包。首次安装/清数据须用专用测试环境，避免丢失日常数据。
 4. 每个步骤前后分别采集，保留电脑时间、动作时间、PID、监听、必要请求摘要以及人工截图/观察。截图显示地址栏、实际正文、错误提示；测试使用无账号页面。证据默认保存在临时目录，先移至本地持久存储，再脱敏摘要入表，不把原始设备日志或密钥提交。
 
 只读采集（从仓库根目录执行；占位序列号只在本机替换）：
@@ -52,7 +52,7 @@
 | D03 冷启动/重启复用 | 记录后由测试者在系统设置强行停止本包，确认清理，再启动；另测设备重启后首次进入 | 记录新 PID、监听与恢复标签的首次请求/渲染；相同 payload 版本不应重复解压两个 zip。就绪后 clear→set 代理是否恢复；若需手工刷新才能正常，单独记录首次失败 |
 | D04 GitHub | 输入 `https://github.com/trending`，等待完成并滚动 | 地址/标题、仓库列表、star 按钮等内容截图；对应请求时间/数量与错误摘要。旧页面缓存或单个 200 不能单独判通过 |
 | D05 Google HK | 输入 `https://www.google.com.hk`，用无敏感词搜索并打开结果 | 首页及结果页可见、最终 URL/重定向、对应请求；若遇验证码/网络限制写受阻。`www.google.com` → google.cn → 404 的历史地域重定向应独立记录，不替代 HK 用例 |
-| D06 多标签/隐身 | 普通模式开两个标签，切换/刷新；进入隐身开页面，再返回普通模式；另测主进程未运行时直接进入隐身（有入口时） | 普通主进程与 `com.dsha.browser:incognito` 各自代理、Node PID/数量/归属；隐身应只挂代理而不重复起 Node。主进程未运行的隐身入口可能没有核心，须记录实际结果，不能预设已支持 |
+| D06 多标签/隐身 | 普通模式开两个标签，切换/刷新；进入隐身开页面，再返回普通模式；另测主进程未运行时直接进入隐身（有入口时） | 普通主进程与 `top.panming.dsbrowser:incognito` 各自代理、Node PID/数量/归属；隐身应只挂代理而不重复起 Node。主进程未运行的隐身入口可能没有核心，须记录实际结果，不能预设已支持 |
 | D07 端口冲突 | 专用环境手动启动已知竞争包占住 31181，再启动本包；保存错误后手动停止竞争包，再冷启本包 | 先记录占用包/PID/端点，检查 `EADDRINUSE`/`mitmproxy 启动失败`；不得将“就绪”或借用其它包代理的页面成功判成本包通过。恢复后重新证明本包监听/请求/页面。竞争包不可用则受阻 |
 | D08 退出与清理 | 分别关闭标签/划掉最近任务、只留隐身、系统强行停止本包；每步前后采集 | 记录主/隐身/Node 进程和监听是否残留；强停后预期本包相关进程与自身监听释放。监听仍在时先排除其它包。划掉任务不预设等于强停；留残进程或恢复失败如实列限制 |
 

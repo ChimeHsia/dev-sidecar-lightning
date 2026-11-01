@@ -76,5 +76,5 @@ JAVA_HOME=../.jdk/jdk-21.0.2 ./gradlew assembleRelease -PbuildAbis=arm64-v8a
   只剩 `w/e`。排查时改用 debug 包，或临时把那几条注释掉。
 - **从别的 App 点链接会弹系统"打开方式"选择器**：这是系统行为（音乐/WPS/EinkBro 都能收 VIEW），
   在系统设置里把 EinkBro 设为默认浏览器即可，不是 App bug。
-- 端口 31181 会被旧壳（`com.dsha.sidecar`）/ Lightning 版（`com.dsha.browser`）抢占，
+- 端口 31181 会被旧壳（`com.dsha.sidecar`）/ Lightning 版（`top.panming.dsbrowser`）抢占，
   现象是 `EADDRINUSE` + 核心秒退。装多个测试包时先 force-stop 其它。
