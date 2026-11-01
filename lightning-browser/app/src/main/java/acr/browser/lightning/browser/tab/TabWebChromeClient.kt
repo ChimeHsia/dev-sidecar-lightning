@@ -39,6 +39,7 @@ import androidx.palette.graphics.Palette
 import coil3.decode.DecodeUtils
 import coil3.size.Scale
 import coil3.size.Size
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.permissionx.guolindev.PermissionX
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory

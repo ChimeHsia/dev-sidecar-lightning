@@ -1,0 +1,65 @@
+[
+  {
+    "path": "lightning-browser/app/src/main/res/drawable/ic_add.xml",
+    "source_commit": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+    "last_changed_commit": "ad7b306b3be67ba72c63069f50a39cf157e20cd5",
+    "git_blob": "f8b675c840eb0d4b18863b5678ec8631288c2d55",
+    "sha256": "2fa341578a88f33ddf72fc78ad566feb40531874c2d7abf694fa59e10995f695"
+  },
+  {
+    "path": "lightning-browser/app/src/main/res/drawable/ic_arrow_back.xml",
+    "source_commit": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+    "last_changed_commit": "ad7b306b3be67ba72c63069f50a39cf157e20cd5",
+    "git_blob": "6aad73ea374e12e1cf9d938d5135bc8332e6c439",
+    "sha256": "017e86ac72f967c85b0c93ddb8cc567517de460281ea7928644f366cefccf61f"
+  },
+  {
+    "path": "lightning-browser/app/src/main/res/drawable/ic_bookmark_add.xml",
+    "source_commit": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+    "last_changed_commit": "ad7b306b3be67ba72c63069f50a39cf157e20cd5",
+    "git_blob": "be55de447a335ddbb6796bd6dfefe6133cb36609",
+    "sha256": "d3a621f67579583173cba92212ef2be7c0cd2d4bcf8eec31976c23669d50a344"
+  },
+  {
+    "path": "lightning-browser/app/src/main/res/drawable/ic_bookmark_remove.xml",
+    "source_commit": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+    "last_changed_commit": "ad7b306b3be67ba72c63069f50a39cf157e20cd5",
+    "git_blob": "ffc7769ea003c8e8d281937d5e40d50735d45756",
+    "sha256": "d0cc358b2c006c8196611ba7b42ff9b6fb787bfda91c27b2ca4e3fb270e8dda3"
+  },
+  {
+    "path": "lightning-browser/app/src/main/res/drawable/ic_build.xml",
+    "source_commit": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+    "last_changed_commit": "ad7b306b3be67ba72c63069f50a39cf157e20cd5",
+    "git_blob": "a6c41d862f0884b153990fd8501eccb0a517bd66",
+    "sha256": "f29f3a300e28cd0e3e0a90ff14999bb2391a24bb12476242a0d0976e75d5742e"
+  },
+  {
+    "path": "lightning-browser/app/src/main/res/drawable/ic_close.xml",
+    "source_commit": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+    "last_changed_commit": "ad7b306b3be67ba72c63069f50a39cf157e20cd5",
+    "git_blob": "ab2d69118b291d6dbc31eea71054c6aa0aea6165",
+    "sha256": "983db24fde7b5b6264408525b77c56fe8a0dd416d3202921b6958df78692eb01"
+  },
+  {
+    "path": "lightning-browser/app/src/main/res/drawable/ic_home.xml",
+    "source_commit": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+    "last_changed_commit": "ad7b306b3be67ba72c63069f50a39cf157e20cd5",
+    "git_blob": "2a89500c3361bdaf95078fc5c22929e75f7575b2",
+    "sha256": "daafbd523cd16aa70e72cefea93080ff7ee3369454f30c895cbe2d45766502b2"
+  },
+  {
+    "path": "lightning-browser/app/src/main/res/drawable/ic_settings.xml",
+    "source_commit": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+    "last_changed_commit": "ad7b306b3be67ba72c63069f50a39cf157e20cd5",
+    "git_blob": "140f0afa53131778185c901e19450b5be2e2c397",
+    "sha256": "4335b89f84862d1df36f3f31d9aee8545744a8fccaca995a03733509f32524a1"
+  },
+  {
+    "path": "lightning-browser/app/src/main/res/drawable/ic_tab.xml",
+    "source_commit": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+    "last_changed_commit": "ad7b306b3be67ba72c63069f50a39cf157e20cd5",
+    "git_blob": "af10eaa68fdc8e9718462ce25e0e72aa4d4bdf5a",
+    "sha256": "f229af4803eecf195dbd48e42cf5d3fa49f6e1e91d8aa75aabe8dd07b43d31cd"
+  }
+]
