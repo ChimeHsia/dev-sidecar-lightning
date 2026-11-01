@@ -21,6 +21,8 @@ production Node payload or device configuration.
 - Standalone bounded cache, retry and backup scheduling APIs, not yet wired
   into the proxy engine.
 - Bounded JSON5-subset configuration parsing and atomic layered snapshots.
+- Standalone bounded HTML script injection and catalog APIs; Brotli injection
+  and production browser/runtime wiring remain unsupported.
 - HTTP/CONNECT MITM engine, WebSocket handoff, Expect/early-response handling,
   injected TLS dialer and explicit trusted request/response-head hooks.
 
@@ -32,7 +34,7 @@ material is gathered.
 ## Aggregate result
 
 The frozen sources above compile together with cached Kotlin 2.0.21, JDK 21
-and BC 1.79. The direct runner completed **682 tests: 680 passed, 2 external
+and BC 1.79. The direct runner completed **741 tests: 739 passed, 2 external
 network checks skipped by assumption, zero failures**. Its machine-readable
 JUnit report counts assumption skips separately from passing tests.
 
