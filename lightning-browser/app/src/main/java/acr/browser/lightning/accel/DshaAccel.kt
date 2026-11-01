@@ -10,7 +10,6 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
 import java.util.concurrent.Executors
-import java.util.zip.ZipInputStream
 
 /**
  * 内嵌 dev-sidecar 核心：在本进程里拉起 Node（aarch64 ELF），
@@ -33,7 +32,7 @@ object DshaAccel {
     private const val MARKER_READY = "[android] READY 127.0.0.1:$PORT"
     private const val MARKER_FAILED = "[android] FAILED"
     /** 负载版本：改了 assets 里的 zip 就 +1，保证升级后会重新解压。 */
-    private const val PAYLOAD_VERSION = "8"
+    private const val PAYLOAD_VERSION = "10"
 
     @Volatile
     private var started = false
@@ -245,28 +244,10 @@ object DshaAccel {
     }
 
     private fun unzipAsset(context: Context, name: String, dest: File) {
-        val marker = File(dest, ".$name.v$PAYLOAD_VERSION.done")
-        if (marker.exists()) return
-
         val start = System.currentTimeMillis()
-        var count = 0
-        context.assets.open(name).use { raw ->
-            ZipInputStream(raw.buffered()).use { zip ->
-                while (true) {
-                    val entry = zip.nextEntry ?: break
-                    val out = File(dest, entry.name)
-                    if (entry.isDirectory) {
-                        out.mkdirs()
-                    } else {
-                        out.parentFile?.mkdirs()
-                        out.outputStream().use { zip.copyTo(it) }
-                        count++
-                    }
-                    zip.closeEntry()
-                }
-            }
-        }
-        marker.createNewFile()
+        val count = PayloadExtractor.extract(name, PAYLOAD_VERSION, dest) {
+            context.assets.open(name)
+        } ?: return
         Log.i(TAG, "解压 $name → ${dest.name}，$count 个文件，${System.currentTimeMillis() - start}ms")
     }
 

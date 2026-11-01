@@ -19,6 +19,21 @@ const HOME = path.join(ROOT, 'home')
 const BASE = path.join(HOME, '.dev-sidecar')
 // 端口可由宿主 App 通过环境变量指定，避免与其它版本的同名 App 抢占同一端口
 const PORT = parseInt(process.env.DSHA_PORT || '31181', 10)
+let failed = false
+function fail (error) {
+  if (failed) return
+  failed = true
+  console.error('[android] FAILED', error && error.stack || error)
+  // The in-process core owns timers and sockets: logging alone leaves a dead
+  // proxy process alive and prevents the Android host from observing failure.
+  process.exit(1)
+}
+let proxyReady
+let proxyFailed
+const proxyStartup = new Promise((resolve, reject) => {
+  proxyReady = resolve
+  proxyFailed = reject
+})
 
 fs.mkdirSync(BASE, { recursive: true })
 
@@ -46,8 +61,9 @@ if (!fs.existsSync(path.join(BASE, 'config.json'))) {
   }, null, 2))
 }
 
-require('./kotlin-helpers').install(CORE, kotlinHelpers)
-console.log('[android] Kotlin helpers active: hostname, config, NAT64')
+const matchContext = require('./kotlin-helpers').install(CORE, kotlinHelpers)
+require('./kotlin-wave2').install(CORE, kotlinHelpers, matchContext)
+console.log('[android] Kotlin helpers active: hostname, config, NAT64, hostname-all, path-rules, dynamic-choice, request-transform')
 
 /** 远程配置用 null 表示"停用该条规则"，但 mitmproxy 的 script.js 未判空，会崩 */
 function stripNulls (intercepts) {
@@ -66,13 +82,18 @@ function stripNulls (intercepts) {
 const cp = require('child_process')
 cp.fork = function (modulePath, args) {
   require('./http-navigation').install(CORE)
-  const server = require(path.join(CORE, 'node_modules/@blue-frontier/mitmproxy'))
   const jsonApi = require(path.join(CORE, 'node_modules/@blue-frontier/mitmproxy/src/json.js'))
   const config = jsonApi.parse(fs.readFileSync(args[0]).toString())
   config.setting.rootDir = path.join(CORE, 'src')
   config.port = PORT
   console.log('[android] 剔除 null 规则', stripNulls(config.intercepts), '条')
-  server.start(config).catch((e) => console.error('[android] mitmproxy 启动失败', e && e.stack || e))
+  require('./proxy-runtime').start(CORE, config).then((servers) => {
+    for (const server of servers) {
+      server.on('error', fail)
+      server.once('close', () => fail(new Error('Proxy listener closed')))
+    }
+    proxyReady()
+  }, proxyFailed)
   return {
     pid: process.pid, connected: false, killed: false, exitCode: null,
     on () {}, once () {}, removeListener () {}, send () {},
@@ -86,11 +107,20 @@ const shell = require(path.join(CORE, 'node_modules/@blue-frontier/dev-sidecar/s
 shell.setSystemProxy = async () => true
 shell.closeSystemProxy = async () => true
 
-process.on('uncaughtException', (e) => console.error('[android] 未捕获异常', e && e.stack || e))
+process.on('uncaughtException', fail)
 
 console.log('[android] 核心', require(path.join(CORE, 'node_modules/@blue-frontier/dev-sidecar/package.json')).version,
   '启动中，端口', PORT)
 
-DevSidecar.api.startup({ mitmproxyPath: 'in-process', setting: { userBasePath: BASE, overwall: false } })
-  .then(() => console.log('[android] 就绪 →', `127.0.0.1:${PORT}`))
-  .catch((e) => console.error('[android] startup 失败', e && e.stack || e))
+const startupTimeout = setTimeout(() => proxyFailed(new Error('Core startup timed out')), 15000)
+Promise.all([
+  Promise.resolve().then(() =>
+    DevSidecar.api.startup({ mitmproxyPath: 'in-process', setting: { userBasePath: BASE, overwall: false } })),
+  proxyStartup,
+]).then(() => {
+  clearTimeout(startupTimeout)
+  if (!failed) console.log(`[android] READY 127.0.0.1:${PORT}`)
+}, (error) => {
+  clearTimeout(startupTimeout)
+  fail(error)
+})

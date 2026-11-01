@@ -1,0 +1,26 @@
+[
+  {
+    "old": "util.getOptionsFromRequest = (req, ssl, externalProxy = null, serverSetting, compatibleConfig = null) => {",
+    "new": "util.getOptionsFromRequest = (req, ssl, externalProxy = null, serverSetting, compatibleConfig = null, kotlinRequest = null) => {"
+  },
+  {
+    "old": "  const urlObj = URL.parse(req.url)",
+    "new": "  const urlObj = kotlinRequest ? { path: kotlinRequest.path } : URL.parse(req.url)"
+  },
+  {
+    "old": "  const protocol = actualSsl ? 'https:' : 'http:'",
+    "new": "  const protocol = kotlinRequest ? kotlinRequest.protocol : (actualSsl ? 'https:' : 'http:')"
+  },
+  {
+    "old": "  const headers = Object.fromEntries(\n    Object.entries(req.headers).filter(([key]) => !key.startsWith(':')),\n  )",
+    "new": "  const headers = kotlinRequest ? kotlinRequest.headers : Object.fromEntries(\n    Object.entries(req.headers).filter(([key]) => !key.startsWith(':')),\n  )"
+  },
+  {
+    "old": "  const arr = util.parseHostnameAndPort(req.headers.host)",
+    "new": "  const arr = kotlinRequest ? [kotlinRequest.hostname, kotlinRequest.port] : util.parseHostnameAndPort(req.headers.host)"
+  },
+  {
+    "old": "\nutil.getTunnelAgent = (requestIsSSL, externalProxyUrl) => {",
+    "new": "\nutil.getOptionsFromRequest.kotlinRequestRuntimeVersion = 1\n\nutil.getTunnelAgent = (requestIsSSL, externalProxyUrl) => {"
+  }
+]

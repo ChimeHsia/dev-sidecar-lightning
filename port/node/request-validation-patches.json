@@ -1,0 +1,14 @@
+{
+  "core/node_modules/@blue-frontier/mitmproxy/src/lib/proxy/mitmproxy/createRequestHandler.js": [
+    {
+      "old": "    const rOptions = commonUtil.getOptionsFromRequest(req, ssl, externalProxy, setting, compatibleConfig)",
+      "new": "    let rOptions\n    try {\n      rOptions = commonUtil.getOptionsFromRequest(req, ssl, externalProxy, setting, compatibleConfig)\n    } catch (error) {\n      markResponded()\n      if (!error || error.code !== 'DSHA_INVALID_REQUEST') throw error\n      res.writeHead(400, {\n        'Content-Type': 'text/plain; charset=utf-8',\n        'Content-Length': 12,\n        Connection: 'close',\n      })\n      res.end('Bad Request\\n')\n      return\n    }"
+    }
+  ],
+  "core/node_modules/@blue-frontier/mitmproxy/src/lib/proxy/mitmproxy/createUpgradeHandler.js": [
+    {
+      "old": "    const clientOptions = util.getOptionsFromRequest(req, ssl, null, serverSetting)",
+      "new": "    let clientOptions\n    try {\n      clientOptions = util.getOptionsFromRequest(req, ssl, null, serverSetting)\n    } catch (error) {\n      if (!error || error.code !== 'DSHA_INVALID_REQUEST') throw error\n      cltSocket.end('HTTP/1.1 400 Bad Request\\r\\nConnection: close\\r\\nContent-Length: 0\\r\\n\\r\\n')\n      return\n    }"
+    }
+  ]
+}

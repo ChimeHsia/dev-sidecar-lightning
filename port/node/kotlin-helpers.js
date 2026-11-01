@@ -100,7 +100,7 @@ function install (coreRoot, helpers) {
     if (!isObject(compiled) || !matcher || typeof matcher.match !== 'function') {
       throw new TypeError('Invalid hostname compiler result')
     }
-    bindings.set(compiled, { matcher, values })
+    bindings.set(compiled, { matcher, values, entries: hostMap })
     return compiled
   }
 
@@ -121,6 +121,8 @@ function install (coreRoot, helpers) {
     }
     return binding.values[index]
   }
+
+  return { bindings }
 }
 
 module.exports = { install }

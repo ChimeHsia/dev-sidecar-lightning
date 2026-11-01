@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
+const { EventEmitter } = require('node:events');
 
 const entrypoint = path.resolve(__dirname, '../node/main.js');
 const source = fs.readFileSync(entrypoint, 'utf8');
@@ -57,6 +58,8 @@ async function boot(options = {}) {
         systemProxyAttempts: [],
         hookResults: [],
         installations: [],
+        exits: [],
+        listener: new EventEmitter(),
     };
     const fakeProcess = {
         pid: 4242,
@@ -71,6 +74,9 @@ async function boot(options = {}) {
             handlers.push(handler);
             observed.handlers.set(event, handlers);
             return this;
+        },
+        exit(code) {
+            observed.exits.push(code);
         },
     };
     const fakeFs = {
@@ -108,6 +114,7 @@ async function boot(options = {}) {
         start(config) {
             // Snapshot the handoff so later mutations cannot hide ordering bugs.
             observed.serverStarts.push(structuredClone(config));
+            if (options.serverStarted) return options.serverStarted;
             return Object.hasOwn(options, 'serverFailure')
                 ? Promise.reject(options.serverFailure)
                 : Promise.resolve();
@@ -122,6 +129,7 @@ async function boot(options = {}) {
                 if (Object.hasOwn(options, 'startupFailure')) {
                     throw options.startupFailure;
                 }
+                if (options.noProxy) return;
                 // The fake core exercises the same entrypoint seam as the real
                 // core, without importing any payload or opening a socket.
                 observed.child = childProcess.fork('unused-on-android', [serverConfigFile]);
@@ -143,6 +151,15 @@ async function boot(options = {}) {
                 assert.equal(corePath, core);
                 assert.equal(helpers, modules.get(kotlinModule));
                 observed.installations.push('kotlin');
+                return { marker: 'match context' };
+            },
+        }],
+        ['./kotlin-wave2', {
+            install(corePath, helpers, context) {
+                assert.equal(corePath, core);
+                assert.equal(helpers, modules.get(kotlinModule));
+                assert.equal(context.marker, 'match context');
+                observed.installations.push('wave2');
             },
         }],
         ['./http-navigation', {
@@ -151,10 +168,20 @@ async function boot(options = {}) {
                 observed.installations.push('navigation');
             },
         }],
+        ['./proxy-runtime', {
+            async start(corePath, config) {
+                assert.equal(corePath, core);
+                assert.deepEqual(observed.installations, ['kotlin', 'wave2', 'navigation']);
+                await server.start(config);
+                return [observed.listener];
+            },
+        }],
     ]);
 
     vm.runInNewContext(source, {
         __dirname: root,
+        setTimeout: (fn, delay) => setTimeout(fn, options.startupTimeoutMillis ?? delay),
+        clearTimeout,
         process: fakeProcess,
         console: {
             log: (...args) => observed.logs.push(args),
@@ -163,7 +190,7 @@ async function boot(options = {}) {
         require(id) {
             assert.ok(modules.has(id), `Unexpected module load: ${id}`);
             if (id === coreModule) {
-                assert.deepEqual(observed.installations, ['kotlin']);
+                assert.deepEqual(observed.installations, ['kotlin', 'wave2']);
                 observed.coreLoads.push({
                     env: { ...fakeProcess.env },
                     config: files.get(configFile),
@@ -171,7 +198,7 @@ async function boot(options = {}) {
                 });
             }
             if (id === proxyModule) {
-                assert.deepEqual(observed.installations, ['kotlin', 'navigation']);
+                assert.deepEqual(observed.installations, ['kotlin', 'wave2', 'navigation']);
             }
             return modules.get(id);
         },
@@ -188,7 +215,7 @@ function assertPort(observed, port) {
     assert.equal(JSON.parse(observed.files.get(configFile)).server.port, port);
     assert.equal(observed.serverStarts.length, 1);
     assert.equal(observed.serverStarts[0].port, port);
-    assert.ok(observed.logs.some((args) => args.includes(`127.0.0.1:${port}`)),
+    assert.ok(observed.logs.some((args) => args.includes(`[android] READY 127.0.0.1:${port}`)),
         'Successful startup should log the listening endpoint');
 }
 
@@ -200,7 +227,7 @@ test('default startup prepares Android paths and minimal config before loading c
     assert.equal(loaded.env.USERPROFILE, home);
     assert.equal(loaded.env.DS_EXTRA_PATH, androidPath.join(core, 'extra'));
     assert.equal(loaded.env.DSHA_KOTLIN_HELPERS, kotlinModule);
-    assert.deepEqual(observed.installations, ['kotlin', 'navigation']);
+    assert.deepEqual(observed.installations, ['kotlin', 'wave2', 'navigation']);
     assert.ok(loaded.directories.some((item) => item.directory === base && item.recursive),
         'The user directory must exist before core initialization');
     const config = JSON.parse(loaded.config);
@@ -289,9 +316,10 @@ test('rejected core startup is logged without announcing readiness', async (t) =
         await t.test(typeof failure, async () => {
             const observed = await boot({ startupFailure: failure });
             assert.equal(observed.errors.length, 1);
-            assert.match(String(observed.errors[0][0]), /startup/);
+            assert.match(String(observed.errors[0][0]), /FAILED/);
             assert.ok(observed.errors[0].includes(failure.stack ?? failure));
-            assert.equal(observed.logs.some((args) => args.includes('127.0.0.1:31181')), false);
+            assert.equal(observed.logs.some((args) => args.some((arg) => String(arg).includes('[android] READY'))), false);
+            assert.deepEqual(observed.exits, [1]);
             assert.equal(observed.serverStarts.length, 0);
         });
     }
@@ -303,10 +331,32 @@ test('rejected in-process server startup is caught and logged', async (t) => {
             const observed = await boot({ serverFailure: failure });
             assert.equal(observed.serverStarts.length, 1);
             assert.equal(observed.errors.length, 1);
-            assert.match(String(observed.errors[0][0]), /mitmproxy/);
+            assert.match(String(observed.errors[0][0]), /FAILED/);
             assert.ok(observed.errors[0].includes(failure?.stack ?? failure));
+            assert.equal(observed.logs.some((args) => args.some((arg) => String(arg).includes('[android] READY'))), false,
+                'A rejected server must never announce readiness');
+            assert.deepEqual(observed.exits, [1]);
         });
     }
+});
+
+test('core startup resolving before the proxy must not announce readiness early', async () => {
+    let listening;
+    const serverStarted = new Promise((resolve) => { listening = resolve; });
+    const observed = await boot({ serverStarted });
+    assert.equal(observed.logs.some((args) => args.some((arg) => String(arg).includes('[android] READY'))), false);
+    listening();
+    await new Promise(setImmediate);
+    assertPort(observed, 31181);
+});
+
+test('startup without a proxy listener fails rather than leaving readiness pending forever', async () => {
+    const observed = await boot({ noProxy: true, startupTimeoutMillis: 10 });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.deepEqual(observed.exits, [1]);
+    assert.equal(observed.serverStarts.length, 0);
+    assert.match(String(observed.errors[0][1]), /Core startup timed out/);
+    assert.equal(observed.logs.some((args) => args.some((arg) => String(arg).includes('[android] READY'))), false);
 });
 
 test('uncaught-exception logging stays isolated from the real Node process', async () => {
@@ -318,4 +368,19 @@ test('uncaught-exception logging stays isolated from the real Node process', asy
         handler(failure);
     }
     assert.ok(observed.errors.some((args) => args.includes(failure.stack)));
+    assert.deepEqual(observed.exits, [1]);
+});
+
+test('a listener error or close after readiness terminates the failed core once', async (t) => {
+    for (const event of ['error', 'close']) {
+        await t.test(event, async () => {
+            const observed = await boot();
+            assertPort(observed, 31181);
+            observed.listener.emit(event, new Error('listener failed'));
+            observed.listener.emit('close');
+            assert.deepEqual(observed.exits, [1]);
+            assert.equal(observed.errors.length, 1);
+            assert.match(String(observed.errors[0][0]), /FAILED/);
+        });
+    }
 });

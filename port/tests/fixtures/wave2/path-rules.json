@@ -1,0 +1,508 @@
+[
+  {
+    "name": "boolean true whole query",
+    "path": "/api?a=1",
+    "pattern": true,
+    "expected": [
+      "/api?a=1"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "string true whole query",
+    "path": "/api?a=1",
+    "pattern": "true",
+    "expected": [
+      "/api?a=1"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "star whole query",
+    "path": "/api?a=1",
+    "pattern": "*",
+    "expected": [
+      "/api?a=1"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "dot star whole query",
+    "path": "/api?a=1",
+    "pattern": ".*",
+    "expected": [
+      "/api?a=1"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "special whole newline",
+    "path": "/a\nb?x=1",
+    "pattern": ".*",
+    "expected": [
+      "/a\nb?x=1"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "empty path special",
+    "path": "",
+    "pattern": "*",
+    "expected": [
+      ""
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "empty pattern",
+    "path": "/foo",
+    "pattern": "",
+    "expected": [
+      ""
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "search within path",
+    "path": "/api/foo?q=x",
+    "pattern": "foo",
+    "expected": [
+      "foo"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "query captures",
+    "path": "/search?q=42&lang=en",
+    "pattern": "q=(\\d+)&lang=(\\w+)",
+    "expected": [
+      "q=42&lang=en",
+      "42",
+      "en"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "optional capture missing",
+    "path": "/search?q=42",
+    "pattern": "q=(\\d+)(?:&(.*))?",
+    "expected": [
+      "q=42",
+      "42",
+      null
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "optional capture present empty",
+    "path": "/search?q=42&",
+    "pattern": "q=(\\d+)(?:&(.*))?",
+    "expected": [
+      "q=42&",
+      "42",
+      ""
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "nested captures",
+    "path": "/abc",
+    "pattern": "((a)(b))",
+    "expected": [
+      "ab",
+      "ab",
+      "a",
+      "b"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "alternative capture missing",
+    "path": "/bar",
+    "pattern": "(foo)|(bar)",
+    "expected": [
+      "bar",
+      null,
+      "bar"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "named capture array",
+    "path": "/id/42",
+    "pattern": "/id/(?<id>\\d+)",
+    "expected": [
+      "/id/42",
+      "42"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "query prevents full anchor",
+    "path": "/foo?q=x",
+    "pattern": "^/foo$",
+    "expected": null,
+    "expectedExcluded": false
+  },
+  {
+    "name": "full query anchor",
+    "path": "/foo?q=x",
+    "pattern": "^/foo\\?q=(.*)$",
+    "expected": [
+      "/foo?q=x",
+      "x"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "case sensitive",
+    "path": "/ABC",
+    "pattern": "abc",
+    "expected": null,
+    "expectedExcluded": false
+  },
+  {
+    "name": "no URL decoding",
+    "path": "/a%20b",
+    "pattern": "a b",
+    "expected": null,
+    "expectedExcluded": false
+  },
+  {
+    "name": "encoded path preserved",
+    "path": "/a%20b",
+    "pattern": "%20",
+    "expected": [
+      "%20"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "leading star prefixes dot",
+    "path": "/abc",
+    "pattern": "*abc",
+    "expected": [
+      "/abc"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "leading star zero repetitions",
+    "path": "abc",
+    "pattern": "*abc",
+    "expected": [
+      "abc"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "leading question prefixes dot",
+    "path": "/abc",
+    "pattern": "?abc",
+    "expected": [
+      "/abc"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "leading question zero repetitions",
+    "path": "abc",
+    "pattern": "?abc",
+    "expected": [
+      "abc"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "leading question searches",
+    "path": "//abc",
+    "pattern": "?abc",
+    "expected": [
+      "/abc"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "leading plus prefixes dot",
+    "path": "/abc",
+    "pattern": "+abc",
+    "expected": [
+      "/abc"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "leading plus needs character",
+    "path": "abc",
+    "pattern": "+abc",
+    "expected": null,
+    "expectedExcluded": false
+  },
+  {
+    "name": "star is not generic glob",
+    "path": "/api/file.json",
+    "pattern": "/api/*.json",
+    "expected": null,
+    "expectedExcluded": false
+  },
+  {
+    "name": "regular expression file suffix",
+    "path": "/api/file.json",
+    "pattern": "/api/.*\\.json",
+    "expected": [
+      "/api/file.json"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "invalid bracket",
+    "path": "/x",
+    "pattern": "[",
+    "expected": null,
+    "expectedExcluded": false
+  },
+  {
+    "name": "invalid group",
+    "path": "/x",
+    "pattern": "(",
+    "expected": null,
+    "expectedExcluded": false
+  },
+  {
+    "name": "invalid escape",
+    "path": "/x",
+    "pattern": "\\",
+    "expected": null,
+    "expectedExcluded": false
+  },
+  {
+    "name": "invalid repeated quantifier",
+    "path": "/x",
+    "pattern": "**",
+    "expected": null,
+    "expectedExcluded": false
+  },
+  {
+    "name": "invalid named capture",
+    "path": "/x",
+    "pattern": "(?<bad",
+    "expected": null,
+    "expectedExcluded": false
+  },
+  {
+    "name": "zero width match",
+    "path": "/x",
+    "pattern": "^",
+    "expected": [
+      ""
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "optional character empty match",
+    "path": "/x",
+    "pattern": "z?",
+    "expected": [
+      ""
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "literal reserved word still matches standalone",
+    "path": "/matched",
+    "pattern": "matched",
+    "expected": [
+      "matched"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "no exclusions array",
+    "path": "/api",
+    "pattern": "*",
+    "expected": [
+      "/api"
+    ],
+    "exclusions": [],
+    "expectedExcluded": false
+  },
+  {
+    "name": "no exclusions object",
+    "path": "/api",
+    "pattern": "*",
+    "expected": [
+      "/api"
+    ],
+    "exclusions": {},
+    "expectedExcluded": false
+  },
+  {
+    "name": "null exclusions",
+    "path": "/api",
+    "pattern": "*",
+    "expected": [
+      "/api"
+    ],
+    "exclusions": null,
+    "expectedExcluded": false
+  },
+  {
+    "name": "string exclusions ignored",
+    "path": "/secret",
+    "pattern": "*",
+    "expected": [
+      "/secret"
+    ],
+    "exclusions": "secret",
+    "expectedExcluded": false
+  },
+  {
+    "name": "array query exclusion",
+    "path": "/api?secret=yes",
+    "pattern": "*",
+    "expected": [
+      "/api?secret=yes"
+    ],
+    "exclusions": [
+      "other",
+      "secret=(.*)"
+    ],
+    "expectedExcluded": true
+  },
+  {
+    "name": "array no match",
+    "path": "/api",
+    "pattern": "*",
+    "expected": [
+      "/api"
+    ],
+    "exclusions": [
+      "secret",
+      "^/other"
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "array invalid then match",
+    "path": "/private",
+    "pattern": "*",
+    "expected": [
+      "/private"
+    ],
+    "exclusions": [
+      "[",
+      "^/private"
+    ],
+    "expectedExcluded": true
+  },
+  {
+    "name": "array invalid only",
+    "path": "/api",
+    "pattern": "*",
+    "expected": [
+      "/api"
+    ],
+    "exclusions": [
+      "[",
+      "("
+    ],
+    "expectedExcluded": false
+  },
+  {
+    "name": "array true exclusion",
+    "path": "/api",
+    "pattern": "*",
+    "expected": [
+      "/api"
+    ],
+    "exclusions": [
+      true
+    ],
+    "expectedExcluded": true
+  },
+  {
+    "name": "array special string exclusion",
+    "path": "/api",
+    "pattern": "*",
+    "expected": [
+      "/api"
+    ],
+    "exclusions": [
+      ".*"
+    ],
+    "expectedExcluded": true
+  },
+  {
+    "name": "object false value still excludes",
+    "path": "/private",
+    "pattern": "*",
+    "expected": [
+      "/private"
+    ],
+    "exclusions": {
+      "^/private": false
+    },
+    "expectedExcluded": true
+  },
+  {
+    "name": "object null value still excludes",
+    "path": "/private",
+    "pattern": "*",
+    "expected": [
+      "/private"
+    ],
+    "exclusions": {
+      "^/private": null
+    },
+    "expectedExcluded": true
+  },
+  {
+    "name": "object true values not patterns",
+    "path": "/private",
+    "pattern": "*",
+    "expected": [
+      "/private"
+    ],
+    "exclusions": {
+      "^/other": true
+    },
+    "expectedExcluded": false
+  },
+  {
+    "name": "object nested value still key",
+    "path": "/private",
+    "pattern": "*",
+    "expected": [
+      "/private"
+    ],
+    "exclusions": {
+      "^/private": {
+        "enabled": false
+      }
+    },
+    "expectedExcluded": true
+  },
+  {
+    "name": "object invalid then matching key",
+    "path": "/private",
+    "pattern": "*",
+    "expected": [
+      "/private"
+    ],
+    "exclusions": {
+      "[": true,
+      "^/private": false
+    },
+    "expectedExcluded": true
+  },
+  {
+    "name": "excluded even with unmatched main pattern",
+    "path": "/private",
+    "pattern": "^/other",
+    "expected": null,
+    "exclusions": [
+      "^/private"
+    ],
+    "expectedExcluded": true
+  }
+]
