@@ -115,7 +115,7 @@ try {
     }
     $metadata['AndroidUserId'] = [int]$androidUser
 
-    $knownPackages = @('com.dsha.browser', 'com.dsha.sidecar', 'info.plateaukao.einkbro', 'acr.browser.barebones')
+    $knownPackages = @('top.panming.dsbrowser', 'com.dsha.sidecar', 'info.plateaukao.einkbro', 'acr.browser.barebones')
     $installed = @()
     $packagesResult = Invoke-AdbEvidence -Name 'installed-test-packages' -AdbArguments @('shell', 'pm', 'list', 'packages', '--user', $androidUser, '--show-versioncode')
     if ($packagesResult.Probe.Status -eq 'available') {

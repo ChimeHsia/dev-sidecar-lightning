@@ -80,7 +80,7 @@ android {
         create("lightningPlus") {
             dimension = "capabilities"
             buildConfigField("boolean", "FULL_VERSION", "Boolean.parseBoolean(\"true\")")
-            applicationId = "com.dsha.browser"
+            applicationId = "top.panming.dsbrowser"
             versionCode = commonVersionCode
         }
         create("lightningLite") {

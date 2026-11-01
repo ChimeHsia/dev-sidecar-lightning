@@ -1,4 +1,4 @@
-# Lightning 版（com.dsha.browser）集成记录
+# Lightning 版（top.panming.dsbrowser）集成记录
 
 > 目标：用成熟浏览器外壳（Lightning Browser，MPL-2.0，2451★）+ 内嵌 dev-sidecar 核心。
 

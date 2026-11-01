@@ -18,7 +18,7 @@ dev-sidecar 原版 Node 代码 + Termux 的 aarch64 Node 运行时，跑在 App 
 ## 仓库结构
 
 ```
-lightning-browser/   Lightning fork + DshaAccel 集成 —— 主产物（包名 com.dsha.browser）
+lightning-browser/   Lightning fork + DshaAccel 集成 —— 主产物（包名 top.panming.dsbrowser）
 app/ netcore/        早期自研壳与 netcore（纯 Kotlin 转发器），现作为参考实现与单测载体
 port/                dev-sidecar 移植工具链：asar 提取 / payload 打包 / payload 同步
 patches/             EinkBro 对照实验的改动补丁（对应源码未入库）
@@ -93,7 +93,7 @@ Node 测试验证当前 Android 核心入口的启动契约；Netcore 测试保�
 
 ## 已知问题
 
-- **代理端口 31181 会被抢占**：多个测试包（`com.dsha.sidecar` / `com.dsha.browser` / EinkBro 版）同时装时，
+- **代理端口 31181 会被抢占**：多个测试包（`com.dsha.sidecar` / `top.panming.dsbrowser` / EinkBro 版）同时装时，
   先启动的占住端口，后启动的核心报 `EADDRINUSE` 秒退。测试前 `adb shell am force-stop` 其它包。
 - **release 看不到核心日志**：`proguard-project.txt` 里有 `-assumenosideeffects`，`Log.i/d/v` 全被裁。
   排查时关掉混淆或改用 `Log.e`。
