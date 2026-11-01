@@ -32,7 +32,7 @@ object DshaAccel {
     private const val PORT = 31181
     private const val MARKER_READY = "就绪"
     /** 负载版本：改了 assets 里的 zip 就 +1，保证升级后会重新解压。 */
-    private const val PAYLOAD_VERSION = "2"
+    private const val PAYLOAD_VERSION = "6"
 
     @Volatile
     private var started = false
@@ -47,6 +47,15 @@ object DshaAccel {
     private var appContext: Context? = null
 
     private val executor = Executors.newSingleThreadExecutor()
+    private val startupGate = ProxyStartupGate()
+
+    suspend fun awaitReady() {
+        if (started && WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
+            if (!startupGate.await()) {
+                Log.w(TAG, "等待代理启动超时，交由 WebView 显示连接结果")
+            }
+        }
+    }
 
     /** 主进程调用：解压资源 → 起 Node → 等就绪 → 设代理。 */
     @Synchronized
@@ -95,6 +104,10 @@ object DshaAccel {
             put("SSL_CERT_FILE", File(root, "cacert.pem").absolutePath)
             put("NODE_EXTRA_CA_CERTS", File(root, "cacert.pem").absolutePath)
             put("DSHA_PORT", PORT.toString())
+            put("DSHA_NAVIGATION_CONFIG", File(
+                context.getExternalFilesDir(null) ?: context.filesDir,
+                "navigation-rules.json"
+            ).absolutePath)
         }
 
         val p = pb.start()
@@ -153,6 +166,7 @@ object DshaAccel {
             .build()
         ProxyController.getInstance().setProxyOverride(config, executor) {
             Log.i(TAG, "WebView 代理已生效 → 127.0.0.1:$PORT")
+            if (coreReady) startupGate.markReady()
         }
     }
 

@@ -7,7 +7,8 @@
  *     ├─ core/            ← 解压出来的原版核心（等价于 app.asar 解包结果）
  *     └─ home/.dev-sidecar ← 配置与证书（替代 ~/.dev-sidecar）
  *
- * 与桌面版的差异只有 4 处，全部在这里打补丁，不改核心源码。
+ * 宿主适配在此安装；纯逻辑调用共享 Kotlin/JS。
+ * NAT64 的内部闭包由 payload 打包工具接到同一编译产物。
  */
 const path = require('path')
 const fs = require('fs')
@@ -25,6 +26,8 @@ fs.mkdirSync(BASE, { recursive: true })
 process.env.HOME = HOME
 process.env.USERPROFILE = HOME
 process.env.DS_EXTRA_PATH = path.join(CORE, 'extra')
+process.env.DSHA_KOTLIN_HELPERS = path.join(ROOT, 'kotlin', 'dev-sidecar-lightning-netcore-js.js')
+const kotlinHelpers = require(process.env.DSHA_KOTLIN_HELPERS)
 
 // ② 最小配置：关掉系统代理与所有插件（Android 上要么无意义，要么由 App 侧接管）
 if (!fs.existsSync(path.join(BASE, 'config.json'))) {
@@ -43,6 +46,9 @@ if (!fs.existsSync(path.join(BASE, 'config.json'))) {
   }, null, 2))
 }
 
+require('./kotlin-helpers').install(CORE, kotlinHelpers)
+console.log('[android] Kotlin helpers active: hostname, config, NAT64')
+
 /** 远程配置用 null 表示"停用该条规则"，但 mitmproxy 的 script.js 未判空，会崩 */
 function stripNulls (intercepts) {
   let n = 0
@@ -59,6 +65,7 @@ function stripNulls (intercepts) {
 // ③ 用同进程启动替代 child_process.fork（Android 上没有 fork 能力）
 const cp = require('child_process')
 cp.fork = function (modulePath, args) {
+  require('./http-navigation').install(CORE)
   const server = require(path.join(CORE, 'node_modules/@blue-frontier/mitmproxy'))
   const jsonApi = require(path.join(CORE, 'node_modules/@blue-frontier/mitmproxy/src/json.js'))
   const config = jsonApi.parse(fs.readFileSync(args[0]).toString())

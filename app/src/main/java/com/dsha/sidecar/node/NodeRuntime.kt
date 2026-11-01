@@ -55,6 +55,10 @@ class NodeRuntime(private val context: Context) {
                 put("TMPDIR", context.cacheDir.absolutePath)
                 put("SSL_CERT_FILE", File(root, "cacert.pem").absolutePath)
                 put("NODE_EXTRA_CA_CERTS", File(root, "cacert.pem").absolutePath)
+                put("DSHA_NAVIGATION_CONFIG", File(
+                    context.getExternalFilesDir(null) ?: context.filesDir,
+                    "navigation-rules.json"
+                ).absolutePath)
             }
 
             val process = pb.start()
@@ -109,7 +113,7 @@ class NodeRuntime(private val context: Context) {
     }
 
     private fun unzipAsset(name: String, dest: File) {
-        val marker = File(dest, ".${name}.done")
+        val marker = File(dest, ".${name}.v4.done")
         if (marker.exists()) return
 
         val start = System.currentTimeMillis()

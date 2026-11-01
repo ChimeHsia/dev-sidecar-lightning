@@ -84,14 +84,17 @@ lightning-browser/
 payload（`libnodebin.so` 46MB + node libs 30MB）不进版本库，必须先重建：
 
 ```bash
-# 1) 生成 Node 运行时 + dev-sidecar 核心
+# 1) 编译供 Node 直接调用的 Kotlin/JS 小模块
+./build.sh :netcore-js:jsNodeProductionLibraryDistribution
+
+# 2) 生成 Node 运行时 + dev-sidecar 核心
 #    需要本机装有 dev-sidecar（取它的 app.asar 作为核心源码）
 python port/build-payload.py --resources "D:/App/Net/dev-sidecar/resources"
 
-# 2) 同步进壳
+# 3) 同步进壳
 ./port/sync-payload.sh                 # 默认 lightning-browser，可传目录名
 
-# 3) 构建
+# 4) 构建
 cd lightning-browser
 JAVA_HOME=../.jdk/jdk-21.0.2 ./gradlew assembleLightningPlusRelease
 # → app/build/outputs/apk/lightningPlus/release/app-lightningPlus-release.apk（58MB）
@@ -109,11 +112,77 @@ JAVA_HOME=../.jdk/jdk-21.0.2 ./gradlew assembleLightningPlusRelease
 
 ## 已知问题
 
-- **Google 访问 `www.google.com` 会被 302 到 `google.cn` 然后 404** —— 这是 Google 按出口 IP 的
-  地域重定向，不是代理问题。用 `www.google.com.hk` 就正常。
+### 2026-11-01 HTTP 入口与页面暂停修复
+
+- `google.com`、`google.com.hk` 及各自的 `www` HTTP 网页入口，在代理内直接返回
+  307 到对应的 `https://www...`，保留路径、查询串；避免先等两轮 7 秒的 80 端口超时。
+  该处理位于 DNS/IP 选择前，不会把 HTTP 超时记入 HTTPS 共用的 IP 失败状态。
+- 仅处理无请求体的文档 GET/HEAD。普通 HTTP、非标准端口、API 和其他方法仍走原流程。
+  实现见 `port/node/http-navigation.js`，在 Node 入口安装，不修改上游核心源码。
+- 浏览器前后台切换使用 `BrowserVisibilityController` 取消过期任务。异步保存标签期间
+  若已切回前台，旧的后台任务不能再暂停 WebView 的 JavaScript 和布局计时器。
+- 网络页面首次加载及标签恢复通过 `ProxyStartupGate` 等待核心就绪和 WebView 代理配置完成；
+  最长等待 15 秒，不阻塞界面。停止、切换地址或销毁标签后，不再执行旧的等待中导航。
+- 本次对比使用 `port/.run/browser-versions/baseline-before-kotlin.apk` 的原版核心；
+  只修改负载入口并增加 HTTP 导航模块。当前本地负载也保持这份基线，Kotlin 迁移源码保留。
+  重新生成不同负载时仍须增加 `DshaAccel.PAYLOAD_VERSION`，避免沿用旧解压标记。
+- 回归：`node --test port/tests/http-navigation.test.js`、
+  `python -m unittest discover -s port/tests -p 'test_*.py'`，
+  以及浏览器 JVM 的 `BrowserVisibilityControllerTest`、`ProxyStartupGateTest`。
+
+### 其他已知问题
+
+- Google 可能把 `www.google.com` 重定向到 `google.cn`。现在由下面的导航配置将
+  `google.cn`、`www.google.cn` 的 HTTP/HTTPS 网页请求转到香港入口，避免落到 404。
 - 从别的 App 点链接会弹系统"打开方式"选择器（音乐/WPS/浏览器都能收 VIEW），
   在系统设置里把「边车浏览器」设为默认浏览器即可。
 - 端口 31181 会被旧壳（`com.dsha.sidecar`）/ EinkBro 版抢占，现象是 `EADDRINUSE` + 核心秒退。
   装多个测试包时先 force-stop 其它。
 - APK 58MB 主要是 Node 运行时（`libnodebin.so` 46MB + assets 30MB）。
 - debug 变体目前不可用（LeakCanary 抢入口 + 依赖锁），要调 UI 请用 release 变体。
+
+## 可配置的域名跳转
+
+默认规则在 `port/node/navigation-rules.json`，随 Node 负载打包，域名不写在跳转引擎里。
+首次运行时复制到 App 外部文件目录：
+
+```text
+/sdcard/Android/data/com.dsha.browser/files/navigation-rules.json
+```
+
+后续升级保留已有文件。可通过 ADB 拉取、编辑、写回，不需要重新构建 APK：
+
+```powershell
+adb pull /sdcard/Android/data/com.dsha.browser/files/navigation-rules.json port/.run/navigation-rules-edit.json
+# 编辑 port/.run/navigation-rules-edit.json，保留需要的其他规则
+adb push port/.run/navigation-rules-edit.json /sdcard/Android/data/com.dsha.browser/files/navigation-rules.json
+```
+
+例如仅保留中国域名到香港入口的规则：
+
+```json
+{
+  "version": 1,
+  "rules": [
+    {
+      "enabled": true,
+      "sourceHosts": ["google.cn", "www.google.cn"],
+      "sourceSchemes": ["http", "https"],
+      "targetOrigin": "https://www.google.com.hk"
+    }
+  ]
+}
+```
+
+- `sourceHosts` 精确匹配域名，不包含子域名或通配符；`sourceSchemes` 指定 `http`、`https`。
+  `targetOrigin` 必须是 HTTPS 的协议和域名，不带路径、查询串或非标准端口。
+- 返回不缓存的 307，保留原路径及查询串。例如
+  `https://google.cn/search?q=a%2Fb` → `https://www.google.com.hk/search?q=a%2Fb`。
+  只重定向无请求体的文档 GET/HEAD；API、页面资源和其他方法走原处理流程。
+- 修改在下一次文档请求或新 CONNECT 时加载。`enabled: false` 关闭一条规则；
+  `"rules": []` 关闭全部导航规则。格式错误、重复来源和跳转循环会记录日志，并继续使用
+  上一次有效配置；启动时尚无有效配置则使用打包默认值。配置上限为 64 KiB、128 条规则。
+- HTTPS 来源按配置加入现有 MITM 流程，才能返回跳转响应；核心明确列入白名单的域名仍跳过
+  MITM，不执行 HTTPS 导航规则。浏览器已有 CA 信任配置不变。
+- 宿主通过 `DSHA_NAVIGATION_CONFIG` 指定运行时文件；外部文件目录不可用时回退到 App
+  内部文件目录，实际位置会输出到 `[navigation] Config:` 日志。

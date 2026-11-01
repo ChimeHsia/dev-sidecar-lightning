@@ -100,9 +100,7 @@ class HostResolver(
     fun persist() = cache.save()
 
     companion object {
-        private val IPV4 = Regex("""^\d{1,3}(\.\d{1,3}){3}$""")
-
         fun isIpLiteral(host: String): Boolean =
-            IPV4.matches(host) || host.contains(':')
+            IpAddress.isIpLiteral(host)
     }
 }

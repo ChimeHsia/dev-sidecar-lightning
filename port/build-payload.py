@@ -8,6 +8,7 @@
   3. 拼成 app 需要的 assets/*.zip 与 jniLibs/arm64-v8a/libnodebin.so。
 
 用法：
+    # 先运行 Gradle :netcore-js:jsNodeProductionLibraryDistribution
     python port/build-payload.py --resources "D:/App/Net/dev-sidecar/resources"
 
 产物（均已写入 .gitignore，体积约 170MB）：
@@ -27,6 +28,7 @@ import sys
 import tarfile
 import urllib.request
 import zipfile
+from kotlin_payload import helper_entries, patch_nat64, NAT64
 
 TUNA = 'https://mirrors.tuna.tsinghua.edu.cn/termux/apt/termux-main/pool/main'
 NODE_DEB = f'{TUNA}/n/nodejs-lts/nodejs-lts_24.22.1_aarch64.deb'
@@ -124,6 +126,7 @@ SKIP = {'ant-design-vue', 'ace-builds', '@ant-design', '@parcel', 'jsoneditor', 
 
 
 def build(args):
+    kotlin_entries = helper_entries()
     app = args.app
     project = os.path.join(WORK, 'core')
     if not os.path.isdir(project):
@@ -167,13 +170,18 @@ def build(args):
         for n in NEEDED:
             z.writestr(n, libs[n])
 
-    main_js = os.path.join(ROOT, 'port', 'node', 'main.js')
     with zipfile.ZipFile(os.path.join(assets, 'nodejs-project.zip'), 'w', zipfile.ZIP_DEFLATED) as z:
-        z.write(main_js, 'main.js')
+        for name, data in kotlin_entries.items():
+            z.writestr(name, data)
         for r, _, fs in os.walk(project):
             for f in fs:
                 p = os.path.join(r, f)
-                z.write(p, 'core/' + os.path.relpath(p, project).replace(os.sep, '/'))
+                archive_name = 'core/' + os.path.relpath(p, project).replace(os.sep, '/')
+                if archive_name == NAT64:
+                    with open(p, encoding='utf-8') as source:
+                        z.writestr(archive_name, patch_nat64(source.read()))
+                else:
+                    z.write(p, archive_name)
 
     ca = os.path.join(assets, 'cacert.pem')
     if not os.path.exists(ca):

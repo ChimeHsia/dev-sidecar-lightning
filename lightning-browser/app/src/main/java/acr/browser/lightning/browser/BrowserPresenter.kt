@@ -105,6 +105,11 @@ class BrowserPresenter @Inject constructor(
 
     private var view: BrowserContract.View? = null
     private var currentTab: TabModel? = null
+    private val visibilityController = BrowserVisibilityController(
+        scope = browserCoroutineScope,
+        pause = { model.pause() },
+        resume = { currentTab?.foreground() },
+    )
     private var currentFolder: Bookmark.Folder = Bookmark.Folder.Root
     private var currentBookmarks: List<Bookmark> = emptyList()
     private var pendingAction: BrowserContract.Action.LoadUrl? = null
@@ -206,9 +211,7 @@ class BrowserPresenter @Inject constructor(
      * Call when the view is shown (i.e. the browser is moved to the foreground).
      */
     fun onViewShown() {
-        browserCoroutineScope.launch {
-            currentTab?.foreground()
-        }
+        visibilityController.show()
     }
 
     /**
@@ -216,9 +219,7 @@ class BrowserPresenter @Inject constructor(
      */
     fun onViewHidden() {
         model.markAllNonEphemeral()
-        browserCoroutineScope.launch {
-            model.pause()
-        }
+        visibilityController.hide()
     }
 
     /**
