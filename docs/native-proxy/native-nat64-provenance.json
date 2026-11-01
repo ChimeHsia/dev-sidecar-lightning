@@ -1,0 +1,83 @@
+{
+  "date": "2026-11-02",
+  "worktree": "C:\\Users\\HONOR\\.codex\\worktrees\\native-dns-orchestration\\dev-sidecar-lightning",
+  "base": "754ff423b59c743cf94e68b3417c1fde4a6f42b7",
+  "verification": {
+    "tests": 232,
+    "failures": 0,
+    "capabilitySkips": 0,
+    "exercisedPasses": 232,
+    "newTests": 45,
+    "frozenRegressions": 187,
+    "compilerHeapMb": 256,
+    "testHeapMb": 192,
+    "runner": "docs/native-proxy/run-native-nat64-tests.ps1"
+  },
+  "frozen187Manifest": {
+    "path": "docs/native-proxy/native-ech-provenance.json",
+    "sha256": "F3BD7DFA361AD16CBCDB9B150FBD7F1B602C239CCC451DDBDF2209D4C151FA41",
+    "comparedFiles": 35
+  },
+  "frozenNat64Address": {
+    "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/Nat64Address.kt",
+    "sha256": "7A79E1ACA5AE4AD61CE112EBC54DEA0FB70D4975AF903AD492A768116D0265C6"
+  },
+  "safeExtension": {
+    "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/native/SocketDnsTransport.kt",
+    "beforeSha256": "5CD8F1327C408DB8CEEA6F1FB0D2E66D0E0672495DB15BC87DB5176C38AF6745",
+    "afterSha256": "919DCA8C76161677636D7034C0ED9F59CF1CCAB8E12B7371E6C46FAD1A96E1EC"
+  },
+  "upstream": [
+    {
+      "path": "D:\\File\\User\\code\\dev-sidecar-lightning\\port\\.run\\device-wave2-20261102\\runtime\\core\\node_modules\\@blue-frontier\\mitmproxy\\src\\lib\\dns\\nat64.js",
+      "sha256": "7371B61B06187952520CE63C6891CB599DF83E223BED780E6F1F4001178BE2AB"
+    },
+    {
+      "path": "D:\\File\\User\\code\\dev-sidecar-lightning\\port\\.run\\device-wave2-20261102\\runtime\\core\\node_modules\\@blue-frontier\\mitmproxy\\src\\options.js",
+      "sha256": "411A38AF92019B15E829446F22D23BA9221E56F44253FA9E660FA95D7B63B356"
+    }
+  ],
+  "newFiles": [
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/native/NativeNat64Models.kt",
+      "sha256": "3569754F77BE206DF790BCA154AF0C187C2904A368D688B57DA7E5446F92DB59"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/native/NativeNat64Config.kt",
+      "sha256": "8FCE97364780B673F4252E3083C74A9C257D91A01981AC2B0DC8DB1E111F0FF1"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/native/NativeNat64Json.kt",
+      "sha256": "ECE2FA93D6E2742792ECD20238C0200B7F67631A9D93460407FF87CC02C9ED02"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/native/NativeNat64Transport.kt",
+      "sha256": "C95036B79B01F13056600096074144EF980F956C9C9091EBD6DD0AA0049F5985"
+    },
+    {
+      "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/dns/native/NativeNat64JsonTest.kt",
+      "sha256": "9FEFA5FD9FB0ED36FEBB43DE0B2BFC5F2A574AB704B297F2995453A649E85A59"
+    },
+    {
+      "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/dns/native/NativeNat64TransportTest.kt",
+      "sha256": "EB47E4DA048F539D3992FF175C214350C69DD07E673508A01EFCDE169F2E2A51"
+    },
+    {
+      "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/dns/native/NativeNat64Ipv6Test.kt",
+      "sha256": "6BF29A5064AA47677E67FB54E9BEF50BD74142E454A4AD1027D2F05C0B1277AC"
+    },
+    {
+      "path": "docs/native-proxy/native-nat64.md",
+      "sha256": "06A916FEEE694BAD238EEF5388FCBFBEBC39252AFF2650EA6312DDFDE81A2A6D"
+    },
+    {
+      "path": "docs/native-proxy/run-native-nat64-tests.ps1",
+      "sha256": "8AC503E4C9AF83BE69153164D238BAB2E9A20B313519460988BF18D54BBC7384"
+    }
+  ],
+  "integrationGates": [
+    "Apply empty-prefix/domain gate before catalog selection",
+    "Automatic NAT64 eligibility/dispatch for frozen NativeEchResolver needs reviewed route adapter",
+    "Real custom-prefix gateway/device/network/ECH acceptance pending"
+  ]
+}

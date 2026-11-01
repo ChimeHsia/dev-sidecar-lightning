@@ -13,6 +13,8 @@ production Node payload or device configuration.
 - Native HPKE/TLS cryptographic primitives and independent known-answer fixtures.
 - Real UDP/TCP/DoT/DoH DNS transport and bounded resolver/candidate orchestration.
 - Typed HTTPS/SVCB DNS transport and bounded ECH configuration resolution.
+- NAT64 coordinator and pinned IPv6 DNS-over-HTTPS transport, not yet wired
+  into automatic ECH provider selection or verified against a real gateway.
 - Rule selection and typed action plans, with 35 independent original-source cases.
 - Bounded request/local-response and response-header/entity action execution,
   including an independent 14-case response-transform oracle.
@@ -30,7 +32,7 @@ material is gathered.
 ## Aggregate result
 
 The frozen sources above compile together with cached Kotlin 2.0.21, JDK 21
-and BC 1.79. The direct runner completed **637 tests: 635 passed, 2 external
+and BC 1.79. The direct runner completed **682 tests: 680 passed, 2 external
 network checks skipped by assumption, zero failures**. Its machine-readable
 JUnit report counts assumption skips separately from passing tests.
 

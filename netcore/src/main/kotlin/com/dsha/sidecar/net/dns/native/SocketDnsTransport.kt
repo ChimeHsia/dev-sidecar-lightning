@@ -98,7 +98,7 @@ class SocketDnsTransport(
     private val endpointResolver: NativeDnsEndpointResolver = NativeDnsEndpointResolver.SYSTEM,
     private val sslContext: SSLContext = SSLContext.getDefault(),
     private val limits: SocketDnsLimits = SocketDnsLimits(),
-) : DnsTransport, HttpsRecordTransport {
+) : DnsTransport, HttpsRecordTransport, NativeNat64DohDialer {
     data class State(
         val queries: Int,
         val resources: Int,
@@ -137,6 +137,9 @@ class SocketDnsTransport(
 
     override fun queryHttps(query: HttpsRecordQuery): CompletableFuture<HttpsRecordAnswer> =
         submit { performHttps(query, it) }
+
+    override fun queryNat64Doh(query: NativeNat64DohQuery): CompletableFuture<NativeNat64DohAnswer> =
+        submit { performNat64Doh(query, it) }
 
     private fun <T : Any> submit(operation: (Work<T>) -> T): CompletableFuture<T> {
         val work = Work<T>()
@@ -362,6 +365,43 @@ class SocketDnsTransport(
         }
     }
 
+    private fun performNat64Doh(query: NativeNat64DohQuery, work: Work<*>): NativeNat64DohAnswer {
+        val service = endpoint(query.provider)
+        require(service.httpUri != null && service.tls) { "Pinned NAT64 DoH requires HTTPS" }
+        val literal = NativeDnsWire.literalBytes(query.ipv6Destination)
+        require(literal != null && literal.size == 16) { "Pinned NAT64 destination must be IPv6" }
+        val address = InetAddress.getByAddress(literal)
+        var hostname = NativeDnsWire.name(query.hostname)
+        val visited = mutableSetOf(hostname)
+        val aliases = mutableListOf<String>()
+        var ttl = Long.MAX_VALUE
+        while (true) {
+            work.remainingMillis()
+            val bytes = httpRequest(service, address, work, "GET",
+                NativeNat64Json.target(service.httpUri, hostname, query.type), null,
+                listOf("application/dns-json", "application/json", "application/dns+json"))
+            val parsed = NativeNat64Json.parse(bytes, hostname, query.type,
+                limits.maxRecords, limits.maxAddresses, limits.maxCnameHops)
+            for (alias in parsed.aliases) {
+                require(aliases.size < limits.maxCnameHops && visited.add(alias)) { "JSON CNAME cycle/limit" }
+                aliases.add(alias)
+            }
+            ttl = minOf(ttl, parsed.aliasTtlMillis)
+            val follow = parsed.followUp
+            if (follow != null) { hostname = follow; continue }
+            return when (val value = parsed.value) {
+                is NativeNat64DohAnswer.Addresses -> NativeNat64DohAnswer.Addresses(value.answer.copy(
+                    records = value.answer.records.map { it.copy(ttlMillis = minOf(ttl, it.ttlMillis)) },
+                    negativeTtlMillis = minOf(ttl, value.answer.negativeTtlMillis),
+                ))
+                is NativeNat64DohAnswer.Services -> NativeNat64DohAnswer.Services(HttpsRecordAnswer(
+                    value.answer.records.map { it.withTtl(ttl) }, value.answer.code,
+                    minOf(ttl, value.answer.negativeTtlMillis), aliases,
+                ))
+            }
+        }
+    }
+
     private fun resolveType(
         query: NativeDnsQuery,
         type: Int,
@@ -449,7 +489,22 @@ class SocketDnsTransport(
             ByteArray(size).also(input::readFully)
         }
 
-    private fun http(endpoint: Endpoint, address: InetAddress, bytes: ByteArray, work: Work<*>): ByteArray =
+    private fun http(endpoint: Endpoint, address: InetAddress, bytes: ByteArray, work: Work<*>): ByteArray {
+        val uri = requireNotNull(endpoint.httpUri)
+        return httpRequest(endpoint, address, work, "POST",
+            uri.rawPath.orEmpty().ifEmpty { "/" } + uri.rawQuery?.let { "?$it" }.orEmpty(), bytes,
+            listOf("application/dns-message"))
+    }
+
+    private fun httpRequest(
+        endpoint: Endpoint,
+        address: InetAddress,
+        work: Work<*>,
+        method: String,
+        target: String,
+        bytes: ByteArray?,
+        responseTypes: List<String>,
+    ): ByteArray =
         withSocket(endpoint, address, work) { socket ->
             val uri = requireNotNull(endpoint.httpUri)
             val httpLimits = Http1Limits(
@@ -457,25 +512,25 @@ class SocketDnsTransport(
                 maxTrailerBytes = 4096, maxTrailerCount = 16,
                 maxBodyBytes = limits.maxPacketBytes.toLong(), bufferBytes = 4096,
             )
-            val target = uri.rawPath.orEmpty().ifEmpty { "/" } + uri.rawQuery?.let { "?$it" }.orEmpty()
             val headers = Http1Headers(listOf(
                 Http1Header("Host", " ${uri.rawAuthority}"),
-                Http1Header("Content-Type", " application/dns-message"),
-                Http1Header("Accept", " application/dns-message"),
-                Http1Header("Content-Length", " ${bytes.size}"),
+                Http1Header("Accept", " ${responseTypes.first()}"),
                 Http1Header("Connection", " close"),
+            ) + if (bytes == null) emptyList() else listOf(
+                Http1Header("Content-Type", " application/dns-message"),
+                Http1Header("Content-Length", " ${bytes.size}"),
             ))
             val output = socket.getOutputStream()
             Http1HeadCodec.writeRequest(output,
-                Http1RequestHead("POST", Http1Target.Origin(target), "HTTP/1.1", headers), httpLimits)
-            output.write(bytes)
+                Http1RequestHead(method, Http1Target.Origin(target), "HTTP/1.1", headers), httpLimits)
+            bytes?.let(output::write)
             output.flush()
             val reader = Http1Reader(deadlineInput(socket, work), httpLimits)
-            val response = reader.readResponse("POST") ?: throw NativeDnsProtocolException("Empty DoH response")
+            val response = reader.readResponse(method) ?: throw NativeDnsProtocolException("Empty DoH response")
             if (response.head.status != 200) throw NativeDnsProtocolException("DoH HTTP status ${response.head.status}")
             val types = response.head.headers.values("Content-Type")
-            if (types.size != 1 || !types[0].substringBefore(';').trim().equals("application/dns-message", true)) {
-                throw UnsupportedOperationException("DoH requires application/dns-message; JSON/legacy formats unsupported")
+            if (types.size != 1 || responseTypes.none { it.equals(types[0].substringBefore(';').trim(), true) }) {
+                throw UnsupportedOperationException("Unsupported DoH response Content-Type")
             }
             val encodings = response.head.headers.values("Content-Encoding")
             if (encodings.isNotEmpty() && !(encodings.size == 1 && encodings[0].equals("identity", true))) {
