@@ -1,0 +1,1638 @@
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserContract.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserContract.kt
+index 4d8ec03..90e41b8 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserContract.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserContract.kt
+@@ -163,6 +163,11 @@ interface BrowserContract {
+          * launch the incognito browser and load the provided [url].
+          */
+         fun launchIncognito(url: String?)
++
++        /**
++         * End the incognito session and return to the regular browser.
++         */
++        suspend fun exitIncognito()
+     }
+ 
+     /**
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserNavigator.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserNavigator.kt
+index 26d1e28..c82421f 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserNavigator.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserNavigator.kt
+@@ -1,5 +1,6 @@
+ package acr.browser.lightning.browser
+ 
++import acr.browser.lightning.DefaultBrowserActivity
+ import acr.browser.lightning.IncognitoBrowserActivity
+ import acr.browser.lightning.browser.cleanup.ExitCleanup
+ import acr.browser.lightning.concurrency.AppCoroutineScope
+@@ -86,6 +87,11 @@ class BrowserNavigator @Inject constructor(
+         IncognitoBrowserActivity.launch(activity, url)
+     }
+ 
++    override suspend fun exitIncognito() {
++        activity.startActivity(Intent(activity, DefaultBrowserActivity::class.java))
++        closeBrowser()
++    }
++
+     companion object {
+         private const val TAG = "BrowserNavigator"
+     }
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserPresenter.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserPresenter.kt
+index dee8dae..dc552e9 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserPresenter.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserPresenter.kt
+@@ -682,6 +682,12 @@ class BrowserPresenter @Inject constructor(
+                 ?.let { showAddBookmarkDialog() }
+ 
+             MenuSelection.SETTINGS -> navigator.openSettings()
++            MenuSelection.EXIT_INCOGNITO -> {
++                model.deleteAllTabs()
++                state.updateSelf { updateTabViewState() }
++                navigator.exitIncognito()
++            }
++
+             MenuSelection.BACK -> onBackClick()
+             MenuSelection.FORWARD -> onForwardClick()
+         }
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/BookmarkIcon.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/BookmarkIcon.kt
+index 707753c..c6038fa 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/BookmarkIcon.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/BookmarkIcon.kt
+@@ -2,24 +2,21 @@ package acr.browser.lightning.browser.compose
+ 
+ import acr.browser.lightning.R
+ import androidx.compose.material3.Icon
++import androidx.compose.material3.LocalContentColor
+ import androidx.compose.material3.MaterialTheme
+ import androidx.compose.runtime.Composable
+ import androidx.compose.ui.res.painterResource
++import androidx.compose.ui.res.stringResource
+ 
+ @Composable
+ fun BookmarkIcon(
+     isBookmarked: Boolean,
+ ) {
+-    if (isBookmarked) {
+-        Icon(
+-            painter = painterResource(R.drawable.ic_bookmark),
+-            tint = MaterialTheme.colorScheme.primary,
+-            contentDescription = ""
+-        )
+-    } else {
+-        Icon(
+-            painter = painterResource(R.drawable.ic_action_star),
+-            contentDescription = ""
+-        )
+-    }
++    Icon(
++        painter = painterResource(
++            if (isBookmarked) R.drawable.ic_bookmark_remove else R.drawable.ic_bookmark_add
++        ),
++        tint = if (isBookmarked) MaterialTheme.colorScheme.primary else LocalContentColor.current,
++        contentDescription = stringResource(R.string.action_add_bookmark)
++    )
+ }
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/BottomTabs.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/BottomTabs.kt
+index fe39b7c..e40ca26 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/BottomTabs.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/BottomTabs.kt
+@@ -1,7 +1,6 @@
+ package acr.browser.lightning.browser.compose
+ 
+ import acr.browser.lightning.BrowserUiEvent
+-import acr.browser.lightning.R
+ import acr.browser.lightning.browser.BrowserComposeState
+ import acr.browser.lightning.browser.BrowserPresenter
+ import acr.browser.lightning.browser.compose.sheets.BookmarksBottomSheet
+@@ -23,15 +22,12 @@ import androidx.compose.foundation.layout.fillMaxSize
+ import androidx.compose.foundation.layout.fillMaxWidth
+ import androidx.compose.foundation.layout.height
+ import androidx.compose.foundation.layout.padding
+-import androidx.compose.foundation.layout.size
+ import androidx.compose.foundation.layout.width
+ import androidx.compose.foundation.lazy.LazyListState
+ import androidx.compose.foundation.lazy.LazyRow
+ import androidx.compose.foundation.lazy.itemsIndexed
+ import androidx.compose.material3.ExperimentalMaterial3Api
+ import androidx.compose.material3.HorizontalDivider
+-import androidx.compose.material3.Icon
+-import androidx.compose.material3.IconButton
+ import androidx.compose.material3.MaterialTheme
+ import androidx.compose.material3.ModalBottomSheet
+ import androidx.compose.material3.Scaffold
+@@ -47,11 +43,10 @@ import androidx.compose.runtime.remember
+ import androidx.compose.runtime.setValue
+ import androidx.compose.ui.Alignment
+ import androidx.compose.ui.Modifier
++import androidx.compose.ui.draw.clip
+ import androidx.compose.ui.layout.ContentScale
+ import androidx.compose.ui.platform.LocalContext
+ import androidx.compose.ui.platform.LocalDensity
+-import androidx.compose.ui.res.painterResource
+-import androidx.compose.ui.res.stringResource
+ import androidx.compose.ui.text.style.TextOverflow
+ import androidx.compose.ui.unit.dp
+ import androidx.compose.ui.viewinterop.AndroidView
+@@ -172,60 +167,11 @@ fun TabsBottomSheet(
+         sheetState = sheetState,
+         onDismissRequest = { presenter.onEvent(BrowserUiEvent.TabDrawerMoved(isOpen = false)) }
+     ) {
+-        Row(
+-            modifier = Modifier
+-                .height(64.dp)
+-                .fillMaxWidth(),
+-            verticalAlignment = Alignment.CenterVertically,
+-            horizontalArrangement = Arrangement.Center
+-        ) {
+-            IconButton(
+-                enabled = browserViewState.isBackEnabled,
+-                onClick = { presenter.onEvent(BrowserUiEvent.BackClick) }
+-            ) {
+-                Icon(
+-                    painter = painterResource(R.drawable.ic_action_back),
+-                    contentDescription = ""
+-                )
+-            }
+-            IconButton(
+-                enabled = browserViewState.isForwardEnabled,
+-                onClick = { presenter.onEvent(BrowserUiEvent.ForwardClick) }
+-            ) {
+-                Icon(
+-                    painter = painterResource(R.drawable.ic_action_forward),
+-                    contentDescription = ""
+-                )
+-            }
+-            IconButton(onClick = { presenter.onEvent(BrowserUiEvent.HomeClick) }) {
+-                Icon(
+-                    painter = painterResource(R.drawable.ic_action_home),
+-                    contentDescription = ""
+-                )
+-            }
+-            IconButton(onClick = { presenter.onEvent(BrowserUiEvent.ToolsClick) }) {
+-                Icon(
+-                    painter = painterResource(R.drawable.ic_page_tools),
+-                    contentDescription = ""
+-                )
+-            }
+-            IconButton(
+-                enabled = browserViewState.isBookmarkEnabled,
+-                onClick = { presenter.onEvent(BrowserUiEvent.StarClick) }
+-            ) {
+-                BookmarkIcon(browserViewState.isBookmarked)
+-            }
+-            IconButton(onClick = { presenter.onEvent(BrowserUiEvent.NewTabClick) }) {
+-                Icon(
+-                    painter = painterResource(R.drawable.ic_action_plus),
+-                    contentDescription = ""
+-                )
+-            }
+-        }
++        TabSheetToolbar(browserViewState, presenter)
+         LazyRow(
+             modifier = Modifier.height(200.dp),
+             state = lazyListState,
+-            contentPadding = PaddingValues(8.dp),
++            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+             horizontalArrangement = Arrangement.spacedBy(8.dp),
+         ) {
+             itemsIndexed(
+@@ -240,69 +186,34 @@ fun TabsBottomSheet(
+                             fadeInSpec = null,
+                             fadeOutSpec = null
+                         )
+-                        .background(
+-                            color = MaterialTheme.colorScheme.surfaceVariant,
+-                            shape = MaterialTheme.shapes.medium
+-                        )
++                        .clip(MaterialTheme.shapes.medium)
++                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                         .combinedClickable(
+                             onClick = { presenter.onEvent(BrowserUiEvent.TabClick(index)) },
+                             onLongClick = { presenter.onEvent(BrowserUiEvent.TabLongClick(index)) }
+                         )
+                         .optionalBorder(tab.isSelected)
+-                        .padding(start = 4.dp, end = 4.dp, bottom = 4.dp)
++                        .padding(start = 8.dp, end = 4.dp, bottom = 8.dp)
+                 ) {
+                     Row(
+                         modifier = Modifier
+                             .fillMaxWidth()
+-                            .height(36.dp),
++                            .height(48.dp),
+                         verticalAlignment = Alignment.CenterVertically
+                     ) {
+-                        when (tab.icon) {
+-                            TabModel.Favicon.Frozen -> Icon(
+-                                modifier = Modifier
+-                                    .size(24.dp)
+-                                    .padding(horizontal = 4.dp),
+-                                tint = MaterialTheme.colorScheme.onSurface,
+-                                painter = painterResource(R.drawable.ic_frozen),
+-                                contentDescription = "test"
+-                            )
+-
+-                            is TabModel.Favicon.Icon -> Image(
+-                                modifier = Modifier
+-                                    .size(24.dp)
+-                                    .padding(horizontal = 4.dp),
+-                                bitmap = tab.icon.bitmap,
+-                                contentDescription = "test"
+-                            )
+-
+-                            TabModel.Favicon.None -> Icon(
+-                                modifier = Modifier
+-                                    .size(24.dp)
+-                                    .padding(horizontal = 4.dp),
+-                                tint = MaterialTheme.colorScheme.onSurface,
+-                                painter = painterResource(R.drawable.ic_webpage),
+-                                contentDescription = "test"
+-                            )
+-                        }
++                        TabFavicon(tab.icon)
+                         Text(
+                             modifier = Modifier
+-                                .fillMaxWidth()
+-                                .weight(1f, false),
+-                            style = MaterialTheme.typography.bodyMedium,
++                                .padding(start = 8.dp)
++                                .weight(1f),
++                            style = MaterialTheme.typography.labelLarge,
+                             maxLines = 1,
+                             overflow = TextOverflow.Ellipsis,
+                             text = tab.title
+                         )
+-                        IconButton(
+-                            modifier = Modifier
+-                                .size(30.dp),
+-                            onClick = { presenter.onEvent(BrowserUiEvent.TabClose(index)) }) {
+-                            Icon(
+-                                modifier = Modifier.size(20.dp),
+-                                painter = painterResource(R.drawable.ic_action_delete),
+-                                contentDescription = stringResource(R.string.close_tab)
+-                            )
+-                        }
++                        TabCloseButton(
++                            onClick = { presenter.onEvent(BrowserUiEvent.TabClose(index)) }
++                        )
+                     }
+                     val transformations = with(LocalDensity.current) {
+                         remember {
+@@ -322,7 +233,7 @@ fun TabsBottomSheet(
+ 
+                             TabModel.Preview.None -> null
+                         },
+-                        contentDescription = "test",
++                        contentDescription = null,
+                         contentScale = ContentScale.Crop,
+                         modifier = Modifier
+                             .fillMaxSize()
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/BrowserOverflowMenu.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/BrowserOverflowMenu.kt
+index f86a618..73fdaac 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/BrowserOverflowMenu.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/BrowserOverflowMenu.kt
+@@ -136,11 +136,20 @@ fun BrowserOverflowMenu(presenter: BrowserPresenter, browserViewState: BrowserCo
+                     }
+                 )
+             }
+-            if (!browserViewState.isIncognito) {
++            DropdownMenuItem(
++                text = { DropdownText(stringResource(R.string.settings)) },
++                leadingIcon = { Icon(painterResource(R.drawable.ic_settings), contentDescription = null) },
++                onClick = {
++                    presenter.onEvent(BrowserUiEvent.MenuClick(MenuSelection.SETTINGS))
++                    dropDownExpanded = false
++                }
++            )
++            if (browserViewState.isIncognito) {
+                 DropdownMenuItem(
+-                    text = { DropdownText(stringResource(R.string.settings)) },
++                    text = { DropdownText(stringResource(R.string.action_exit_incognito)) },
++                    leadingIcon = { Icon(painterResource(R.drawable.ic_logout), contentDescription = null) },
+                     onClick = {
+-                        presenter.onEvent(BrowserUiEvent.MenuClick(MenuSelection.SETTINGS))
++                        presenter.onEvent(BrowserUiEvent.MenuClick(MenuSelection.EXIT_INCOGNITO))
+                         dropDownExpanded = false
+                     }
+                 )
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/DesktopTabs.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/DesktopTabs.kt
+index c3846c3..4729b1b 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/DesktopTabs.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/DesktopTabs.kt
+@@ -6,23 +6,22 @@ import acr.browser.lightning.browser.BrowserComposeState
+ import acr.browser.lightning.browser.BrowserPresenter
+ import acr.browser.lightning.browser.BrowserViewState
+ import acr.browser.lightning.browser.compose.sheets.BookmarksBottomSheet
+-import acr.browser.lightning.browser.tab.TabModel
+ import acr.browser.lightning.compose.imeInsetsPadding
+ import acr.browser.lightning.search.SuggestionsModel
+ import android.widget.FrameLayout
+-import androidx.compose.foundation.Image
+ import androidx.compose.foundation.background
+ import androidx.compose.foundation.combinedClickable
+ import androidx.compose.foundation.layout.Arrangement
+ import androidx.compose.foundation.layout.Box
+ import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.layout.PaddingValues
+ import androidx.compose.foundation.layout.Row
++import androidx.compose.foundation.layout.fillMaxHeight
+ import androidx.compose.foundation.layout.fillMaxSize
+ import androidx.compose.foundation.layout.fillMaxWidth
+ import androidx.compose.foundation.layout.height
+ import androidx.compose.foundation.layout.offset
+ import androidx.compose.foundation.layout.padding
+-import androidx.compose.foundation.layout.size
+ import androidx.compose.foundation.layout.width
+ import androidx.compose.foundation.lazy.LazyListState
+ import androidx.compose.foundation.lazy.LazyRow
+@@ -43,7 +42,7 @@ import androidx.compose.runtime.mutableIntStateOf
+ import androidx.compose.runtime.remember
+ import androidx.compose.ui.Alignment
+ import androidx.compose.ui.Modifier
+-import androidx.compose.ui.graphics.RectangleShape
++import androidx.compose.ui.draw.clip
+ import androidx.compose.ui.platform.LocalDensity
+ import androidx.compose.ui.res.painterResource
+ import androidx.compose.ui.res.stringResource
+@@ -52,7 +51,6 @@ import androidx.compose.ui.unit.Dp
+ import androidx.compose.ui.unit.IntOffset
+ import androidx.compose.ui.unit.dp
+ import androidx.compose.ui.viewinterop.AndroidView
+-import androidx.compose.ui.zIndex
+ import kotlinx.coroutines.flow.StateFlow
+ 
+ @Composable
+@@ -77,7 +75,7 @@ fun DesktopTabs(
+                 .fillMaxSize()
+                 .padding(innerPadding)
+         ) {
+-            val heightDp = remember { 92.dp }
++            val heightDp = remember { DesktopTabStripHeight + 56.dp }
+             val height = with(LocalDensity.current) {
+                 remember { heightDp.roundToPx() }
+             }
+@@ -135,6 +133,8 @@ fun DesktopTabs(
+     }
+ }
+ 
++private val DesktopTabStripHeight = 48.dp
++
+ @OptIn(ExperimentalMaterial3Api::class)
+ @Composable
+ fun TopTabDesktopNavigationBar(
+@@ -162,11 +162,13 @@ fun TopTabDesktopNavigationBar(
+         LazyRow(
+             modifier = Modifier
+                 .fillMaxWidth()
+-                .background(MaterialTheme.colorScheme.scrim, RectangleShape),
++                .height(DesktopTabStripHeight)
++                .background(MaterialTheme.colorScheme.surfaceContainer),
+             state = lazyListState,
+-            verticalAlignment = Alignment.CenterVertically,
++            verticalAlignment = Alignment.Bottom,
+             overscrollEffect = null,
+-            horizontalArrangement = Arrangement.spacedBy((-16).dp)
++            contentPadding = PaddingValues(start = 8.dp, top = 8.dp, end = 8.dp),
++            horizontalArrangement = Arrangement.spacedBy(2.dp)
+         ) {
+             itemsIndexed(
+                 items = browserViewState.tabs,
+@@ -175,81 +177,45 @@ fun TopTabDesktopNavigationBar(
+             ) { index, tab ->
+                 Row(
+                     modifier = Modifier
+-                        .width(175.dp)
+-                        .height(36.dp)
++                        .width(180.dp)
++                        .fillMaxHeight()
+                         .animateItem(
+                             fadeInSpec = null,
+                             fadeOutSpec = null
+                         )
+-                        .combinedClickable(
+-                            onClick = { presenter.onEvent(BrowserUiEvent.TabClick(index)) },
+-                            onLongClick = { presenter.onEvent(BrowserUiEvent.TabLongClick(index)) }
+-                        )
+-                        .zIndex(
++                        .clip(DesktopTabShape)
++                        .background(
+                             if (tab.isSelected) {
+-                                1f
++                                MaterialTheme.colorScheme.surface
+                             } else {
+-                                0f
++                                MaterialTheme.colorScheme.surfaceContainer
+                             }
+                         )
+-                        .background(
+-                            color = if (tab.isSelected) {
+-                                MaterialTheme.colorScheme.surface
+-                            } else {
+-                                MaterialTheme.colorScheme.surfaceVariant
+-                            },
+-                            shape = DesktopTabShape
++                        .combinedClickable(
++                            onClick = { presenter.onEvent(BrowserUiEvent.TabClick(index)) },
++                            onLongClick = { presenter.onEvent(BrowserUiEvent.TabLongClick(index)) }
+                         )
+-                        .padding(horizontal = 15.dp),
++                        .padding(start = 12.dp),
+                     verticalAlignment = Alignment.CenterVertically
+                 ) {
+-                    when (tab.icon) {
+-                        TabModel.Favicon.Frozen -> Icon(
+-                            modifier = Modifier
+-                                .size(28.dp)
+-                                .padding(horizontal = 4.dp),
+-                            tint = MaterialTheme.colorScheme.onSurface,
+-                            painter = painterResource(R.drawable.ic_frozen),
+-                            contentDescription = "test"
+-                        )
+-
+-                        is TabModel.Favicon.Icon -> Image(
+-                            modifier = Modifier
+-                                .size(28.dp)
+-                                .padding(horizontal = 4.dp),
+-                            bitmap = tab.icon.bitmap,
+-                            contentDescription = "test"
+-                        )
+-
+-                        TabModel.Favicon.None -> Icon(
+-                            modifier = Modifier
+-                                .size(28.dp)
+-                                .padding(horizontal = 4.dp),
+-                            tint = MaterialTheme.colorScheme.onSurface,
+-                            painter = painterResource(R.drawable.ic_webpage),
+-                            contentDescription = "test"
+-                        )
+-                    }
++                    TabFavicon(tab.icon)
+                     Text(
+                         modifier = Modifier
+-                            .fillMaxWidth()
+-                            .weight(1f, false),
+-                        style = MaterialTheme.typography.bodyMedium,
++                            .padding(start = 8.dp)
++                            .weight(1f),
++                        style = MaterialTheme.typography.labelLarge,
++                        color = if (tab.isSelected) {
++                            MaterialTheme.colorScheme.onSurface
++                        } else {
++                            MaterialTheme.colorScheme.onSurfaceVariant
++                        },
+                         maxLines = 1,
+                         overflow = TextOverflow.Ellipsis,
+                         text = tab.title
+                     )
+-                    IconButton(
+-                        modifier = Modifier
+-                            .size(30.dp),
++                    TabCloseButton(
+                         onClick = { presenter.onEvent(BrowserUiEvent.TabClose(index)) }
+-                    ) {
+-                        Icon(
+-                            modifier = Modifier.size(20.dp),
+-                            painter = painterResource(R.drawable.ic_action_delete),
+-                            contentDescription = stringResource(R.string.close_tab)
+-                        )
+-                    }
++                    )
+                 }
+             }
+         }
+@@ -259,8 +225,8 @@ fun TopTabDesktopNavigationBar(
+         ) {
+             IconButton(onClick = { presenter.onEvent(BrowserUiEvent.HomeClick) }) {
+                 Icon(
+-                    painter = painterResource(R.drawable.ic_action_home),
+-                    contentDescription = "test"
++                    painter = painterResource(R.drawable.ic_home),
++                    contentDescription = stringResource(R.string.home)
+                 )
+             }
+             BrowserSearchBar(browserViewState, presenter, suggestionsModel)
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/DrawerTabs.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/DrawerTabs.kt
+index c2cfaeb..81e1af6 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/DrawerTabs.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/DrawerTabs.kt
+@@ -6,14 +6,11 @@ import acr.browser.lightning.browser.BrowserComposeState
+ import acr.browser.lightning.browser.BrowserPresenter
+ import acr.browser.lightning.browser.BrowserViewState
+ import acr.browser.lightning.browser.compose.sheets.BookmarksBottomSheet
+-import acr.browser.lightning.browser.tab.TabModel
+ import acr.browser.lightning.compose.imeInsetsPadding
+ import acr.browser.lightning.search.SuggestionsModel
+ import android.widget.FrameLayout
+-import androidx.compose.foundation.Image
+ import androidx.compose.foundation.background
+ import androidx.compose.foundation.combinedClickable
+-import androidx.compose.foundation.layout.Arrangement
+ import androidx.compose.foundation.layout.Box
+ import androidx.compose.foundation.layout.Column
+ import androidx.compose.foundation.layout.Row
+@@ -28,6 +25,7 @@ import androidx.compose.foundation.layout.widthIn
+ import androidx.compose.foundation.lazy.LazyColumn
+ import androidx.compose.foundation.lazy.LazyListState
+ import androidx.compose.foundation.lazy.itemsIndexed
++import androidx.compose.foundation.shape.CircleShape
+ import androidx.compose.material3.DrawerValue
+ import androidx.compose.material3.ExperimentalMaterial3Api
+ import androidx.compose.material3.HorizontalDivider
+@@ -48,10 +46,11 @@ import androidx.compose.runtime.mutableIntStateOf
+ import androidx.compose.runtime.remember
+ import androidx.compose.ui.Alignment
+ import androidx.compose.ui.Modifier
++import androidx.compose.ui.draw.clip
++import androidx.compose.ui.graphics.Color
+ import androidx.compose.ui.platform.LocalDensity
+ import androidx.compose.ui.res.painterResource
+ import androidx.compose.ui.res.stringResource
+-import androidx.compose.ui.text.font.FontWeight
+ import androidx.compose.ui.text.style.TextOverflow
+ import androidx.compose.ui.unit.Dp
+ import androidx.compose.ui.unit.IntOffset
+@@ -108,26 +107,21 @@ fun DrawerTabs(
+             ModalDrawerSheet(modifier = Modifier.widthIn(max = 300.dp)) {
+                 Row(
+                     modifier = Modifier
+-                        .height(56.dp)
++                        .height(64.dp)
+                         .fillMaxWidth()
+-                        .background(MaterialTheme.colorScheme.surfaceContainerHighest),
++                        .padding(horizontal = 12.dp),
+                     verticalAlignment = Alignment.CenterVertically
+                 ) {
+-                    IconButton(
+-                        modifier = Modifier
+-                            .size(56.dp)
+-                            .padding(horizontal = 16.dp),
+-                        onClick = { presenter.onEvent(BrowserUiEvent.TabMenuClick) }
+-                    ) {
++                    IconButton(onClick = { presenter.onEvent(BrowserUiEvent.TabMenuClick) }) {
+                         Icon(
+-                            painter = painterResource(R.drawable.ic_action_tabs),
+-                            contentDescription = "more"
++                            painter = painterResource(R.drawable.ic_tab),
++                            contentDescription = stringResource(R.string.tabs)
+                         )
+                     }
+                     Text(
+-                        modifier = Modifier.padding(16.dp),
++                        modifier = Modifier.padding(start = 8.dp),
+                         text = stringResource(R.string.tabs),
+-                        style = MaterialTheme.typography.titleLarge
++                        style = MaterialTheme.typography.titleMedium
+                     )
+                 }
+                 LazyColumn(
+@@ -143,11 +137,21 @@ fun DrawerTabs(
+                     ) { index, tab ->
+                         Row(
+                             modifier = Modifier
++                                .padding(horizontal = 12.dp)
+                                 .fillMaxWidth()
++                                .height(56.dp)
+                                 .animateItem(
+                                     fadeInSpec = null,
+                                     fadeOutSpec = null
+                                 )
++                                .clip(CircleShape)
++                                .background(
++                                    if (tab.isSelected) {
++                                        MaterialTheme.colorScheme.secondaryContainer
++                                    } else {
++                                        Color.Transparent
++                                    }
++                                )
+                                 .combinedClickable(
+                                     onClick = { presenter.onEvent(BrowserUiEvent.TabClick(index)) },
+                                     onLongClick = {
+@@ -156,117 +160,32 @@ fun DrawerTabs(
+                                         )
+                                     }
+                                 )
+-                                .height(56.dp),
++                                .padding(start = 16.dp, end = 4.dp),
+                             verticalAlignment = Alignment.CenterVertically
+                         ) {
+-                            when (tab.icon) {
+-                                TabModel.Favicon.Frozen -> Icon(
+-                                    modifier = Modifier
+-                                        .size(56.dp)
+-                                        .padding(horizontal = 16.dp),
+-                                    tint = MaterialTheme.colorScheme.onSurface,
+-                                    painter = painterResource(R.drawable.ic_frozen),
+-                                    contentDescription = "test"
+-                                )
+-
+-                                is TabModel.Favicon.Icon -> Image(
+-                                    modifier = Modifier
+-                                        .size(56.dp)
+-                                        .padding(horizontal = 16.dp),
+-                                    bitmap = tab.icon.bitmap,
+-                                    contentDescription = "test"
+-                                )
+-
+-                                TabModel.Favicon.None -> Icon(
+-                                    modifier = Modifier
+-                                        .size(56.dp)
+-                                        .padding(horizontal = 16.dp),
+-                                    tint = MaterialTheme.colorScheme.onSurface,
+-                                    painter = painterResource(R.drawable.ic_webpage),
+-                                    contentDescription = "test"
+-                                )
+-                            }
++                            TabFavicon(tab.icon, modifier = Modifier.size(24.dp))
+                             Text(
+                                 modifier = Modifier
+-                                    .padding(horizontal = 16.dp)
+-                                    .fillMaxWidth()
+-                                    .weight(1f, false),
+-                                style = MaterialTheme.typography.bodyLarge,
+-                                maxLines = 1,
+-                                overflow = TextOverflow.Ellipsis,
+-                                fontWeight = if (tab.isSelected) {
+-                                    FontWeight.Bold
++                                    .padding(start = 12.dp)
++                                    .weight(1f),
++                                style = MaterialTheme.typography.labelLarge,
++                                color = if (tab.isSelected) {
++                                    MaterialTheme.colorScheme.onSecondaryContainer
+                                 } else {
+-                                    null
++                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                 },
++                                maxLines = 1,
++                                overflow = TextOverflow.Ellipsis,
+                                 text = tab.title
+                             )
+-                            IconButton(
+-                                modifier = Modifier
+-                                    .size(48.dp)
+-                                    .padding(4.dp),
++                            TabCloseButton(
+                                 onClick = { presenter.onEvent(BrowserUiEvent.TabClose(index)) }
+-                            ) {
+-                                Icon(
+-                                    modifier = Modifier.size(20.dp),
+-                                    painter = painterResource(R.drawable.ic_action_delete),
+-                                    contentDescription = stringResource(R.string.close_tab)
+-                                )
+-                            }
++                            )
+                         }
+                     }
+                 }
+-                Row(
+-                    modifier = Modifier
+-                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+-                        .height(56.dp)
+-                        .fillMaxWidth(),
+-                    verticalAlignment = Alignment.CenterVertically,
+-                    horizontalArrangement = Arrangement.Center
+-                ) {
+-                    IconButton(
+-                        enabled = browserViewState.isBackEnabled,
+-                        onClick = { presenter.onEvent(BrowserUiEvent.BackClick) }
+-                    ) {
+-                        Icon(
+-                            painter = painterResource(R.drawable.ic_action_back),
+-                            contentDescription = ""
+-                        )
+-                    }
+-                    IconButton(
+-                        enabled = browserViewState.isForwardEnabled,
+-                        onClick = { presenter.onEvent(BrowserUiEvent.ForwardClick) }
+-                    ) {
+-                        Icon(
+-                            painter = painterResource(R.drawable.ic_action_forward),
+-                            contentDescription = ""
+-                        )
+-                    }
+-                    IconButton(onClick = { presenter.onEvent(BrowserUiEvent.HomeClick) }) {
+-                        Icon(
+-                            painter = painterResource(R.drawable.ic_action_home),
+-                            contentDescription = ""
+-                        )
+-                    }
+-                    IconButton(onClick = { presenter.onEvent(BrowserUiEvent.ToolsClick) }) {
+-                        Icon(
+-                            painter = painterResource(R.drawable.ic_page_tools),
+-                            contentDescription = ""
+-                        )
+-                    }
+-                    IconButton(
+-                        enabled = browserViewState.isBookmarkEnabled,
+-                        onClick = { presenter.onEvent(BrowserUiEvent.StarClick) }
+-                    ) {
+-                        BookmarkIcon(browserViewState.isBookmarked)
+-                    }
+-                    IconButton(onClick = { presenter.onEvent(BrowserUiEvent.NewTabClick) }) {
+-                        Icon(
+-                            painter = painterResource(R.drawable.ic_action_plus),
+-                            contentDescription = ""
+-                        )
+-                    }
+-                }
++                HorizontalDivider()
++                TabSheetToolbar(browserViewState, presenter)
+             }
+         }
+     ) {
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/Shapes.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/Shapes.kt
+index 76cd42e..4bb239f 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/Shapes.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/Shapes.kt
+@@ -1,32 +1,7 @@
+ package acr.browser.lightning.browser.compose
+ 
+-import androidx.compose.ui.geometry.Size
+-import androidx.compose.ui.graphics.Outline
+-import androidx.compose.ui.graphics.Path
++import androidx.compose.foundation.shape.RoundedCornerShape
+ import androidx.compose.ui.graphics.Shape
+-import androidx.compose.ui.unit.Density
+-import androidx.compose.ui.unit.LayoutDirection
+-import kotlin.math.tan
++import androidx.compose.ui.unit.dp
+ 
+-val DesktopTabShape: Shape = object : Shape {
+-    override fun createOutline(
+-        size: Size,
+-        layoutDirection: LayoutDirection,
+-        density: Density
+-    ): Outline {
+-        val radians = Math.PI / 3
+-        val base = (size.height / tan(radians)).toInt()
+-
+-        return Outline.Generic(
+-            Path().apply {
+-                reset()
+-                moveTo(0f, size.height)
+-                lineTo(size.width, size.height)
+-                lineTo((size.width - base), 0f)
+-                lineTo(base.toFloat(), 0f)
+-                close()
+-            }
+-        )
+-    }
+-
+-}
++val DesktopTabShape: Shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/TabComponents.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/TabComponents.kt
+new file mode 100644
+index 0000000..4da998a
+--- /dev/null
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/TabComponents.kt
+@@ -0,0 +1,116 @@
++package acr.browser.lightning.browser.compose
++
++import acr.browser.lightning.BrowserUiEvent
++import acr.browser.lightning.R
++import acr.browser.lightning.browser.BrowserComposeState
++import acr.browser.lightning.browser.BrowserPresenter
++import acr.browser.lightning.browser.tab.TabModel
++import androidx.compose.foundation.Image
++import androidx.compose.foundation.layout.Arrangement
++import androidx.compose.foundation.layout.Row
++import androidx.compose.foundation.layout.fillMaxWidth
++import androidx.compose.foundation.layout.height
++import androidx.compose.foundation.layout.size
++import androidx.compose.material3.Icon
++import androidx.compose.material3.IconButton
++import androidx.compose.material3.MaterialTheme
++import androidx.compose.runtime.Composable
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.res.painterResource
++import androidx.compose.ui.res.stringResource
++import androidx.compose.ui.unit.dp
++
++@Composable
++fun TabFavicon(icon: TabModel.Favicon, modifier: Modifier = Modifier) {
++    when (icon) {
++        TabModel.Favicon.Frozen -> Icon(
++            modifier = modifier.size(20.dp),
++            tint = MaterialTheme.colorScheme.onSurfaceVariant,
++            painter = painterResource(R.drawable.ic_ac_unit),
++            contentDescription = null
++        )
++
++        is TabModel.Favicon.Icon -> Image(
++            modifier = modifier.size(20.dp),
++            bitmap = icon.bitmap,
++            contentDescription = null
++        )
++
++        TabModel.Favicon.None -> Icon(
++            modifier = modifier.size(20.dp),
++            tint = MaterialTheme.colorScheme.onSurfaceVariant,
++            painter = painterResource(R.drawable.ic_language),
++            contentDescription = null
++        )
++    }
++}
++
++@Composable
++fun TabCloseButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
++    IconButton(modifier = modifier, onClick = onClick) {
++        Icon(
++            modifier = Modifier.size(18.dp),
++            painter = painterResource(R.drawable.ic_close),
++            contentDescription = stringResource(R.string.close_tab)
++        )
++    }
++}
++
++@Composable
++fun TabSheetToolbar(
++    browserViewState: BrowserComposeState,
++    presenter: BrowserPresenter,
++    modifier: Modifier = Modifier,
++) {
++    Row(
++        modifier = modifier
++            .height(64.dp)
++            .fillMaxWidth(),
++        verticalAlignment = Alignment.CenterVertically,
++        horizontalArrangement = Arrangement.SpaceEvenly
++    ) {
++        IconButton(
++            enabled = browserViewState.isBackEnabled,
++            onClick = { presenter.onEvent(BrowserUiEvent.BackClick) }
++        ) {
++            Icon(
++                painter = painterResource(R.drawable.ic_arrow_back),
++                contentDescription = stringResource(R.string.action_back)
++            )
++        }
++        IconButton(
++            enabled = browserViewState.isForwardEnabled,
++            onClick = { presenter.onEvent(BrowserUiEvent.ForwardClick) }
++        ) {
++            Icon(
++                painter = painterResource(R.drawable.ic_arrow_forward),
++                contentDescription = stringResource(R.string.action_forward)
++            )
++        }
++        IconButton(onClick = { presenter.onEvent(BrowserUiEvent.HomeClick) }) {
++            Icon(
++                painter = painterResource(R.drawable.ic_home),
++                contentDescription = stringResource(R.string.home)
++            )
++        }
++        IconButton(onClick = { presenter.onEvent(BrowserUiEvent.ToolsClick) }) {
++            Icon(
++                painter = painterResource(R.drawable.ic_build),
++                contentDescription = stringResource(R.string.dialog_tools_title)
++            )
++        }
++        IconButton(
++            enabled = browserViewState.isBookmarkEnabled,
++            onClick = { presenter.onEvent(BrowserUiEvent.StarClick) }
++        ) {
++            BookmarkIcon(browserViewState.isBookmarked)
++        }
++        IconButton(onClick = { presenter.onEvent(BrowserUiEvent.NewTabClick) }) {
++            Icon(
++                painter = painterResource(R.drawable.ic_add),
++                contentDescription = stringResource(R.string.action_new_tab)
++            )
++        }
++    }
++}
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/menu/MenuSelection.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/menu/MenuSelection.kt
+index 09383d2..3efcd19 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/menu/MenuSelection.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/menu/MenuSelection.kt
+@@ -16,6 +16,7 @@ enum class MenuSelection {
+     BOOKMARKS,
+     ADD_BOOKMARK,
+     SETTINGS,
++    EXIT_INCOGNITO,
+     BACK,
+     FORWARD
+ }
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/tab/TabWebChromeClient.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/tab/TabWebChromeClient.kt
+index b881071..79fd8c8 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/tab/TabWebChromeClient.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/tab/TabWebChromeClient.kt
+@@ -5,6 +5,7 @@ import acr.browser.lightning.browser.view.CustomViewCoordinator
+ import acr.browser.lightning.browser.webrtc.WebRtcPermissionsModel
+ import acr.browser.lightning.browser.webrtc.WebRtcPermissionsView
+ import acr.browser.lightning.concurrency.TabCoroutineScope
++import acr.browser.lightning.databinding.DialogJsPromptBinding
+ import acr.browser.lightning.dialog.BrowserDialog
+ import acr.browser.lightning.dialog.DialogItem
+ import acr.browser.lightning.extensions.color
+@@ -18,8 +19,11 @@ import android.graphics.Bitmap
+ import android.graphics.Color
+ import android.net.Uri
+ import android.os.Message
++import android.view.LayoutInflater
+ import android.view.View
+ import android.webkit.GeolocationPermissions
++import android.webkit.JsPromptResult
++import android.webkit.JsResult
+ import android.webkit.PermissionRequest
+ import android.webkit.ValueCallback
+ import android.webkit.WebChromeClient
+@@ -35,6 +39,7 @@ import androidx.palette.graphics.Palette
+ import coil3.decode.DecodeUtils
+ import coil3.size.Scale
+ import coil3.size.Size
++import com.google.android.material.dialog.MaterialAlertDialogBuilder
+ import com.permissionx.guolindev.PermissionX
+ import dagger.assisted.Assisted
+ import dagger.assisted.AssistedFactory
+@@ -213,6 +218,80 @@ class TabWebChromeClient @AssistedInject constructor(
+         }
+     }
+ 
++    override fun onJsAlert(view: WebView, url: String?, message: String?, result: JsResult): Boolean {
++        if (activity.isFinishing) return false
++        MaterialAlertDialogBuilder(activity).apply {
++            setTitle(jsDialogTitle(url))
++            setMessage(message)
++            setOnCancelListener { result.cancel() }
++            setPositiveButton(R.string.action_ok) { _, _ -> result.confirm() }
++        }.resizeAndShow()
++        return true
++    }
++
++    override fun onJsConfirm(view: WebView, url: String?, message: String?, result: JsResult): Boolean {
++        if (activity.isFinishing) return false
++        MaterialAlertDialogBuilder(activity).apply {
++            setTitle(jsDialogTitle(url))
++            setMessage(message)
++            setOnCancelListener { result.cancel() }
++            setPositiveButton(R.string.action_ok) { _, _ -> result.confirm() }
++            setNegativeButton(R.string.action_cancel) { _, _ -> result.cancel() }
++        }.resizeAndShow()
++        return true
++    }
++
++    override fun onJsPrompt(
++        view: WebView,
++        url: String?,
++        message: String?,
++        defaultValue: String?,
++        result: JsPromptResult
++    ): Boolean {
++        if (activity.isFinishing) return false
++        val binding = DialogJsPromptBinding.inflate(LayoutInflater.from(activity))
++        binding.jsPromptEdittext.setText(defaultValue)
++        binding.jsPromptEdittext.selectAll()
++        MaterialAlertDialogBuilder(activity).apply {
++            setTitle(jsDialogTitle(url))
++            setMessage(message)
++            setView(binding.root)
++            setOnCancelListener { result.cancel() }
++            setPositiveButton(R.string.action_ok) { _, _ ->
++                result.confirm(binding.jsPromptEdittext.text?.toString().orEmpty())
++            }
++            setNegativeButton(R.string.action_cancel) { _, _ -> result.cancel() }
++        }.resizeAndShow()
++        return true
++    }
++
++    override fun onJsBeforeUnload(
++        view: WebView,
++        url: String?,
++        message: String?,
++        result: JsResult
++    ): Boolean {
++        if (activity.isFinishing) return false
++        MaterialAlertDialogBuilder(activity).apply {
++            setTitle(R.string.title_js_before_unload)
++            setMessage(R.string.message_js_before_unload)
++            setOnCancelListener { result.cancel() }
++            setPositiveButton(R.string.action_leave) { _, _ -> result.confirm() }
++            setNegativeButton(R.string.action_stay) { _, _ -> result.cancel() }
++        }.resizeAndShow()
++        return true
++    }
++
++    private fun jsDialogTitle(url: String?): String {
++        val uri = url?.let(Uri::parse)
++        val origin = if (uri?.scheme != null && !uri.host.isNullOrEmpty()) {
++            "${uri.scheme}://${uri.host}" + if (uri.port != -1) ":${uri.port}" else ""
++        } else {
++            url.orEmpty()
++        }
++        return activity.getString(R.string.title_js_dialog, origin)
++    }
++
+     override fun onShowFileChooser(
+         webView: WebView,
+         filePathCallback: ValueCallback<Array<Uri>>,
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_ac_unit.xml b/lightning-browser/app/src/main/res/drawable/ic_ac_unit.xml
+new file mode 100644
+index 0000000..de7cfdb
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/drawable/ic_ac_unit.xml
+@@ -0,0 +1,12 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:tint="?attr/iconColor"
++    android:viewportWidth="960"
++    android:viewportHeight="960">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M450-80v-195L301-126l-43-42 192-192v-90h-90L172-262l-44-41 147-147H80v-60h195L125-660l43-43 192 193h90v-91L262-789l42-44 146 147v-194h60v194l150-150 42 43-192 192v91h91l189-189 43 42-147 147h194v60H686l148 149-41 43-192-192h-91v90l192 193-41 43-151-151v195h-60Z" />
++    </group>
++</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_action_forward.xml b/lightning-browser/app/src/main/res/drawable/ic_action_forward.xml
+deleted file mode 100644
+index 17421de..0000000
+--- a/lightning-browser/app/src/main/res/drawable/ic_action_forward.xml
++++ /dev/null
+@@ -1,10 +0,0 @@
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
+-        android:width="24dp"
+-        android:height="24dp"
+-        android:tint="?attr/iconColorState"
+-        android:viewportHeight="24.0"
+-        android:viewportWidth="24.0">
+-    <path
+-        android:fillColor="#000000"
+-        android:pathData="M12,4l-1.41,1.41L16.17,11H4v2h12.17l-5.58,5.59L12,20l8,-8z"/>
+-</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_action_home.xml b/lightning-browser/app/src/main/res/drawable/ic_action_home.xml
+deleted file mode 100644
+index 46b19f4..0000000
+--- a/lightning-browser/app/src/main/res/drawable/ic_action_home.xml
++++ /dev/null
+@@ -1,10 +0,0 @@
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
+-        android:width="24dp"
+-        android:height="24dp"
+-        android:tint="?attr/iconColor"
+-        android:viewportHeight="24.0"
+-        android:viewportWidth="24.0">
+-    <path
+-        android:fillColor="#000000"
+-        android:pathData="M10,20v-6h4v6h5v-8h3L12,3 2,12h3v8z"/>
+-</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_action_plus.xml b/lightning-browser/app/src/main/res/drawable/ic_action_plus.xml
+deleted file mode 100644
+index c980a16..0000000
+--- a/lightning-browser/app/src/main/res/drawable/ic_action_plus.xml
++++ /dev/null
+@@ -1,10 +0,0 @@
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
+-        android:width="24dp"
+-        android:height="24dp"
+-        android:tint="?attr/iconColor"
+-        android:viewportHeight="24.0"
+-        android:viewportWidth="24.0">
+-    <path
+-        android:fillColor="#000000"
+-        android:pathData="M19,13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+-</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_action_tabs.xml b/lightning-browser/app/src/main/res/drawable/ic_action_tabs.xml
+deleted file mode 100644
+index c986d6c..0000000
+--- a/lightning-browser/app/src/main/res/drawable/ic_action_tabs.xml
++++ /dev/null
+@@ -1,10 +0,0 @@
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
+-        android:width="24dp"
+-        android:height="24dp"
+-        android:tint="?attr/iconColor"
+-        android:viewportHeight="24.0"
+-        android:viewportWidth="24.0">
+-    <path
+-        android:fillColor="#000000"
+-        android:pathData="M4,10.5c-0.83,0 -1.5,0.67 -1.5,1.5s0.67,1.5 1.5,1.5 1.5,-0.67 1.5,-1.5 -0.67,-1.5 -1.5,-1.5zM4,4.5c-0.83,0 -1.5,0.67 -1.5,1.5S3.17,7.5 4,7.5 5.5,6.83 5.5,6 4.83,4.5 4,4.5zM4,16.5c-0.83,0 -1.5,0.68 -1.5,1.5s0.68,1.5 1.5,1.5 1.5,-0.68 1.5,-1.5 -0.67,-1.5 -1.5,-1.5zM7,19h14v-2L7,17v2zM7,13h14v-2L7,11v2zM7,5v2h14L21,5L7,5z"/>
+-</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_add.xml b/lightning-browser/app/src/main/res/drawable/ic_add.xml
+new file mode 100644
+index 0000000..f8b675c
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/drawable/ic_add.xml
+@@ -0,0 +1,12 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:tint="?attr/iconColor"
++    android:viewportWidth="960"
++    android:viewportHeight="960">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M450-450H200v-60h250v-250h60v250h250v60H510v250h-60v-250Z" />
++    </group>
++</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_arrow_back.xml b/lightning-browser/app/src/main/res/drawable/ic_arrow_back.xml
+new file mode 100644
+index 0000000..6aad73e
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/drawable/ic_arrow_back.xml
+@@ -0,0 +1,12 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:tint="?attr/iconColor"
++    android:viewportWidth="960"
++    android:viewportHeight="960">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="m274-450 248 248-42 42-320-320 320-320 42 42-248 248h526v60H274Z" />
++    </group>
++</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_arrow_forward.xml b/lightning-browser/app/src/main/res/drawable/ic_arrow_forward.xml
+new file mode 100644
+index 0000000..0334ef0
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/drawable/ic_arrow_forward.xml
+@@ -0,0 +1,12 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:tint="?attr/iconColor"
++    android:viewportWidth="960"
++    android:viewportHeight="960">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M686-450H160v-60h526L438-758l42-42 320 320-320 320-42-42 248-248Z" />
++    </group>
++</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_bookmark_add.xml b/lightning-browser/app/src/main/res/drawable/ic_bookmark_add.xml
+new file mode 100644
+index 0000000..be55de4
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/drawable/ic_bookmark_add.xml
+@@ -0,0 +1,12 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:tint="?attr/iconColor"
++    android:viewportWidth="960"
++    android:viewportHeight="960">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M200-120v-665q0-24 18-42t42-18h290v60H260v574l220-93 220 93v-334h60v425L480-240 200-120Zm60-665h290-290Zm440 180v-90h-90v-60h90v-90h60v90h90v60h-90v90h-60Z" />
++    </group>
++</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_bookmark_remove.xml b/lightning-browser/app/src/main/res/drawable/ic_bookmark_remove.xml
+new file mode 100644
+index 0000000..ffc7769
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/drawable/ic_bookmark_remove.xml
+@@ -0,0 +1,12 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:tint="?attr/iconColor"
++    android:viewportWidth="960"
++    android:viewportHeight="960">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M850-695H610v-60h240v60ZM200-120v-665q0-24 18-42t42-18h290v60H260v574l220-93 220 93v-334h60v425L480-240 200-120Zm60-665h290-290Z" />
++    </group>
++</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_build.xml b/lightning-browser/app/src/main/res/drawable/ic_build.xml
+new file mode 100644
+index 0000000..a6c41d8
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/drawable/ic_build.xml
+@@ -0,0 +1,12 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:tint="?attr/iconColor"
++    android:viewportWidth="960"
++    android:viewportHeight="960">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M705-128 447-388q-23 8-46 13t-47 5q-97.08 0-165.04-67.67Q121-505.33 121-602q0-31 8.16-60.39T152-718l145 145 92-86-149-149q25.91-15.16 54.96-23.58Q324-840 354-840q99.17 0 168.58 69.42Q592-701.17 592-602q0 24-5 47t-13 46l259 258q11 10.96 11 26.48T833-198l-76 70q-10.7 11-25.85 11Q716-117 705-128Zm28-57 40-40-273-273q16-21 24-49.5t8-54.5q0-75-55.5-127T350-782l102 104q9 9 8.5 21.5T451-635L318-510q-9.27 8-21.64 8-12.36 0-20.36-8l-98-97q3 77 54.67 127T354-430q25 0 53-8t49-24l277 277ZM476-484Z" />
++    </group>
++</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_close.xml b/lightning-browser/app/src/main/res/drawable/ic_close.xml
+new file mode 100644
+index 0000000..ab2d691
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/drawable/ic_close.xml
+@@ -0,0 +1,12 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:tint="?attr/iconColor"
++    android:viewportWidth="960"
++    android:viewportHeight="960">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="m249-207-42-42 231-231-231-231 42-42 231 231 231-231 42 42-231 231 231 231-42 42-231-231-231 231Z" />
++    </group>
++</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_frozen.xml b/lightning-browser/app/src/main/res/drawable/ic_frozen.xml
+deleted file mode 100644
+index ce047ca..0000000
+--- a/lightning-browser/app/src/main/res/drawable/ic_frozen.xml
++++ /dev/null
+@@ -1,10 +0,0 @@
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
+-        android:width="24dp"
+-        android:height="24dp"
+-        android:tint="?attr/iconColor"
+-        android:viewportWidth="24.0"
+-        android:viewportHeight="24.0">
+-    <path
+-        android:fillColor="#FF000000"
+-        android:pathData="M22,11h-4.17l3.24,-3.24 -1.41,-1.42L15,11h-2V9l4.66,-4.66 -1.42,-1.41L13,6.17V2h-2v4.17L7.76,2.93 6.34,4.34 11,9v2H9L4.34,6.34 2.93,7.76 6.17,11H2v2h4.17l-3.24,3.24 1.41,1.42L9,13h2v2l-4.66,4.66 1.42,1.41L11,17.83V22h2v-4.17l3.24,3.24 1.42,-1.41L13,15v-2h2l4.66,4.66 1.41,-1.42L17.83,13H22z"/>
+-</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_home.xml b/lightning-browser/app/src/main/res/drawable/ic_home.xml
+new file mode 100644
+index 0000000..2a89500
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/drawable/ic_home.xml
+@@ -0,0 +1,12 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:tint="?attr/iconColor"
++    android:viewportWidth="960"
++    android:viewportHeight="960">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M220-180h150v-250h220v250h150v-390L480-765 220-570v390Zm-60 60v-480l320-240 320 240v480H530v-250H430v250H160Zm320-353Z" />
++    </group>
++</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_language.xml b/lightning-browser/app/src/main/res/drawable/ic_language.xml
+new file mode 100644
+index 0000000..72ddbd3
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/drawable/ic_language.xml
+@@ -0,0 +1,12 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:tint="?attr/iconColor"
++    android:viewportWidth="960"
++    android:viewportHeight="960">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M323-111.5Q250-143 196-197t-85-127.5Q80-398 80-482t31-156.5Q142-711 196-765t127-84.5Q396-880 480-880t157 30.5Q710-819 764-765t85 126.5Q880-566 880-482t-31 157.5Q818-251 764-197t-127 85.5Q564-80 480-80t-157-31.5ZM480-138q35-36 58.5-82.5T577-331H384q14 60 37.5 108t58.5 85Zm-85-12q-25-38-43-82t-30-99H172q38 71 88 111.5T395-150Zm171-1q72-23 129.5-69T788-331H639q-13 54-30.5 98T566-151ZM152-391h159q-3-27-3.5-48.5T307-482q0-25 1-44.5t4-43.5H152q-7 24-9.5 43t-2.5 45q0 26 2.5 46.5T152-391Zm221 0h215q4-31 5-50.5t1-40.5q0-20-1-38.5t-5-49.5H373q-4 31-5 49.5t-1 38.5q0 21 1 40.5t5 50.5Zm275 0h160q7-24 9.5-44.5T820-482q0-26-2.5-45t-9.5-43H649q3 35 4 53.5t1 34.5q0 22-1.5 41.5T648-391Zm-10-239h150q-33-69-90.5-115T565-810q25 37 42.5 80T638-630Zm-254 0h194q-11-53-37-102.5T480-820q-32 27-54 71t-42 119Zm-212 0h151q11-54 28-96.5t43-82.5q-75 19-131 64t-91 115Z" />
++    </group>
++</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_launcher_background_blue.xml b/lightning-browser/app/src/main/res/drawable/ic_launcher_background_blue.xml
+index e0fc1fa..f89b406 100644
+--- a/lightning-browser/app/src/main/res/drawable/ic_launcher_background_blue.xml
++++ b/lightning-browser/app/src/main/res/drawable/ic_launcher_background_blue.xml
+@@ -2,28 +2,18 @@
+     xmlns:aapt="http://schemas.android.com/aapt"
+     android:width="108dp"
+     android:height="108dp"
+-    android:viewportWidth="192"
+-    android:viewportHeight="192">
+-  <path
+-      android:pathData="M0,0h192v192h-192z"
+-      android:strokeWidth="1"
+-      android:fillType="evenOdd"
+-      android:strokeColor="#00000000">
+-    <aapt:attr name="android:fillColor">
+-      <gradient
+-          android:centerX="96.52"
+-          android:centerY="94.05"
+-          android:gradientRadius="79.1"
+-          android:type="radial">
+-        <item android:offset="0" android:color="#FFADD5FF"/>
+-        <item android:offset="1" android:color="#FF47A0FF"/>
+-      </gradient>
+-    </aapt:attr>
+-  </path>
+-  <path
+-      android:pathData="M122.5,0l-122.5,0l0,192l66.47,0l37.53,-98l-16,-4z"
+-      android:strokeWidth="1"
+-      android:fillColor="#0073EF"
+-      android:fillType="evenOdd"
+-      android:strokeColor="#00000000"/>
++    android:viewportWidth="108"
++    android:viewportHeight="108">
++    <path android:pathData="M0,0h108v108h-108z">
++        <aapt:attr name="android:fillColor">
++            <gradient
++                android:centerX="54"
++                android:centerY="53"
++                android:gradientRadius="76"
++                android:type="radial">
++                <item android:offset="0" android:color="#FF5A9BFF" />
++                <item android:offset="1" android:color="#FF1B57C9" />
++            </gradient>
++        </aapt:attr>
++    </path>
+ </vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_launcher_background_orange.xml b/lightning-browser/app/src/main/res/drawable/ic_launcher_background_orange.xml
+index 98b4560..613ec6b 100644
+--- a/lightning-browser/app/src/main/res/drawable/ic_launcher_background_orange.xml
++++ b/lightning-browser/app/src/main/res/drawable/ic_launcher_background_orange.xml
+@@ -2,28 +2,18 @@
+     xmlns:aapt="http://schemas.android.com/aapt"
+     android:width="108dp"
+     android:height="108dp"
+-    android:viewportWidth="192"
+-    android:viewportHeight="192">
+-  <path
+-      android:pathData="M0,0h192v192h-192z"
+-      android:strokeWidth="1"
+-      android:fillType="evenOdd"
+-      android:strokeColor="#00000000">
+-    <aapt:attr name="android:fillColor">
+-      <gradient
+-          android:centerX="96.52"
+-          android:centerY="94.05"
+-          android:gradientRadius="79.1"
+-          android:type="radial">
+-        <item android:offset="0" android:color="#FFFFDA00"/>
+-        <item android:offset="1" android:color="#FFFF8200"/>
+-      </gradient>
+-    </aapt:attr>
+-  </path>
+-  <path
+-      android:pathData="M122.5,0l-122.5,0l0,192l66.47,0l37.53,-98l-16,-4z"
+-      android:strokeWidth="1"
+-      android:fillColor="#0073EF"
+-      android:fillType="evenOdd"
+-      android:strokeColor="#00000000"/>
++    android:viewportWidth="108"
++    android:viewportHeight="108">
++    <path android:pathData="M0,0h108v108h-108z">
++        <aapt:attr name="android:fillColor">
++            <gradient
++                android:centerX="54"
++                android:centerY="53"
++                android:gradientRadius="76"
++                android:type="radial">
++                <item android:offset="0" android:color="#FF2EC27E" />
++                <item android:offset="1" android:color="#FF0B7A55" />
++            </gradient>
++        </aapt:attr>
++    </path>
+ </vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_launcher_foreground.xml b/lightning-browser/app/src/main/res/drawable/ic_launcher_foreground.xml
+new file mode 100644
+index 0000000..9efbfad
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/drawable/ic_launcher_foreground.xml
+@@ -0,0 +1,38 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="108dp"
++    android:height="108dp"
++    android:viewportWidth="108"
++    android:viewportHeight="108">
++    <path
++        android:pathData="M31,71.5Q54,63 77,71.5"
++        android:strokeWidth="4.5"
++        android:strokeColor="#FFFFFF"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round" />
++    <path
++        android:pathData="M29,57a6,6 0,1 0,12 0a6,6 0,1 0,-12 0"
++        android:strokeWidth="4.5"
++        android:strokeColor="#FFFFFF" />
++    <path
++        android:pathData="M67,57a6,6 0,1 0,12 0a6,6 0,1 0,-12 0"
++        android:strokeWidth="4.5"
++        android:strokeColor="#FFFFFF" />
++    <path
++        android:pathData="M35,57L40.5,44.5"
++        android:strokeWidth="4.5"
++        android:strokeColor="#FFFFFF"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round" />
++    <path
++        android:pathData="M60.5,35H65L73,57"
++        android:strokeWidth="4.5"
++        android:strokeColor="#FFFFFF"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round" />
++    <path
++        android:fillColor="#FFFFFF"
++        android:pathData="M37,40C37,38.6 38.1,37.5 39.5,37.5H48L51.5,34.5C52.4,33.7 53.6,33.3 54.8,33.3H59C61.6,33.3 62.4,36 61.4,38L60.6,39.6C60.1,40.6 59.1,41.3 58,41.3H38.3C37.6,41.3 37,40.7 37,40Z" />
++    <path
++        android:fillColor="#FFFFFF"
++        android:pathData="M45.5,47H57L60.5,44.2C61.3,43.6 62.5,44 62.7,45L63,47.5V54C63,58 60,61 56,61H50C47.5,61 45.5,59 45.5,56.5Z" />
++</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_logout.xml b/lightning-browser/app/src/main/res/drawable/ic_logout.xml
+new file mode 100644
+index 0000000..c73fea8
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/drawable/ic_logout.xml
+@@ -0,0 +1,12 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:tint="?attr/iconColor"
++    android:viewportWidth="960"
++    android:viewportHeight="960">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h299v60H180v600h299v60H180Zm486-185-43-43 102-102H360v-60h363L621-612l43-43 176 176-174 174Z" />
++    </group>
++</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_page_tools.xml b/lightning-browser/app/src/main/res/drawable/ic_page_tools.xml
+deleted file mode 100644
+index 6f63937..0000000
+--- a/lightning-browser/app/src/main/res/drawable/ic_page_tools.xml
++++ /dev/null
+@@ -1,10 +0,0 @@
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
+-        android:width="24dp"
+-        android:height="24dp"
+-        android:tint="?attr/iconColor"
+-        android:viewportHeight="24.0"
+-        android:viewportWidth="24.0">
+-    <path
+-        android:fillColor="#FF000000"
+-        android:pathData="M22.7,19l-9.1,-9.1c0.9,-2.3 0.4,-5 -1.5,-6.9 -2,-2 -5,-2.4 -7.4,-1.3L9,6 6,9 1.6,4.7C0.4,7.1 0.9,10.1 2.9,12.1c1.9,1.9 4.6,2.4 6.9,1.5l9.1,9.1c0.4,0.4 1,0.4 1.4,0l2.3,-2.3c0.5,-0.4 0.5,-1.1 0.1,-1.4z"/>
+-</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_settings.xml b/lightning-browser/app/src/main/res/drawable/ic_settings.xml
+new file mode 100644
+index 0000000..140f0af
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/drawable/ic_settings.xml
+@@ -0,0 +1,12 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:tint="?attr/iconColor"
++    android:viewportWidth="960"
++    android:viewportHeight="960">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="m388-80-20-126q-19-7-40-19t-37-25l-118 54-93-164 108-79q-2-9-2.5-20.5T185-480q0-9 .5-20.5T188-521L80-600l93-164 118 54q16-13 37-25t40-18l20-127h184l20 126q19 7 40.5 18.5T669-710l118-54 93 164-108 77q2 10 2.5 21.5t.5 21.5q0 10-.5 21t-2.5 21l108 78-93 164-118-54q-16 13-36.5 25.5T592-206L572-80H388Zm48-60h88l14-112q33-8 62.5-25t53.5-41l106 46 40-72-94-69q4-17 6.5-33.5T715-480q0-17-2-33.5t-7-33.5l94-69-40-72-106 46q-23-26-52-43.5T538-708l-14-112h-88l-14 112q-34 7-63.5 24T306-642l-106-46-40 72 94 69q-4 17-6.5 33.5T245-480q0 17 2.5 33.5T254-413l-94 69 40 72 106-46q24 24 53.5 41t62.5 25l14 112Zm44-210q54 0 92-38t38-92q0-54-38-92t-92-38q-54 0-92 38t-38 92q0 54 38 92t92 38Zm0-130Z" />
++    </group>
++</vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_tab.xml b/lightning-browser/app/src/main/res/drawable/ic_tab.xml
+new file mode 100644
+index 0000000..af10eaa
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/drawable/ic_tab.xml
+@@ -0,0 +1,12 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:tint="?attr/iconColor"
++    android:viewportWidth="960"
++    android:viewportHeight="960">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M140-220h680v-347H524v-173H140v520Zm0 60q-24 0-42-18t-18-42v-520q0-24 18-42t42-18h680q24 0 42 18t18 42v520q0 24-18 42t-42 18H140Zm0-60v-520 520Z" />
++    </group>
++</vector>
+diff --git a/lightning-browser/app/src/main/res/layout/dialog_js_prompt.xml b/lightning-browser/app/src/main/res/layout/dialog_js_prompt.xml
+new file mode 100644
+index 0000000..438822c
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/layout/dialog_js_prompt.xml
+@@ -0,0 +1,23 @@
++<?xml version="1.0" encoding="utf-8"?>
++<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:paddingStart="@dimen/dialog_padding"
++    android:paddingTop="8dp"
++    android:paddingEnd="@dimen/dialog_padding">
++
++    <com.google.android.material.textfield.TextInputLayout
++        android:id="@+id/js_prompt_input_layout"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content">
++
++        <com.google.android.material.textfield.TextInputEditText
++            android:id="@+id/js_prompt_edittext"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:inputType="text"
++            android:maxLines="1" />
++
++    </com.google.android.material.textfield.TextInputLayout>
++
++</FrameLayout>
+diff --git a/lightning-browser/app/src/main/res/mipmap-anydpi-v26/ic_launcher_blue.xml b/lightning-browser/app/src/main/res/mipmap-anydpi-v26/ic_launcher_blue.xml
+index 6cd3309..e81ba0f 100644
+--- a/lightning-browser/app/src/main/res/mipmap-anydpi-v26/ic_launcher_blue.xml
++++ b/lightning-browser/app/src/main/res/mipmap-anydpi-v26/ic_launcher_blue.xml
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+     <background android:drawable="@drawable/ic_launcher_background_blue"/>
+-    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+-    <monochrome android:drawable="@mipmap/ic_launcher_foreground"/>
++    <foreground android:drawable="@drawable/ic_launcher_foreground"/>
++    <monochrome android:drawable="@drawable/ic_launcher_foreground"/>
+ </adaptive-icon>
+diff --git a/lightning-browser/app/src/main/res/mipmap-anydpi-v26/ic_launcher_orange.xml b/lightning-browser/app/src/main/res/mipmap-anydpi-v26/ic_launcher_orange.xml
+index 7e23031..ecdd26c 100644
+--- a/lightning-browser/app/src/main/res/mipmap-anydpi-v26/ic_launcher_orange.xml
++++ b/lightning-browser/app/src/main/res/mipmap-anydpi-v26/ic_launcher_orange.xml
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+     <background android:drawable="@drawable/ic_launcher_background_orange"/>
+-    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+-    <monochrome android:drawable="@mipmap/ic_launcher_foreground"/>
++    <foreground android:drawable="@drawable/ic_launcher_foreground"/>
++    <monochrome android:drawable="@drawable/ic_launcher_foreground"/>
+ </adaptive-icon>
+diff --git a/lightning-browser/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png b/lightning-browser/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png
+deleted file mode 100644
+index 2f972a5..0000000
+Binary files a/lightning-browser/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png and /dev/null differ
+diff --git a/lightning-browser/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png b/lightning-browser/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
+deleted file mode 100644
+index 57a917d..0000000
+Binary files a/lightning-browser/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png and /dev/null differ
+diff --git a/lightning-browser/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png b/lightning-browser/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
+deleted file mode 100644
+index 3dce698..0000000
+Binary files a/lightning-browser/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png and /dev/null differ
+diff --git a/lightning-browser/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png b/lightning-browser/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+deleted file mode 100644
+index 832a2cc..0000000
+Binary files a/lightning-browser/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png and /dev/null differ
+diff --git a/lightning-browser/app/src/main/res/values-zh-rCN/strings.xml b/lightning-browser/app/src/main/res/values-zh-rCN/strings.xml
+index 6ef214b..6c70186 100644
+--- a/lightning-browser/app/src/main/res/values-zh-rCN/strings.xml
++++ b/lightning-browser/app/src/main/res/values-zh-rCN/strings.xml
+@@ -54,6 +54,11 @@
+     <string name="agent_custom">自定义</string>
+     <string name="title_search_engine">搜索引擎</string>
+     <string name="action_ok">确定</string>
++    <string name="title_js_dialog">%1$s 显示</string>
++    <string name="title_js_before_unload">要离开此网页吗？</string>
++    <string name="message_js_before_unload">系统可能不会保存您所做的更改。</string>
++    <string name="action_leave">离开</string>
++    <string name="action_stay">留下</string>
+     <string name="dialog_download">你想要下载这个文件吗？ (%1$s)</string>
+     <string name="unknown_size">未知大小</string>
+     <string name="action_cancel">取消</string>
+@@ -82,6 +87,7 @@
+     <string name="title_edit_bookmark">编辑书签</string>
+     <string name="action_edit">编辑</string>
+     <string name="action_incognito">新建无痕标签页</string>
++    <string name="action_exit_incognito">退出无痕模式</string>
+     <string name="action_homepage">默认</string>
+     <string name="action_back">返回</string>
+     <string name="action_find">在页面中查找</string>
+diff --git a/lightning-browser/app/src/main/res/values-zh-rTW/strings.xml b/lightning-browser/app/src/main/res/values-zh-rTW/strings.xml
+index 609fb4d..62c2bd7 100644
+--- a/lightning-browser/app/src/main/res/values-zh-rTW/strings.xml
++++ b/lightning-browser/app/src/main/res/values-zh-rTW/strings.xml
+@@ -55,6 +55,11 @@
+     <string name="agent_custom">自訂</string>
+     <string name="title_search_engine">搜尋引擎</string>
+     <string name="action_ok">確定</string>
++    <string name="title_js_dialog">%1$s 顯示</string>
++    <string name="title_js_before_unload">要離開這個網頁嗎？</string>
++    <string name="message_js_before_unload">系統可能不會儲存你所做的變更。</string>
++    <string name="action_leave">離開</string>
++    <string name="action_stay">留下</string>
+     <string name="dialog_download">您是否想下載此檔案？（%1$s）</string>
+     <string name="unknown_size">未知大小</string>
+     <string name="action_cancel">取消</string>
+@@ -83,6 +88,7 @@
+     <string name="title_edit_bookmark">編輯書籤</string>
+     <string name="action_edit">編輯</string>
+     <string name="action_incognito">新增無痕式分頁</string>
++    <string name="action_exit_incognito">退出無痕模式</string>
+     <string name="action_homepage">預設</string>
+     <string name="action_back">返回</string>
+     <string name="action_find">在網頁中尋找</string>
+diff --git a/lightning-browser/app/src/main/res/values/strings.xml b/lightning-browser/app/src/main/res/values/strings.xml
+index db72307..b848361 100644
+--- a/lightning-browser/app/src/main/res/values/strings.xml
++++ b/lightning-browser/app/src/main/res/values/strings.xml
+@@ -58,6 +58,11 @@
+     <string name="agent_custom">Custom</string>
+     <string name="title_search_engine">Search engine</string>
+     <string name="action_ok">OK</string>
++    <string name="title_js_dialog">%1$s says</string>
++    <string name="title_js_before_unload">Leave this page?</string>
++    <string name="message_js_before_unload">Changes you made may not be saved.</string>
++    <string name="action_leave">Leave</string>
++    <string name="action_stay">Stay</string>
+     <string name="dialog_download">Do you want to download this file? (%1$s)</string>
+     <string name="unknown_size">Unknown size</string>
+     <string name="action_cancel">Cancel</string>
+@@ -86,6 +91,7 @@
+     <string name="title_edit_bookmark">Edit bookmark</string>
+     <string name="action_edit">Edit</string>
+     <string name="action_incognito">New incognito tab</string>
++    <string name="action_exit_incognito">Exit incognito</string>
+     <string name="action_homepage">Default</string>
+     <string name="action_back">Back</string>
+     <string name="action_find">Find in page</string>

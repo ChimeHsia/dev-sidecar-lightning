@@ -1,0 +1,372 @@
+commit 0cbada8d4256ed2c4b321d8c00e7f96ccad4c580
+Author:     ChimeHsia <137911088+ChimeHsia@users.noreply.github.com>
+AuthorDate: Mon Nov 2 01:10:54 2026 +0800
+Commit:     ChimeHsia <137911088+ChimeHsia@users.noreply.github.com>
+CommitDate: Mon Nov 2 01:47:16 2026 +0800
+
+    ui: Material dialogs for JS alert/confirm/prompt and vector launcher icon
+    
+    (cherry picked from commit ba03219be4c83268cdb1b0b9038ef544b5fe627b)
+
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/tab/TabWebChromeClient.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/tab/TabWebChromeClient.kt
+index b881071..0b260fd 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/tab/TabWebChromeClient.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/tab/TabWebChromeClient.kt
+@@ -5,6 +5,7 @@ import acr.browser.lightning.browser.view.CustomViewCoordinator
+ import acr.browser.lightning.browser.webrtc.WebRtcPermissionsModel
+ import acr.browser.lightning.browser.webrtc.WebRtcPermissionsView
+ import acr.browser.lightning.concurrency.TabCoroutineScope
++import acr.browser.lightning.databinding.DialogJsPromptBinding
+ import acr.browser.lightning.dialog.BrowserDialog
+ import acr.browser.lightning.dialog.DialogItem
+ import acr.browser.lightning.extensions.color
+@@ -18,8 +19,11 @@ import android.graphics.Bitmap
+ import android.graphics.Color
+ import android.net.Uri
+ import android.os.Message
++import android.view.LayoutInflater
+ import android.view.View
+ import android.webkit.GeolocationPermissions
++import android.webkit.JsPromptResult
++import android.webkit.JsResult
+ import android.webkit.PermissionRequest
+ import android.webkit.ValueCallback
+ import android.webkit.WebChromeClient
+@@ -213,6 +217,80 @@ class TabWebChromeClient @AssistedInject constructor(
+         }
+     }
+ 
++    override fun onJsAlert(view: WebView, url: String?, message: String?, result: JsResult): Boolean {
++        if (activity.isFinishing) return false
++        MaterialAlertDialogBuilder(activity).apply {
++            setTitle(jsDialogTitle(url))
++            setMessage(message)
++            setOnCancelListener { result.cancel() }
++            setPositiveButton(R.string.action_ok) { _, _ -> result.confirm() }
++        }.resizeAndShow()
++        return true
++    }
++
++    override fun onJsConfirm(view: WebView, url: String?, message: String?, result: JsResult): Boolean {
++        if (activity.isFinishing) return false
++        MaterialAlertDialogBuilder(activity).apply {
++            setTitle(jsDialogTitle(url))
++            setMessage(message)
++            setOnCancelListener { result.cancel() }
++            setPositiveButton(R.string.action_ok) { _, _ -> result.confirm() }
++            setNegativeButton(R.string.action_cancel) { _, _ -> result.cancel() }
++        }.resizeAndShow()
++        return true
++    }
++
++    override fun onJsPrompt(
++        view: WebView,
++        url: String?,
++        message: String?,
++        defaultValue: String?,
++        result: JsPromptResult
++    ): Boolean {
++        if (activity.isFinishing) return false
++        val binding = DialogJsPromptBinding.inflate(LayoutInflater.from(activity))
++        binding.jsPromptEdittext.setText(defaultValue)
++        binding.jsPromptEdittext.selectAll()
++        MaterialAlertDialogBuilder(activity).apply {
++            setTitle(jsDialogTitle(url))
++            setMessage(message)
++            setView(binding.root)
++            setOnCancelListener { result.cancel() }
++            setPositiveButton(R.string.action_ok) { _, _ ->
++                result.confirm(binding.jsPromptEdittext.text?.toString().orEmpty())
++            }
++            setNegativeButton(R.string.action_cancel) { _, _ -> result.cancel() }
++        }.resizeAndShow()
++        return true
++    }
++
++    override fun onJsBeforeUnload(
++        view: WebView,
++        url: String?,
++        message: String?,
++        result: JsResult
++    ): Boolean {
++        if (activity.isFinishing) return false
++        MaterialAlertDialogBuilder(activity).apply {
++            setTitle(R.string.title_js_before_unload)
++            setMessage(R.string.message_js_before_unload)
++            setOnCancelListener { result.cancel() }
++            setPositiveButton(R.string.action_leave) { _, _ -> result.confirm() }
++            setNegativeButton(R.string.action_stay) { _, _ -> result.cancel() }
++        }.resizeAndShow()
++        return true
++    }
++
++    private fun jsDialogTitle(url: String?): String {
++        val uri = url?.let(Uri::parse)
++        val origin = if (uri?.scheme != null && !uri.host.isNullOrEmpty()) {
++            "${uri.scheme}://${uri.host}" + if (uri.port != -1) ":${uri.port}" else ""
++        } else {
++            url.orEmpty()
++        }
++        return activity.getString(R.string.title_js_dialog, origin)
++    }
++
+     override fun onShowFileChooser(
+         webView: WebView,
+         filePathCallback: ValueCallback<Array<Uri>>,
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_launcher_background_blue.xml b/lightning-browser/app/src/main/res/drawable/ic_launcher_background_blue.xml
+index e0fc1fa..f89b406 100644
+--- a/lightning-browser/app/src/main/res/drawable/ic_launcher_background_blue.xml
++++ b/lightning-browser/app/src/main/res/drawable/ic_launcher_background_blue.xml
+@@ -2,28 +2,18 @@
+     xmlns:aapt="http://schemas.android.com/aapt"
+     android:width="108dp"
+     android:height="108dp"
+-    android:viewportWidth="192"
+-    android:viewportHeight="192">
+-  <path
+-      android:pathData="M0,0h192v192h-192z"
+-      android:strokeWidth="1"
+-      android:fillType="evenOdd"
+-      android:strokeColor="#00000000">
+-    <aapt:attr name="android:fillColor">
+-      <gradient
+-          android:centerX="96.52"
+-          android:centerY="94.05"
+-          android:gradientRadius="79.1"
+-          android:type="radial">
+-        <item android:offset="0" android:color="#FFADD5FF"/>
+-        <item android:offset="1" android:color="#FF47A0FF"/>
+-      </gradient>
+-    </aapt:attr>
+-  </path>
+-  <path
+-      android:pathData="M122.5,0l-122.5,0l0,192l66.47,0l37.53,-98l-16,-4z"
+-      android:strokeWidth="1"
+-      android:fillColor="#0073EF"
+-      android:fillType="evenOdd"
+-      android:strokeColor="#00000000"/>
++    android:viewportWidth="108"
++    android:viewportHeight="108">
++    <path android:pathData="M0,0h108v108h-108z">
++        <aapt:attr name="android:fillColor">
++            <gradient
++                android:centerX="54"
++                android:centerY="53"
++                android:gradientRadius="76"
++                android:type="radial">
++                <item android:offset="0" android:color="#FF5A9BFF" />
++                <item android:offset="1" android:color="#FF1B57C9" />
++            </gradient>
++        </aapt:attr>
++    </path>
+ </vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_launcher_background_orange.xml b/lightning-browser/app/src/main/res/drawable/ic_launcher_background_orange.xml
+index 98b4560..613ec6b 100644
+--- a/lightning-browser/app/src/main/res/drawable/ic_launcher_background_orange.xml
++++ b/lightning-browser/app/src/main/res/drawable/ic_launcher_background_orange.xml
+@@ -2,28 +2,18 @@
+     xmlns:aapt="http://schemas.android.com/aapt"
+     android:width="108dp"
+     android:height="108dp"
+-    android:viewportWidth="192"
+-    android:viewportHeight="192">
+-  <path
+-      android:pathData="M0,0h192v192h-192z"
+-      android:strokeWidth="1"
+-      android:fillType="evenOdd"
+-      android:strokeColor="#00000000">
+-    <aapt:attr name="android:fillColor">
+-      <gradient
+-          android:centerX="96.52"
+-          android:centerY="94.05"
+-          android:gradientRadius="79.1"
+-          android:type="radial">
+-        <item android:offset="0" android:color="#FFFFDA00"/>
+-        <item android:offset="1" android:color="#FFFF8200"/>
+-      </gradient>
+-    </aapt:attr>
+-  </path>
+-  <path
+-      android:pathData="M122.5,0l-122.5,0l0,192l66.47,0l37.53,-98l-16,-4z"
+-      android:strokeWidth="1"
+-      android:fillColor="#0073EF"
+-      android:fillType="evenOdd"
+-      android:strokeColor="#00000000"/>
++    android:viewportWidth="108"
++    android:viewportHeight="108">
++    <path android:pathData="M0,0h108v108h-108z">
++        <aapt:attr name="android:fillColor">
++            <gradient
++                android:centerX="54"
++                android:centerY="53"
++                android:gradientRadius="76"
++                android:type="radial">
++                <item android:offset="0" android:color="#FF2EC27E" />
++                <item android:offset="1" android:color="#FF0B7A55" />
++            </gradient>
++        </aapt:attr>
++    </path>
+ </vector>
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_launcher_foreground.xml b/lightning-browser/app/src/main/res/drawable/ic_launcher_foreground.xml
+new file mode 100644
+index 0000000..9efbfad
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/drawable/ic_launcher_foreground.xml
+@@ -0,0 +1,38 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="108dp"
++    android:height="108dp"
++    android:viewportWidth="108"
++    android:viewportHeight="108">
++    <path
++        android:pathData="M31,71.5Q54,63 77,71.5"
++        android:strokeWidth="4.5"
++        android:strokeColor="#FFFFFF"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round" />
++    <path
++        android:pathData="M29,57a6,6 0,1 0,12 0a6,6 0,1 0,-12 0"
++        android:strokeWidth="4.5"
++        android:strokeColor="#FFFFFF" />
++    <path
++        android:pathData="M67,57a6,6 0,1 0,12 0a6,6 0,1 0,-12 0"
++        android:strokeWidth="4.5"
++        android:strokeColor="#FFFFFF" />
++    <path
++        android:pathData="M35,57L40.5,44.5"
++        android:strokeWidth="4.5"
++        android:strokeColor="#FFFFFF"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round" />
++    <path
++        android:pathData="M60.5,35H65L73,57"
++        android:strokeWidth="4.5"
++        android:strokeColor="#FFFFFF"
++        android:strokeLineCap="round"
++        android:strokeLineJoin="round" />
++    <path
++        android:fillColor="#FFFFFF"
++        android:pathData="M37,40C37,38.6 38.1,37.5 39.5,37.5H48L51.5,34.5C52.4,33.7 53.6,33.3 54.8,33.3H59C61.6,33.3 62.4,36 61.4,38L60.6,39.6C60.1,40.6 59.1,41.3 58,41.3H38.3C37.6,41.3 37,40.7 37,40Z" />
++    <path
++        android:fillColor="#FFFFFF"
++        android:pathData="M45.5,47H57L60.5,44.2C61.3,43.6 62.5,44 62.7,45L63,47.5V54C63,58 60,61 56,61H50C47.5,61 45.5,59 45.5,56.5Z" />
++</vector>
+diff --git a/lightning-browser/app/src/main/res/layout/dialog_js_prompt.xml b/lightning-browser/app/src/main/res/layout/dialog_js_prompt.xml
+new file mode 100644
+index 0000000..438822c
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/layout/dialog_js_prompt.xml
+@@ -0,0 +1,23 @@
++<?xml version="1.0" encoding="utf-8"?>
++<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="match_parent"
++    android:layout_height="wrap_content"
++    android:paddingStart="@dimen/dialog_padding"
++    android:paddingTop="8dp"
++    android:paddingEnd="@dimen/dialog_padding">
++
++    <com.google.android.material.textfield.TextInputLayout
++        android:id="@+id/js_prompt_input_layout"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content">
++
++        <com.google.android.material.textfield.TextInputEditText
++            android:id="@+id/js_prompt_edittext"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:inputType="text"
++            android:maxLines="1" />
++
++    </com.google.android.material.textfield.TextInputLayout>
++
++</FrameLayout>
+diff --git a/lightning-browser/app/src/main/res/mipmap-anydpi-v26/ic_launcher_blue.xml b/lightning-browser/app/src/main/res/mipmap-anydpi-v26/ic_launcher_blue.xml
+index 6cd3309..e81ba0f 100644
+--- a/lightning-browser/app/src/main/res/mipmap-anydpi-v26/ic_launcher_blue.xml
++++ b/lightning-browser/app/src/main/res/mipmap-anydpi-v26/ic_launcher_blue.xml
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+     <background android:drawable="@drawable/ic_launcher_background_blue"/>
+-    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+-    <monochrome android:drawable="@mipmap/ic_launcher_foreground"/>
++    <foreground android:drawable="@drawable/ic_launcher_foreground"/>
++    <monochrome android:drawable="@drawable/ic_launcher_foreground"/>
+ </adaptive-icon>
+diff --git a/lightning-browser/app/src/main/res/mipmap-anydpi-v26/ic_launcher_orange.xml b/lightning-browser/app/src/main/res/mipmap-anydpi-v26/ic_launcher_orange.xml
+index 7e23031..ecdd26c 100644
+--- a/lightning-browser/app/src/main/res/mipmap-anydpi-v26/ic_launcher_orange.xml
++++ b/lightning-browser/app/src/main/res/mipmap-anydpi-v26/ic_launcher_orange.xml
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+     <background android:drawable="@drawable/ic_launcher_background_orange"/>
+-    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+-    <monochrome android:drawable="@mipmap/ic_launcher_foreground"/>
++    <foreground android:drawable="@drawable/ic_launcher_foreground"/>
++    <monochrome android:drawable="@drawable/ic_launcher_foreground"/>
+ </adaptive-icon>
+diff --git a/lightning-browser/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png b/lightning-browser/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png
+deleted file mode 100644
+index 2f972a5..0000000
+Binary files a/lightning-browser/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png and /dev/null differ
+diff --git a/lightning-browser/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png b/lightning-browser/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
+deleted file mode 100644
+index 57a917d..0000000
+Binary files a/lightning-browser/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png and /dev/null differ
+diff --git a/lightning-browser/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png b/lightning-browser/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
+deleted file mode 100644
+index 3dce698..0000000
+Binary files a/lightning-browser/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png and /dev/null differ
+diff --git a/lightning-browser/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png b/lightning-browser/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+deleted file mode 100644
+index 832a2cc..0000000
+Binary files a/lightning-browser/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png and /dev/null differ
+diff --git a/lightning-browser/app/src/main/res/values-zh-rCN/strings.xml b/lightning-browser/app/src/main/res/values-zh-rCN/strings.xml
+index c29be8d..6c70186 100644
+--- a/lightning-browser/app/src/main/res/values-zh-rCN/strings.xml
++++ b/lightning-browser/app/src/main/res/values-zh-rCN/strings.xml
+@@ -54,6 +54,11 @@
+     <string name="agent_custom">自定义</string>
+     <string name="title_search_engine">搜索引擎</string>
+     <string name="action_ok">确定</string>
++    <string name="title_js_dialog">%1$s 显示</string>
++    <string name="title_js_before_unload">要离开此网页吗？</string>
++    <string name="message_js_before_unload">系统可能不会保存您所做的更改。</string>
++    <string name="action_leave">离开</string>
++    <string name="action_stay">留下</string>
+     <string name="dialog_download">你想要下载这个文件吗？ (%1$s)</string>
+     <string name="unknown_size">未知大小</string>
+     <string name="action_cancel">取消</string>
+diff --git a/lightning-browser/app/src/main/res/values-zh-rTW/strings.xml b/lightning-browser/app/src/main/res/values-zh-rTW/strings.xml
+index 62926d7..62c2bd7 100644
+--- a/lightning-browser/app/src/main/res/values-zh-rTW/strings.xml
++++ b/lightning-browser/app/src/main/res/values-zh-rTW/strings.xml
+@@ -55,6 +55,11 @@
+     <string name="agent_custom">自訂</string>
+     <string name="title_search_engine">搜尋引擎</string>
+     <string name="action_ok">確定</string>
++    <string name="title_js_dialog">%1$s 顯示</string>
++    <string name="title_js_before_unload">要離開這個網頁嗎？</string>
++    <string name="message_js_before_unload">系統可能不會儲存你所做的變更。</string>
++    <string name="action_leave">離開</string>
++    <string name="action_stay">留下</string>
+     <string name="dialog_download">您是否想下載此檔案？（%1$s）</string>
+     <string name="unknown_size">未知大小</string>
+     <string name="action_cancel">取消</string>
+diff --git a/lightning-browser/app/src/main/res/values/strings.xml b/lightning-browser/app/src/main/res/values/strings.xml
+index a4edf30..b848361 100644
+--- a/lightning-browser/app/src/main/res/values/strings.xml
++++ b/lightning-browser/app/src/main/res/values/strings.xml
+@@ -58,6 +58,11 @@
+     <string name="agent_custom">Custom</string>
+     <string name="title_search_engine">Search engine</string>
+     <string name="action_ok">OK</string>
++    <string name="title_js_dialog">%1$s says</string>
++    <string name="title_js_before_unload">Leave this page?</string>
++    <string name="message_js_before_unload">Changes you made may not be saved.</string>
++    <string name="action_leave">Leave</string>
++    <string name="action_stay">Stay</string>
+     <string name="dialog_download">Do you want to download this file? (%1$s)</string>
+     <string name="unknown_size">Unknown size</string>
+     <string name="action_cancel">Cancel</string>

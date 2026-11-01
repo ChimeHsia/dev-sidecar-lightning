@@ -1,0 +1,36 @@
+{
+  "source_worktree": "D:\\File\\User\\code\\dev-sidecar-lightning\\.claude\\worktrees\\swift-beaming-shell",
+  "source_head_observed": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+  "source_branch_observed": "worktree-swift-beaming-shell",
+  "base": "754ff423b59c743cf94e68b3417c1fde4a6f42b7",
+  "snapshot_commit": "c8aa068d510b6714a7b50c2e382b43c3c892df55",
+  "style_integration_source_commit": "e1d4e4cc88e6842f27d2eca26d305349195f5954",
+  "commits": [
+    {
+      "commit": "128cca9515a3c2f6d420e810ca3e78c3ee9b77e1",
+      "parents": "962883653d1fe60895cd7b3eec6fb2dd28c9491e",
+      "author": "ChimeHsia",
+      "author_date": "2026-11-01T23:21:08+08:00",
+      "subject": "ui: show settings and add exit option in incognito overflow menu"
+    },
+    {
+      "commit": "d9231f4c4e5b0bf2705a121815d0d83a0012b35c",
+      "parents": "128cca9515a3c2f6d420e810ca3e78c3ee9b77e1",
+      "author": "ChimeHsia",
+      "author_date": "2026-11-01T23:49:26+08:00",
+      "subject": "ui: restyle desktop, bottom and drawer tabs to Material 3"
+    },
+    {
+      "commit": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+      "parents": "d9231f4c4e5b0bf2705a121815d0d83a0012b35c",
+      "author": "ChimeHsia",
+      "author_date": "2026-11-02T01:10:54+08:00",
+      "subject": "ui: Material dialogs for JS alert/confirm/prompt and vector launcher icon"
+    }
+  ],
+  "local_style_commits": [
+    "adc9fc3afefc1a77a6d69483a5258641664f25eb",
+    "8726a42599ab44d0ce3d6ec869ab0e5f8d780dbc",
+    "0cbada8d4256ed2c4b321d8c00e7f96ccad4c580"
+  ]
+}

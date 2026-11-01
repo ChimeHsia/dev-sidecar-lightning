@@ -1,0 +1,160 @@
+commit adc9fc3afefc1a77a6d69483a5258641664f25eb
+Author:     ChimeHsia <137911088+ChimeHsia@users.noreply.github.com>
+AuthorDate: Sun Nov 1 23:21:08 2026 +0800
+Commit:     ChimeHsia <137911088+ChimeHsia@users.noreply.github.com>
+CommitDate: Mon Nov 2 01:47:02 2026 +0800
+
+    ui: show settings and add exit option in incognito overflow menu
+    
+    (cherry picked from commit 128cca9515a3c2f6d420e810ca3e78c3ee9b77e1)
+
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserContract.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserContract.kt
+index 4d8ec03..90e41b8 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserContract.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserContract.kt
+@@ -163,6 +163,11 @@ interface BrowserContract {
+          * launch the incognito browser and load the provided [url].
+          */
+         fun launchIncognito(url: String?)
++
++        /**
++         * End the incognito session and return to the regular browser.
++         */
++        suspend fun exitIncognito()
+     }
+ 
+     /**
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserNavigator.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserNavigator.kt
+index 26d1e28..c82421f 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserNavigator.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserNavigator.kt
+@@ -1,5 +1,6 @@
+ package acr.browser.lightning.browser
+ 
++import acr.browser.lightning.DefaultBrowserActivity
+ import acr.browser.lightning.IncognitoBrowserActivity
+ import acr.browser.lightning.browser.cleanup.ExitCleanup
+ import acr.browser.lightning.concurrency.AppCoroutineScope
+@@ -86,6 +87,11 @@ class BrowserNavigator @Inject constructor(
+         IncognitoBrowserActivity.launch(activity, url)
+     }
+ 
++    override suspend fun exitIncognito() {
++        activity.startActivity(Intent(activity, DefaultBrowserActivity::class.java))
++        closeBrowser()
++    }
++
+     companion object {
+         private const val TAG = "BrowserNavigator"
+     }
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserPresenter.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserPresenter.kt
+index dee8dae..dc552e9 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserPresenter.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/BrowserPresenter.kt
+@@ -682,6 +682,12 @@ class BrowserPresenter @Inject constructor(
+                 ?.let { showAddBookmarkDialog() }
+ 
+             MenuSelection.SETTINGS -> navigator.openSettings()
++            MenuSelection.EXIT_INCOGNITO -> {
++                model.deleteAllTabs()
++                state.updateSelf { updateTabViewState() }
++                navigator.exitIncognito()
++            }
++
+             MenuSelection.BACK -> onBackClick()
+             MenuSelection.FORWARD -> onForwardClick()
+         }
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/BrowserOverflowMenu.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/BrowserOverflowMenu.kt
+index f86a618..73fdaac 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/BrowserOverflowMenu.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/compose/BrowserOverflowMenu.kt
+@@ -136,11 +136,20 @@ fun BrowserOverflowMenu(presenter: BrowserPresenter, browserViewState: BrowserCo
+                     }
+                 )
+             }
+-            if (!browserViewState.isIncognito) {
++            DropdownMenuItem(
++                text = { DropdownText(stringResource(R.string.settings)) },
++                leadingIcon = { Icon(painterResource(R.drawable.ic_settings), contentDescription = null) },
++                onClick = {
++                    presenter.onEvent(BrowserUiEvent.MenuClick(MenuSelection.SETTINGS))
++                    dropDownExpanded = false
++                }
++            )
++            if (browserViewState.isIncognito) {
+                 DropdownMenuItem(
+-                    text = { DropdownText(stringResource(R.string.settings)) },
++                    text = { DropdownText(stringResource(R.string.action_exit_incognito)) },
++                    leadingIcon = { Icon(painterResource(R.drawable.ic_logout), contentDescription = null) },
+                     onClick = {
+-                        presenter.onEvent(BrowserUiEvent.MenuClick(MenuSelection.SETTINGS))
++                        presenter.onEvent(BrowserUiEvent.MenuClick(MenuSelection.EXIT_INCOGNITO))
+                         dropDownExpanded = false
+                     }
+                 )
+diff --git a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/menu/MenuSelection.kt b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/menu/MenuSelection.kt
+index 09383d2..3efcd19 100644
+--- a/lightning-browser/app/src/main/java/acr/browser/lightning/browser/menu/MenuSelection.kt
++++ b/lightning-browser/app/src/main/java/acr/browser/lightning/browser/menu/MenuSelection.kt
+@@ -16,6 +16,7 @@ enum class MenuSelection {
+     BOOKMARKS,
+     ADD_BOOKMARK,
+     SETTINGS,
++    EXIT_INCOGNITO,
+     BACK,
+     FORWARD
+ }
+diff --git a/lightning-browser/app/src/main/res/drawable/ic_logout.xml b/lightning-browser/app/src/main/res/drawable/ic_logout.xml
+new file mode 100644
+index 0000000..c73fea8
+--- /dev/null
++++ b/lightning-browser/app/src/main/res/drawable/ic_logout.xml
+@@ -0,0 +1,12 @@
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:tint="?attr/iconColor"
++    android:viewportWidth="960"
++    android:viewportHeight="960">
++    <group android:translateY="960">
++        <path
++            android:fillColor="@android:color/white"
++            android:pathData="M180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h299v60H180v600h299v60H180Zm486-185-43-43 102-102H360v-60h363L621-612l43-43 176 176-174 174Z" />
++    </group>
++</vector>
+diff --git a/lightning-browser/app/src/main/res/values-zh-rCN/strings.xml b/lightning-browser/app/src/main/res/values-zh-rCN/strings.xml
+index 6ef214b..c29be8d 100644
+--- a/lightning-browser/app/src/main/res/values-zh-rCN/strings.xml
++++ b/lightning-browser/app/src/main/res/values-zh-rCN/strings.xml
+@@ -82,6 +82,7 @@
+     <string name="title_edit_bookmark">编辑书签</string>
+     <string name="action_edit">编辑</string>
+     <string name="action_incognito">新建无痕标签页</string>
++    <string name="action_exit_incognito">退出无痕模式</string>
+     <string name="action_homepage">默认</string>
+     <string name="action_back">返回</string>
+     <string name="action_find">在页面中查找</string>
+diff --git a/lightning-browser/app/src/main/res/values-zh-rTW/strings.xml b/lightning-browser/app/src/main/res/values-zh-rTW/strings.xml
+index 609fb4d..62926d7 100644
+--- a/lightning-browser/app/src/main/res/values-zh-rTW/strings.xml
++++ b/lightning-browser/app/src/main/res/values-zh-rTW/strings.xml
+@@ -83,6 +83,7 @@
+     <string name="title_edit_bookmark">編輯書籤</string>
+     <string name="action_edit">編輯</string>
+     <string name="action_incognito">新增無痕式分頁</string>
++    <string name="action_exit_incognito">退出無痕模式</string>
+     <string name="action_homepage">預設</string>
+     <string name="action_back">返回</string>
+     <string name="action_find">在網頁中尋找</string>
+diff --git a/lightning-browser/app/src/main/res/values/strings.xml b/lightning-browser/app/src/main/res/values/strings.xml
+index db72307..a4edf30 100644
+--- a/lightning-browser/app/src/main/res/values/strings.xml
++++ b/lightning-browser/app/src/main/res/values/strings.xml
+@@ -86,6 +86,7 @@
+     <string name="title_edit_bookmark">Edit bookmark</string>
+     <string name="action_edit">Edit</string>
+     <string name="action_incognito">New incognito tab</string>
++    <string name="action_exit_incognito">Exit incognito</string>
+     <string name="action_homepage">Default</string>
+     <string name="action_back">Back</string>
+     <string name="action_find">Find in page</string>
