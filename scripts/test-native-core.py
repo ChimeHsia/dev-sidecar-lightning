@@ -65,7 +65,7 @@ def main():
         classes = Path(directory) / "classes.jar"
         classpath = os.pathsep.join(dependencies)
         subprocess.run([
-            str(java), "-Xmx256m", "-XX:+UseSerialGC", "-XX:ActiveProcessorCount=1",
+            str(java), "-Xmx512m", "-XX:+UseSerialGC", "-XX:ActiveProcessorCount=1",
             "-cp", os.pathsep.join(compiler), "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler",
             "-no-stdlib", "-no-reflect", "-jvm-target", "17",
             "-classpath", classpath, "-d", str(classes),
