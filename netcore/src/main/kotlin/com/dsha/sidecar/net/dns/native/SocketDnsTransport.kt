@@ -98,7 +98,7 @@ class SocketDnsTransport(
     private val endpointResolver: NativeDnsEndpointResolver = NativeDnsEndpointResolver.SYSTEM,
     private val sslContext: SSLContext = SSLContext.getDefault(),
     private val limits: SocketDnsLimits = SocketDnsLimits(),
-) : DnsTransport {
+) : DnsTransport, HttpsRecordTransport {
     data class State(
         val queries: Int,
         val resources: Int,
@@ -116,7 +116,7 @@ class SocketDnsTransport(
     )
 
     private val monitor = Any()
-    private val pending = linkedSetOf<Work>()
+    private val pending = linkedSetOf<Work<*>>()
     private var closed = false
     private val resourceCount = AtomicInteger()
     private val random = SecureRandom()
@@ -133,8 +133,13 @@ class SocketDnsTransport(
         setExecuteExistingDelayedTasksAfterShutdownPolicy(false)
     }
 
-    override fun query(query: NativeDnsQuery): CompletableFuture<NativeDnsAnswer> {
-        val work = Work()
+    override fun query(query: NativeDnsQuery): CompletableFuture<NativeDnsAnswer> = submit { perform(query, it) }
+
+    override fun queryHttps(query: HttpsRecordQuery): CompletableFuture<HttpsRecordAnswer> =
+        submit { performHttps(query, it) }
+
+    private fun <T : Any> submit(operation: (Work<T>) -> T): CompletableFuture<T> {
+        val work = Work<T>()
         synchronized(monitor) {
             if (closed) return failed(NativeDnsClosedException())
             if (pending.size >= limits.workers + limits.queueCapacity) {
@@ -148,7 +153,7 @@ class SocketDnsTransport(
             }, limits.queryTimeoutMillis.toLong(), TimeUnit.MILLISECONDS))
             work.submit(FutureTask {
                 try {
-                    work.finish(answer = perform(query, work))
+                    work.finish(answer = operation(work))
                 } catch (error: Exception) {
                     work.finish(error = error)
                 }
@@ -185,19 +190,19 @@ class SocketDnsTransport(
         return deadlines.awaitTermination((end - System.nanoTime()).coerceAtLeast(0), TimeUnit.NANOSECONDS)
     }
 
-    private inner class QueryFuture(private val work: Work) : CompletableFuture<NativeDnsAnswer>() {
+    private inner class QueryFuture<T : Any>(private val work: Work<T>) : CompletableFuture<T>() {
         override fun cancel(mayInterruptIfRunning: Boolean): Boolean = work.finish(canceled = true)
         fun markCanceled(): Boolean = super.cancel(true)
     }
 
-    private inner class Work {
+    private inner class Work<T : Any> {
         private val lock = Any()
         private val resources = linkedSetOf<Closeable>()
         private var terminal = false
         private var task: FutureTask<Unit>? = null
         private var timer: ScheduledFuture<*>? = null
         private val end = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(limits.queryTimeoutMillis.toLong())
-        val future = QueryFuture(this)
+        val future = QueryFuture<T>(this)
 
         fun setTimer(value: ScheduledFuture<*>) {
             synchronized(lock) {
@@ -243,7 +248,7 @@ class SocketDnsTransport(
         }
 
         fun finish(
-            answer: NativeDnsAnswer? = null,
+            answer: T? = null,
             error: Throwable? = null,
             canceled: Boolean = false,
         ): Boolean {
@@ -278,10 +283,9 @@ class SocketDnsTransport(
         }
     }
 
-    private fun perform(query: NativeDnsQuery, work: Work): NativeDnsAnswer {
-        val normalized = query.copy(hostname = NativeDnsWire.name(query.hostname))
-        val endpoint = endpoint(query.provider)
-        val bootstrapFamily = when (query.provider.family?.toString()) {
+    private fun bootstrap(provider: DnsProviderDescriptor, work: Work<*>): Pair<Endpoint, InetAddress> {
+        val endpoint = endpoint(provider)
+        val bootstrapFamily = when (provider.family?.toString()) {
             null, "0", "0.0" -> NativeDnsFamily.ANY
             "4", "4.0" -> NativeDnsFamily.IPV4
             "6", "6.0" -> NativeDnsFamily.IPV6
@@ -295,6 +299,12 @@ class SocketDnsTransport(
             NativeDnsFamily.IPV4 -> require(address is Inet4Address) { "Provider requires IPv4 bootstrap" }
             NativeDnsFamily.IPV6 -> require(address is Inet6Address) { "Provider requires IPv6 bootstrap" }
         }
+        return endpoint to address
+    }
+
+    private fun perform(query: NativeDnsQuery, work: Work<*>): NativeDnsAnswer {
+        val normalized = query.copy(hostname = NativeDnsWire.name(query.hostname))
+        val (endpoint, address) = bootstrap(query.provider, work)
         val types = when (query.family) {
             NativeDnsFamily.IPV4 -> listOf(NativeDnsWire.A)
             NativeDnsFamily.IPV6 -> listOf(NativeDnsWire.AAAA)
@@ -316,12 +326,48 @@ class SocketDnsTransport(
         )
     }
 
+    private fun performHttps(query: HttpsRecordQuery, work: Work<*>): HttpsRecordAnswer {
+        var hostname = NativeDnsWire.name(query.hostname)
+        val (endpoint, address) = bootstrap(query.provider, work)
+        val names = mutableListOf<String>()
+        val visited = mutableSetOf(hostname)
+        var ttl = Long.MAX_VALUE
+        while (true) {
+            work.remainingMillis()
+            val question = NativeHttpsWire.question(hostname, query.type, random.nextInt(65536), limits.udpPayloadBytes)
+            fun parse(bytes: ByteArray) = NativeHttpsWire.parse(
+                bytes, question, limits.maxRecords, limits.maxAddresses, limits.maxCnameHops,
+            )
+            var reply = parse(exchange(query.provider.transport, endpoint, address, question.bytes, work))
+            if (reply.truncated && query.provider.transport == "udp") {
+                reply = parse(tcp(endpoint.copy(tls = false), address, question.bytes, work))
+            }
+            if (reply.truncated) throw NativeDnsProtocolException("Truncated stream/DoH service response")
+            for (alias in reply.answer.canonicalNames) {
+                if (names.size >= limits.maxCnameHops || !visited.add(alias)) {
+                    throw NativeDnsProtocolException("Service CNAME cycle/limit")
+                }
+                names.add(alias)
+            }
+            ttl = minOf(ttl, reply.aliasTtlMillis)
+            val target = reply.followUp
+            if (target != null) {
+                hostname = target
+                continue
+            }
+            return HttpsRecordAnswer(
+                reply.answer.records.map { it.withTtl(ttl) }, reply.answer.code,
+                minOf(ttl, reply.answer.negativeTtlMillis), names,
+            )
+        }
+    }
+
     private fun resolveType(
         query: NativeDnsQuery,
         type: Int,
         endpoint: Endpoint,
         address: InetAddress,
-        work: Work,
+        work: Work<*>,
     ): NativeDnsAnswer {
         var hostname = NativeDnsWire.name(query.hostname)
         val visited = linkedSetOf(hostname)
@@ -363,7 +409,7 @@ class SocketDnsTransport(
         endpoint: Endpoint,
         address: InetAddress,
         bytes: ByteArray,
-        work: Work,
+        work: Work<*>,
     ): ByteArray = when (type) {
         "udp" -> udp(endpoint, address, bytes, work)
         "tcp", "tls" -> tcp(endpoint, address, bytes, work)
@@ -371,7 +417,7 @@ class SocketDnsTransport(
         else -> throw UnsupportedOperationException("Unsupported DNS provider transport: $type")
     }
 
-    private fun udp(endpoint: Endpoint, address: InetAddress, bytes: ByteArray, work: Work): ByteArray {
+    private fun udp(endpoint: Endpoint, address: InetAddress, bytes: ByteArray, work: Work<*>): ByteArray {
         val socket = work.own(DatagramSocket(null))
         try {
             socket.bind(InetSocketAddress(0))
@@ -391,7 +437,7 @@ class SocketDnsTransport(
         }
     }
 
-    private fun tcp(endpoint: Endpoint, address: InetAddress, bytes: ByteArray, work: Work): ByteArray =
+    private fun tcp(endpoint: Endpoint, address: InetAddress, bytes: ByteArray, work: Work<*>): ByteArray =
         withSocket(endpoint, address, work) { socket ->
             val output = DataOutputStream(socket.getOutputStream())
             output.writeShort(bytes.size)
@@ -403,7 +449,7 @@ class SocketDnsTransport(
             ByteArray(size).also(input::readFully)
         }
 
-    private fun http(endpoint: Endpoint, address: InetAddress, bytes: ByteArray, work: Work): ByteArray =
+    private fun http(endpoint: Endpoint, address: InetAddress, bytes: ByteArray, work: Work<*>): ByteArray =
         withSocket(endpoint, address, work) { socket ->
             val uri = requireNotNull(endpoint.httpUri)
             val httpLimits = Http1Limits(
@@ -443,7 +489,7 @@ class SocketDnsTransport(
     private fun <T> withSocket(
         endpoint: Endpoint,
         address: InetAddress,
-        work: Work,
+        work: Work<*>,
         block: (Socket) -> T,
     ): T {
         val raw = work.own(Socket())
@@ -473,7 +519,7 @@ class SocketDnsTransport(
         }
     }
 
-    private fun deadlineInput(socket: Socket, work: Work): InputStream =
+    private fun deadlineInput(socket: Socket, work: Work<*>): InputStream =
         object : FilterInputStream(socket.getInputStream()) {
             override fun read(): Int {
                 socket.soTimeout = work.remainingMillis()

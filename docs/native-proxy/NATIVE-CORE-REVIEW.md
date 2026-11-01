@@ -12,6 +12,7 @@ production Node payload or device configuration.
 - Native CA/leaf issuance, bounded certificate cache and downstream TLS contexts.
 - Native HPKE/TLS cryptographic primitives and independent known-answer fixtures.
 - Real UDP/TCP/DoT/DoH DNS transport and bounded resolver/candidate orchestration.
+- Typed HTTPS/SVCB DNS transport and bounded ECH configuration resolution.
 - Rule selection and typed action plans, with 35 independent original-source cases.
 - Bounded request/local-response and response-header/entity action execution,
   including an independent 14-case response-transform oracle.
@@ -26,7 +27,7 @@ material is gathered.
 ## Aggregate result
 
 The frozen sources above compile together with cached Kotlin 2.0.21, JDK 21
-and BC 1.79. The direct runner completed **483 tests: 481 passed, 2 external
+and BC 1.79. The direct runner completed **537 tests: 535 passed, 2 external
 network checks skipped by assumption, zero failures**. Its machine-readable
 JUnit report counts assumption skips separately from passing tests.
 
@@ -37,7 +38,8 @@ python scripts/test-native-core.py --java-home '<JDK-21>'
 Compilation and tests each have a 256 MiB Java heap cap. The first complete
 runner used the repository root as working directory; three legacy TLS tests
 could not find their module-relative fixture. The runner now uses `netcore/`,
-matching Gradle's test working directory, and the final aggregate passed.
+matching Gradle's test working directory. The HTTPS/SVCB test fixture loads
+from the test classpath so it does not depend on the working directory.
 
 This count includes existing reference-proxy tests and pure prerequisites;
 it is not a count of fully migrated browsing features. It does not include
@@ -45,10 +47,11 @@ the separate Conscrypt independent-peer suite or Android device acceptance.
 
 ## Pending integration
 
-HTTPS-record/ECH resolution, live configuration loading, retry/cache execution and
-the released ECH provider are still being reviewed separately. Their later
-snapshots require new aggregate checks. The gathered engine has no retries,
-HTTP cache or production configuration entry point yet.
+Live configuration loading, retry/cache execution and the released ECH
+provider are still being reviewed separately. Their later snapshots require new
+aggregate checks. The gathered engine has no retries, HTTP cache or production
+configuration entry point yet. ECH configuration resolution does not perform
+an ECH handshake; the separate Android provider probe remains unverified.
 
 JDK tests do not establish Android API/provider compatibility. Actual browser
 integration must preserve the supported rule and network capabilities before
