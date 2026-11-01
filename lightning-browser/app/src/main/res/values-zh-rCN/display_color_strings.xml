@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="display_wide_color_gamut_title">宽色域</string>
+    <string name="display_wide_color_gamut_summary">开启：在兼容显示屏上请求宽色域。关闭：使用标准色域。返回浏览器时生效。</string>
+    <string name="display_wide_color_gamut_summary_legacy">开启：在兼容显示屏上请求宽色域。关闭：使用标准色域。更改后返回浏览器时会重建窗口，网页可能重新加载。</string>
+    <string name="display_wide_color_gamut_unavailable">需要 Android 8.0 或更高版本及兼容显示屏。</string>
+</resources>

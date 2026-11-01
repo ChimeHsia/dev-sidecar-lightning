@@ -51,4 +51,46 @@ class ProxyStartupGateTest {
         assertTrue(cancelled.isCancelled)
         assertTrue(waiting.await())
     }
+
+    @Test
+    fun `failure releases all waiters without a successful readiness result`() = runTest {
+        val gate = ProxyStartupGate()
+        val token = gate.begin()
+        val waiting = async { gate.await() }
+        runCurrent()
+        gate.fail(token)
+        gate.markReady(token)
+        assertFalse(waiting.await())
+        assertFalse(gate.await())
+    }
+
+    @Test
+    fun `restart invalidates old proxy callbacks and old navigation waiters`() = runTest {
+        val gate = ProxyStartupGate()
+        val old = gate.begin()
+        val oldWaiting = async { gate.await() }
+        runCurrent()
+        val current = gate.begin()
+        assertFalse(oldWaiting.await())
+        val waiting = async { gate.await() }
+        runCurrent()
+        gate.markReady(old)
+        gate.fail(old)
+        assertFalse(waiting.isCompleted)
+        gate.markReady(current)
+        assertTrue(waiting.await())
+    }
+
+    @Test
+    fun `exit after readiness removes the old successful result`() = runTest {
+        val gate = ProxyStartupGate()
+        val token = gate.begin()
+        gate.markReady(token)
+        assertTrue(gate.await())
+        gate.fail(token)
+        assertFalse(gate.await())
+        val restarted = gate.begin()
+        gate.markReady(restarted)
+        assertTrue(gate.await())
+    }
 }

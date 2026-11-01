@@ -53,6 +53,14 @@ fun BrowserOverflowMenu(presenter: BrowserPresenter, browserViewState: BrowserCo
                     dropDownExpanded = false
                 }
             )
+            DropdownMenuItem(
+                text = { DropdownText(stringResource(R.string.action_duplicate_tab)) },
+                enabled = browserViewState.tabs.isNotEmpty(),
+                onClick = {
+                    presenter.onEvent(BrowserUiEvent.MenuClick(MenuSelection.DUPLICATE_TAB))
+                    dropDownExpanded = false
+                }
+            )
             if (!browserViewState.isIncognito) {
                 DropdownMenuItem(
                     text = { DropdownText(stringResource(R.string.action_incognito)) },

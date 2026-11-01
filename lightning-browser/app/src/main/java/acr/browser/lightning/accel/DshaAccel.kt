@@ -30,9 +30,10 @@ object DshaAccel {
 
     private const val TAG = "dsha-accel"
     private const val PORT = 31181
-    private const val MARKER_READY = "就绪"
+    private const val MARKER_READY = "[android] READY 127.0.0.1:$PORT"
+    private const val MARKER_FAILED = "[android] FAILED"
     /** 负载版本：改了 assets 里的 zip 就 +1，保证升级后会重新解压。 */
-    private const val PAYLOAD_VERSION = "6"
+    private const val PAYLOAD_VERSION = "9"
 
     @Volatile
     private var started = false
@@ -41,6 +42,12 @@ object DshaAccel {
     @Volatile
     private var coreReady = false
 
+    @Volatile
+    private var ownsCore = false
+
+    @Volatile
+    private var activeToken = 0L
+
     private var process: Process? = null
 
     @Volatile
@@ -48,11 +55,13 @@ object DshaAccel {
 
     private val executor = Executors.newSingleThreadExecutor()
     private val startupGate = ProxyStartupGate()
+    private val preparationLock = Any()
 
     suspend fun awaitReady() {
+        if (ownsCore && !started) appContext?.let { start(it) }
         if (started && WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
             if (!startupGate.await()) {
-                Log.w(TAG, "等待代理启动超时，交由 WebView 显示连接结果")
+                Log.w(TAG, "代理未就绪或启动失败，交由 WebView 显示连接结果")
             }
         }
     }
@@ -61,9 +70,13 @@ object DshaAccel {
     @Synchronized
     fun start(context: Context) {
         if (started) return
+        ownsCore = true
         started = true
+        coreReady = false
+        val token = startupGate.begin()
+        activeToken = token
         appContext = context.applicationContext
-        Thread({ boot(context.applicationContext) }, "dsha-boot").start()
+        Thread({ boot(context.applicationContext, token) }, "dsha-boot").start()
     }
 
     /**
@@ -74,16 +87,33 @@ object DshaAccel {
         ensureProxy(context)
     }
 
-    private fun boot(context: Context) {
+    private fun boot(context: Context, token: Long) {
         try {
-            prepare(context)
-            launchNode(context)
+            synchronized(preparationLock) {
+                if (!isActive(token)) return
+                prepare(context)
+            }
+            if (isActive(token)) launchNode(context, token)
         } catch (e: Throwable) {
             Log.e(TAG, "核心启动失败", e)
+            failAttempt(token)
         }
     }
 
-    private fun launchNode(context: Context) {
+    @Synchronized
+    private fun isActive(token: Long): Boolean = started && activeToken == token
+
+    @Synchronized
+    private fun failAttempt(token: Long) {
+        if (activeToken != token) return
+        coreReady = false
+        started = false
+        startupGate.fail(token)
+        process?.destroy()
+        process = null
+    }
+
+    private fun launchNode(context: Context, token: Long) {
         val root = File(context.filesDir, "node")
         val projectDir = File(context.filesDir, "nodejs-project")
         val homeDir = File(projectDir, "home")
@@ -91,6 +121,7 @@ object DshaAccel {
         val nodeBin = File(context.applicationInfo.nativeLibraryDir, "libnodebin.so")
         if (!nodeBin.exists()) {
             Log.e(TAG, "缺少 node 可执行文件：${nodeBin.absolutePath}")
+            failAttempt(token)
             return
         }
 
@@ -111,22 +142,33 @@ object DshaAccel {
         }
 
         val p = pb.start()
-        process = p
+        synchronized(this) {
+            if (!isActive(token)) {
+                p.destroy()
+                return
+            }
+            process = p
+        }
         Log.i(TAG, "node 已启动")
 
         try {
             BufferedReader(InputStreamReader(p.inputStream)).useLines { lines ->
                 lines.forEach { line ->
                     Log.i(TAG, line)
-                    if (!coreReady && line.contains(MARKER_READY)) {
-                        coreReady = true
-                        appContext?.let { refreshProxy(it) }
+                    if (line.startsWith(MARKER_FAILED)) {
+                        failAttempt(token)
+                    } else if (line == MARKER_READY && isActive(token)) {
+                        synchronized(this) {
+                            if (isActive(token)) coreReady = true
+                        }
+                        appContext?.let { refreshProxy(it, token) }
                     }
                 }
             }
         } catch (e: Throwable) {
             Log.w(TAG, "读取 node 输出中断: ${e.message}")
         }
+        failAttempt(token)
         Log.w(TAG, "node 已退出 code=${runCatching { p.waitFor() }.getOrNull()}")
     }
 
@@ -139,11 +181,16 @@ object DshaAccel {
      * 先 clear 再 set，等于让 Chromium 丢掉旧结论重新解析。
      */
     @Synchronized
-    fun refreshProxy(context: Context) {
+    fun refreshProxy(context: Context, token: Long = activeToken) {
+        if (!isActive(token)) return
         if (!WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) return
         ProxyController.getInstance().clearProxyOverride(executor) {
-            Log.i(TAG, "已清空旧代理配置，准备重设")
-            ensureProxy(context)
+            synchronized(this) {
+                if (isActive(token)) {
+                    Log.i(TAG, "已清空旧代理配置，准备重设")
+                    ensureProxy(context)
+                }
+            }
         }
     }
 
@@ -164,9 +211,12 @@ object DshaAccel {
         val config = ProxyConfig.Builder()
             .addProxyRule("http://127.0.0.1:$PORT")
             .build()
+        val token = activeToken
         ProxyController.getInstance().setProxyOverride(config, executor) {
             Log.i(TAG, "WebView 代理已生效 → 127.0.0.1:$PORT")
-            if (coreReady) startupGate.markReady()
+            synchronized(this) {
+                if (coreReady && isActive(token)) startupGate.markReady(token)
+            }
         }
     }
 
@@ -220,8 +270,9 @@ object DshaAccel {
         Log.i(TAG, "解压 $name → ${dest.name}，$count 个文件，${System.currentTimeMillis() - start}ms")
     }
 
+    @Synchronized
     fun stop() {
-        process?.destroy()
-        process = null
+        ownsCore = false
+        failAttempt(activeToken)
     }
 }

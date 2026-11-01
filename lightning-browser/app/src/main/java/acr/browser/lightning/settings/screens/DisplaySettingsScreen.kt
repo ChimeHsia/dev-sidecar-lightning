@@ -15,6 +15,7 @@ import acr.browser.lightning.settings.framework.ClickableState
 import acr.browser.lightning.settings.framework.SettingsBottomSheetChooserState
 import acr.browser.lightning.settings.framework.SettingsFrameworkState
 import acr.browser.lightning.settings.framework.ToggleState
+import android.os.Build
 import androidx.core.graphics.drawable.toBitmap
 import androidx.webkit.WebViewFeature
 import javax.inject.Inject
@@ -50,6 +51,26 @@ class DisplaySettingsScreen @Inject constructor(
                 isChecked = { userPreferencesDataStore.useBlackStatusBar.get() },
                 onToggle = {
                     userPreferencesDataStore.useBlackStatusBar.set(it)
+                    null
+                }
+            ),
+            ToggleState(
+                enabled = { Build.VERSION.SDK_INT >= Build.VERSION_CODES.O },
+                title = resourceProvider.stringResource(R.string.display_wide_color_gamut_title),
+                summary = {
+                    resourceProvider.stringResource(
+                        when {
+                            Build.VERSION.SDK_INT < Build.VERSION_CODES.O ->
+                                R.string.display_wide_color_gamut_unavailable
+                            Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ->
+                                R.string.display_wide_color_gamut_summary_legacy
+                            else -> R.string.display_wide_color_gamut_summary
+                        }
+                    )
+                },
+                isChecked = { userPreferencesDataStore.wideColorGamutEnabled.get() },
+                onToggle = {
+                    userPreferencesDataStore.wideColorGamutEnabled.set(it)
                     null
                 }
             ),

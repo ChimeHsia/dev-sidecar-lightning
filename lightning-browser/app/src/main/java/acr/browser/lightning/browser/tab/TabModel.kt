@@ -297,6 +297,18 @@ interface TabModel {
     suspend fun save(): Bundle
 
     /**
+     * Capture navigation state for an independent tab. An uninitialized tab should override this
+     * to return its existing [FreezableInitializer.snapshot] without acquiring a WebView.
+     */
+    suspend fun duplicationSnapshot(): TabSnapshot = TabSnapshot.capture(
+        bundle = save(),
+        title = title.orEmpty(),
+        url = url,
+        searchQuery = searchQuery,
+        searchQuerySelection = searchQuerySelection,
+    )
+
+    /**
      * Potential favicon states.
      */
     sealed interface Favicon {

@@ -4,15 +4,30 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
 
 internal class ProxyStartupGate {
-    private val ready = CompletableDeferred<Unit>()
+    private var generation = 0L
+    private var ready = CompletableDeferred<Boolean>()
 
-    fun markReady() {
-        ready.complete(Unit)
+    @Synchronized
+    fun begin(): Long {
+        ready.complete(false)
+        ready = CompletableDeferred()
+        return ++generation
     }
 
-    suspend fun await(timeoutMillis: Long = 15_000): Boolean =
-        withTimeoutOrNull(timeoutMillis) {
-            ready.await()
-            true
-        } ?: false
+    @Synchronized
+    fun markReady(token: Long = generation) {
+        if (token == generation) ready.complete(true)
+    }
+
+    @Synchronized
+    fun fail(token: Long = generation) {
+        if (token != generation) return
+        ready.complete(false)
+        ready = CompletableDeferred(false)
+    }
+
+    suspend fun await(timeoutMillis: Long = 15_000): Boolean {
+        val attempt = synchronized(this) { ready }
+        return withTimeoutOrNull(timeoutMillis) { attempt.await() } ?: false
+    }
 }

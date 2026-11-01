@@ -10,6 +10,7 @@ import acr.browser.lightning.browser.tab.TabPager
 import acr.browser.lightning.browser.ui.TabConfiguration
 import acr.browser.lightning.compose.BrowserTheme
 import acr.browser.lightning.di.injector
+import acr.browser.lightning.preference.UserPreferencesDataStore
 import acr.browser.lightning.search.SuggestionsModel
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -26,8 +27,13 @@ import androidx.compose.runtime.remember
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -36,6 +42,9 @@ import javax.inject.Named
  * browsers.
  */
 abstract class BrowserActivity : ThemableActivity(), BrowserContract.View {
+
+    private lateinit var windowColorMode: BrowserWindowColorMode
+    private var colorModeRecreationPending = false
 
     @Suppress("ConvertLambdaToReference")
     private val launcher = registerForActivityResult(
@@ -61,6 +70,9 @@ abstract class BrowserActivity : ThemableActivity(), BrowserContract.View {
     @Inject
     internal lateinit var suggestionsModel: SuggestionsModel
 
+    @Inject
+    internal lateinit var userPreferencesDataStore: UserPreferencesDataStore
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         val browserFrame = FrameLayout(this)
@@ -76,6 +88,55 @@ abstract class BrowserActivity : ThemableActivity(), BrowserContract.View {
 
         super.onCreate(savedInstanceState)
 
+        windowColorMode = BrowserWindowColorMode(window)
+        windowColorMode.restore(savedInstanceState)
+
+        lifecycleScope.launch {
+            // Keep the manifest's wide gamut default until preferences are loaded. Do not
+            // attach the web content with a temporary, potentially incorrect color mode.
+            if (applyWindowColorMode(userPreferencesDataStore.wideColorGamutEnabled.get())) {
+                return@launch
+            }
+            setBrowserContent(browserFrame, customFrame)
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                userPreferencesDataStore.wideColorGamutEnabled.values().collect {
+                    if (!colorModeRecreationPending) {
+                        applyWindowColorMode(it)
+                    }
+                }
+            }
+        }
+
+        presenter.onViewAttached(this)
+
+        tabPager.longPressListener = { id, longPress ->
+            presenter.onEvent(BrowserUiEvent.PageLongPress(id, longPress))
+        }
+
+        onBackPressedDispatcher.addCallback {
+            presenter.onEvent(BrowserUiEvent.NavigateBack)
+        }
+    }
+
+    private fun applyWindowColorMode(wideColorGamut: Boolean): Boolean {
+        if (windowColorMode.apply(wideColorGamut)) {
+            colorModeRecreationPending = true
+            // This job belongs to the Activity, not repeatOnLifecycle's cancellable collector.
+            // Cold-start preference loading and returning from settings use the same handoff.
+            lifecycleScope.launch {
+                presenter.prepareForRecreation()
+                recreate()
+            }
+        }
+        return colorModeRecreationPending
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        windowColorMode.save(outState)
+        super.onSaveInstanceState(outState)
+    }
+
+    private fun setBrowserContent(browserFrame: FrameLayout, customFrame: FrameLayout) {
         setContent {
             val currentState = presenter.state.collectAsMutableState(
                 produceState = { BrowserComposeState(it) },
@@ -100,16 +161,6 @@ abstract class BrowserActivity : ThemableActivity(), BrowserContract.View {
                     setFullscreen(enabled = false, immersive = false)
                 }
             }
-        }
-
-        presenter.onViewAttached(this)
-
-        tabPager.longPressListener = { id, longPress ->
-            presenter.onEvent(BrowserUiEvent.PageLongPress(id, longPress))
-        }
-
-        onBackPressedDispatcher.addCallback {
-            presenter.onEvent(BrowserUiEvent.NavigateBack)
         }
     }
 
