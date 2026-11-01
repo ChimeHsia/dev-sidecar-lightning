@@ -5,6 +5,7 @@ import acr.browser.lightning.browser.view.CustomViewCoordinator
 import acr.browser.lightning.browser.webrtc.WebRtcPermissionsModel
 import acr.browser.lightning.browser.webrtc.WebRtcPermissionsView
 import acr.browser.lightning.concurrency.TabCoroutineScope
+import acr.browser.lightning.databinding.DialogJsPromptBinding
 import acr.browser.lightning.dialog.BrowserDialog
 import acr.browser.lightning.dialog.DialogItem
 import acr.browser.lightning.extensions.color
@@ -18,8 +19,11 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
 import android.os.Message
+import android.view.LayoutInflater
 import android.view.View
 import android.webkit.GeolocationPermissions
+import android.webkit.JsPromptResult
+import android.webkit.JsResult
 import android.webkit.PermissionRequest
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
@@ -211,6 +215,80 @@ class TabWebChromeClient @AssistedInject constructor(
                 colorChangeStateFlow.emit(finalColor)
             }
         }
+    }
+
+    override fun onJsAlert(view: WebView, url: String?, message: String?, result: JsResult): Boolean {
+        if (activity.isFinishing) return false
+        MaterialAlertDialogBuilder(activity).apply {
+            setTitle(jsDialogTitle(url))
+            setMessage(message)
+            setOnCancelListener { result.cancel() }
+            setPositiveButton(R.string.action_ok) { _, _ -> result.confirm() }
+        }.resizeAndShow()
+        return true
+    }
+
+    override fun onJsConfirm(view: WebView, url: String?, message: String?, result: JsResult): Boolean {
+        if (activity.isFinishing) return false
+        MaterialAlertDialogBuilder(activity).apply {
+            setTitle(jsDialogTitle(url))
+            setMessage(message)
+            setOnCancelListener { result.cancel() }
+            setPositiveButton(R.string.action_ok) { _, _ -> result.confirm() }
+            setNegativeButton(R.string.action_cancel) { _, _ -> result.cancel() }
+        }.resizeAndShow()
+        return true
+    }
+
+    override fun onJsPrompt(
+        view: WebView,
+        url: String?,
+        message: String?,
+        defaultValue: String?,
+        result: JsPromptResult
+    ): Boolean {
+        if (activity.isFinishing) return false
+        val binding = DialogJsPromptBinding.inflate(LayoutInflater.from(activity))
+        binding.jsPromptEdittext.setText(defaultValue)
+        binding.jsPromptEdittext.selectAll()
+        MaterialAlertDialogBuilder(activity).apply {
+            setTitle(jsDialogTitle(url))
+            setMessage(message)
+            setView(binding.root)
+            setOnCancelListener { result.cancel() }
+            setPositiveButton(R.string.action_ok) { _, _ ->
+                result.confirm(binding.jsPromptEdittext.text?.toString().orEmpty())
+            }
+            setNegativeButton(R.string.action_cancel) { _, _ -> result.cancel() }
+        }.resizeAndShow()
+        return true
+    }
+
+    override fun onJsBeforeUnload(
+        view: WebView,
+        url: String?,
+        message: String?,
+        result: JsResult
+    ): Boolean {
+        if (activity.isFinishing) return false
+        MaterialAlertDialogBuilder(activity).apply {
+            setTitle(R.string.title_js_before_unload)
+            setMessage(R.string.message_js_before_unload)
+            setOnCancelListener { result.cancel() }
+            setPositiveButton(R.string.action_leave) { _, _ -> result.confirm() }
+            setNegativeButton(R.string.action_stay) { _, _ -> result.cancel() }
+        }.resizeAndShow()
+        return true
+    }
+
+    private fun jsDialogTitle(url: String?): String {
+        val uri = url?.let(Uri::parse)
+        val origin = if (uri?.scheme != null && !uri.host.isNullOrEmpty()) {
+            "${uri.scheme}://${uri.host}" + if (uri.port != -1) ":${uri.port}" else ""
+        } else {
+            url.orEmpty()
+        }
+        return activity.getString(R.string.title_js_dialog, origin)
     }
 
     override fun onShowFileChooser(
