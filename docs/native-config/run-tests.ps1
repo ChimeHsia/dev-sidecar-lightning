@@ -47,7 +47,8 @@ $tests = @(
     'com.dsha.sidecar.net.config.native.BoundedJson5Test',
     'com.dsha.sidecar.net.config.native.NativeConfigRepositoryTest',
     'com.dsha.sidecar.net.config.native.RemoteConfigPolicyTest',
-    'com.dsha.sidecar.net.config.native.LegacyFileCompatibilityTest'
+    'com.dsha.sidecar.net.config.native.LegacyFileCompatibilityTest',
+    'com.dsha.sidecar.net.config.native.HttpsRemoteConfigFetcherTest'
 )
 & $Java '-Xmx256m' '-XX:+UseSerialGC' '-XX:ActiveProcessorCount=2' '-cp' "$output/config-tests.jar;$runtime" `
     'org.junit.runner.JUnitCore' @tests *> "$output/junit.log"
