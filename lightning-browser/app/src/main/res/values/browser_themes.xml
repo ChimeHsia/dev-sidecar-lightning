@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 运行时由 ThemableActivity 按用户设置切换 Light / Dark / Black -->
+    <style name="Theme.Browser.Light" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/md_theme_light_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_light_on_primary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_light_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_light_on_primary_container</item>
+        <item name="colorSecondary">@color/md_theme_light_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_light_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_light_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_light_on_secondary_container</item>
+        <item name="colorTertiary">@color/md_theme_light_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_light_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_light_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_light_on_tertiary_container</item>
+        <item name="colorError">@color/md_theme_light_error</item>
+        <item name="colorOnError">@color/md_theme_light_on_error</item>
+        <item name="colorErrorContainer">@color/md_theme_light_error_container</item>
+        <item name="colorOnErrorContainer">@color/md_theme_light_on_error_container</item>
+        <item name="android:colorBackground">@color/md_theme_light_background</item>
+        <item name="colorOnBackground">@color/md_theme_light_on_background</item>
+        <item name="colorSurface">@color/md_theme_light_surface</item>
+        <item name="colorOnSurface">@color/md_theme_light_on_surface</item>
+        <item name="colorSurfaceVariant">@color/md_theme_light_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_light_on_surface_variant</item>
+        <item name="colorOutline">@color/md_theme_light_outline</item>
+        <item name="colorOutlineVariant">@color/md_theme_light_outline_variant</item>
+        <item name="colorSurfaceInverse">@color/md_theme_light_inverse_surface</item>
+        <item name="colorOnSurfaceInverse">@color/md_theme_light_inverse_on_surface</item>
+        <item name="colorPrimaryInverse">@color/md_theme_light_inverse_primary</item>
+        <item name="colorSurfaceDim">@color/md_theme_light_surface_dim</item>
+        <item name="colorSurfaceBright">@color/md_theme_light_surface_bright</item>
+        <item name="colorSurfaceContainerLowest">@color/md_theme_light_surface_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/md_theme_light_surface_container_low</item>
+        <item name="colorSurfaceContainer">@color/md_theme_light_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/md_theme_light_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/md_theme_light_surface_container_highest</item>
+        <item name="android:windowBackground">@color/md_theme_light_background</item>
+        <item name="iconColor">?attr/colorOnSurfaceVariant</item>
+        <item name="iconColorState">@color/icon_color_state</item>
+    </style>
+
+    <style name="Theme.Browser.Dark" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/md_theme_dark_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_dark_on_primary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_dark_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_dark_on_primary_container</item>
+        <item name="colorSecondary">@color/md_theme_dark_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_dark_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_dark_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_dark_on_secondary_container</item>
+        <item name="colorTertiary">@color/md_theme_dark_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_dark_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_dark_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_dark_on_tertiary_container</item>
+        <item name="colorError">@color/md_theme_dark_error</item>
+        <item name="colorOnError">@color/md_theme_dark_on_error</item>
+        <item name="colorErrorContainer">@color/md_theme_dark_error_container</item>
+        <item name="colorOnErrorContainer">@color/md_theme_dark_on_error_container</item>
+        <item name="android:colorBackground">@color/md_theme_dark_background</item>
+        <item name="colorOnBackground">@color/md_theme_dark_on_background</item>
+        <item name="colorSurface">@color/md_theme_dark_surface</item>
+        <item name="colorOnSurface">@color/md_theme_dark_on_surface</item>
+        <item name="colorSurfaceVariant">@color/md_theme_dark_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_dark_on_surface_variant</item>
+        <item name="colorOutline">@color/md_theme_dark_outline</item>
+        <item name="colorOutlineVariant">@color/md_theme_dark_outline_variant</item>
+        <item name="colorSurfaceInverse">@color/md_theme_dark_inverse_surface</item>
+        <item name="colorOnSurfaceInverse">@color/md_theme_dark_inverse_on_surface</item>
+        <item name="colorPrimaryInverse">@color/md_theme_dark_inverse_primary</item>
+        <item name="colorSurfaceDim">@color/md_theme_dark_surface_dim</item>
+        <item name="colorSurfaceBright">@color/md_theme_dark_surface_bright</item>
+        <item name="colorSurfaceContainerLowest">@color/md_theme_dark_surface_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/md_theme_dark_surface_container_low</item>
+        <item name="colorSurfaceContainer">@color/md_theme_dark_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/md_theme_dark_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/md_theme_dark_surface_container_highest</item>
+        <item name="android:windowBackground">@color/md_theme_dark_background</item>
+        <item name="iconColor">?attr/colorOnSurfaceVariant</item>
+        <item name="iconColorState">@color/icon_color_state</item>
+    </style>
+
+    <style name="Theme.Browser.Black" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/md_theme_black_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_black_on_primary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_black_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_black_on_primary_container</item>
+        <item name="colorSecondary">@color/md_theme_black_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_black_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_black_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_black_on_secondary_container</item>
+        <item name="colorTertiary">@color/md_theme_black_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_black_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_black_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_black_on_tertiary_container</item>
+        <item name="colorError">@color/md_theme_black_error</item>
+        <item name="colorOnError">@color/md_theme_black_on_error</item>
+        <item name="colorErrorContainer">@color/md_theme_black_error_container</item>
+        <item name="colorOnErrorContainer">@color/md_theme_black_on_error_container</item>
+        <item name="android:colorBackground">@color/md_theme_black_background</item>
+        <item name="colorOnBackground">@color/md_theme_black_on_background</item>
+        <item name="colorSurface">@color/md_theme_black_surface</item>
+        <item name="colorOnSurface">@color/md_theme_black_on_surface</item>
+        <item name="colorSurfaceVariant">@color/md_theme_black_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_black_on_surface_variant</item>
+        <item name="colorOutline">@color/md_theme_black_outline</item>
+        <item name="colorOutlineVariant">@color/md_theme_black_outline_variant</item>
+        <item name="colorSurfaceInverse">@color/md_theme_black_inverse_surface</item>
+        <item name="colorOnSurfaceInverse">@color/md_theme_black_inverse_on_surface</item>
+        <item name="colorPrimaryInverse">@color/md_theme_black_inverse_primary</item>
+        <item name="colorSurfaceDim">@color/md_theme_black_surface_dim</item>
+        <item name="colorSurfaceBright">@color/md_theme_black_surface_bright</item>
+        <item name="colorSurfaceContainerLowest">@color/md_theme_black_surface_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/md_theme_black_surface_container_low</item>
+        <item name="colorSurfaceContainer">@color/md_theme_black_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/md_theme_black_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/md_theme_black_surface_container_highest</item>
+        <item name="android:windowBackground">@color/md_theme_black_background</item>
+        <item name="iconColor">?attr/colorOnSurfaceVariant</item>
+        <item name="iconColorState">@color/icon_color_state</item>
+    </style>
+
+    <!-- 只在 manifest 里用作启动主题，跟随系统明暗；values-night 中覆盖为 Dark -->
+    <style name="Theme.Browser" parent="Theme.Browser.Light" />
+</resources>

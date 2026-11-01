@@ -60,7 +60,7 @@
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard"
             android:exported="true"
             android:launchMode="singleInstance"
-            android:theme="@style/Theme.LightTheme"
+            android:theme="@style/Theme.Browser"
             android:windowSoftInputMode="stateHidden|adjustResize">
 
             <intent-filter>
@@ -147,7 +147,7 @@
             android:parentActivityName="acr.browser.lightning.DefaultBrowserActivity"
             android:process=":incognito"
             android:taskAffinity="com.anthonycr.browser.AffinityIncognito"
-            android:theme="@style/Theme.DarkTheme"
+            android:theme="@style/Theme.Browser.Dark"
             android:windowSoftInputMode="stateHidden|adjustResize">
 
             <intent-filter>
@@ -163,7 +163,7 @@
             android:exported="false"
             android:label="@string/settings"
             android:parentActivityName="acr.browser.lightning.DefaultBrowserActivity"
-            android:theme="@style/Theme.LightTheme">
+            android:theme="@style/Theme.Browser">
             <intent-filter>
                 <action android:name="android.intent.action.SETTINGS" />
 

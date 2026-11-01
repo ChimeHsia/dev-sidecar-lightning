@@ -1,0 +1,44 @@
+[
+  {
+    "destination": "lightning-browser/app/src/main/java/acr/browser/lightning/ThemableActivity.kt",
+    "upstream_path": "lightning-browser/app/src/main/java/acr/browser/lightning/ThemableActivity.kt",
+    "upstream_commit": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+    "sha256": "7c83a5d2442191c12082d18b3e3d3d9db11cb3272f364e2fa274eb20df8f8671",
+    "git_blob": "225417f05c14fa882e79b7f98baace9b628808a4"
+  },
+  {
+    "destination": "lightning-browser/app/src/main/java/acr/browser/lightning/compose/Theme.kt",
+    "upstream_path": "lightning-browser/app/src/main/java/acr/browser/lightning/compose/Theme.kt",
+    "upstream_commit": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+    "sha256": "7329ad9a0ea86dc53b611105cc26ed326bb8b4caa58e5478172e27561ce96f57",
+    "git_blob": "7b8de2bd7f20cc6a483d21b3f0870f23741045c7"
+  },
+  {
+    "destination": "lightning-browser/app/src/main/res/values/browser_themes.xml",
+    "upstream_path": "lightning-browser/app/src/main/res/values/styles.xml",
+    "upstream_commit": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+    "sha256": "b94f2764c1b0b1830b962e098d4bb9bea79fde92de461627f08f7b31d93f9ed7",
+    "git_blob": "8b9bf522cdc4cc37a77c6b946f9a7e5e97beaa2d"
+  },
+  {
+    "destination": "lightning-browser/app/src/main/res/values/theme_colors.xml",
+    "upstream_path": "lightning-browser/app/src/main/res/values/theme_colors.xml",
+    "upstream_commit": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+    "sha256": "3804a89bec4a3244edcb6a85966000e031bdfa2e46c3e3bd98ae9bdc9b7dc4b4",
+    "git_blob": "43b114d2cb4a25c542f82da3bf88296baec63abc"
+  },
+  {
+    "destination": "lightning-browser/app/src/main/res/values-night/styles.xml",
+    "upstream_path": "lightning-browser/app/src/main/res/values-night/styles.xml",
+    "upstream_commit": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+    "sha256": "79658bd595a8fdb57c731bd80a831db07a1896126ae6a76a5ef4227d386932b1",
+    "git_blob": "6dcc9f7475dd8e043a9cf982f77335dadd41f53a"
+  },
+  {
+    "destination": "lightning-browser/app/src/main/res/color/icon_color_state.xml",
+    "upstream_path": "lightning-browser/app/src/main/res/color/icon_color_state.xml",
+    "upstream_commit": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+    "sha256": "fb16fa5ad3b5078e616babc59cd53c479ad94a8ee337bdffb15f51cafe1a861d",
+    "git_blob": "bef81fae97446d9dfe22840b80cc99f410649b2c"
+  }
+]
