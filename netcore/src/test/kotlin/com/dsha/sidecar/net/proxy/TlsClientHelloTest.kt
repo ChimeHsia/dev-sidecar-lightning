@@ -2,6 +2,7 @@ package com.dsha.sidecar.net.proxy
 
 import com.dsha.sidecar.net.util.ByteWriter
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
@@ -51,6 +52,50 @@ class TlsClientHelloTest {
         val record = clientHello("github.com")
         val cut = record.copyOf(record.size - 10)
         assertEquals(null, TlsClientHello.sniOf(cut))
+    }
+
+    @Test
+    fun `parsing does not modify bytes and case only rewrite keeps original instance`() {
+        val record = clientHello("GiTHub.COM")
+        val original = record.copyOf()
+        assertEquals("github.com", TlsClientHello.sniOf(record))
+        assertContentEquals(original, record)
+        assertSame(record, TlsClientHello.rewriteSni(record, "GITHUB.com"))
+        assertContentEquals(original, record)
+    }
+
+    @Test
+    fun `rewrite changes only hostname and corresponding lengths without mutating input`() {
+        val record = clientHello("github.com")
+        val original = record.copyOf()
+        for (name in listOf("x.io", "raw.githubusercontent.com", "a".repeat(255))) {
+            val rewritten = TlsClientHello.rewriteSni(record, name)
+            assertContentEquals(clientHello(name), rewritten, name)
+            assertContentEquals(original, record, name)
+        }
+        assertSame(record, TlsClientHello.rewriteSni(record, "a".repeat(256)))
+        assertContentEquals(original, record)
+    }
+
+    @Test
+    fun `every truncated record is left unchanged`() {
+        val record = clientHello("github.com")
+        for (size in 0 until record.size) {
+            val truncated = record.copyOf(size)
+            assertEquals(null, TlsClientHello.sniOf(truncated), "size=$size")
+            assertSame(truncated, TlsClientHello.rewriteSni(truncated, "other.example"), "size=$size")
+        }
+    }
+
+    @Test
+    fun `client hello without server name extension is left unchanged`() {
+        val record = clientHello("github.com")
+        // The fixed fixture puts the first extension type at offsets 52-53.
+        record[53] = 1
+        val original = record.copyOf()
+        assertEquals(null, TlsClientHello.sniOf(record))
+        assertSame(record, TlsClientHello.rewriteSni(record, "other.example"))
+        assertContentEquals(original, record)
     }
 
     private fun assertConsistent(r: ByteArray) {

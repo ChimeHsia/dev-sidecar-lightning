@@ -1,15 +1,12 @@
 package acr.browser.lightning.preference.datastore
 
 import acr.browser.lightning.preference.IntEnum
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import app.cash.turbine.turbineScope
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Rule
 import org.junit.Test
-import java.io.File
 
 class EnumPreferenceStoreTest {
 
@@ -20,9 +17,10 @@ class EnumPreferenceStoreTest {
         FOUR(4),
     }
 
-    private val dataStore: DataStore<Preferences> = PreferenceDataStoreFactory.create {
-        File.createTempFile("test", ".preferences_pb")
-    }
+    @get:Rule
+    val dataStoreRule = PreferenceDataStoreRule()
+
+    private val dataStore get() = dataStoreRule.dataStore
 
     @Test
     fun `no stored value returns default`() = runTest {

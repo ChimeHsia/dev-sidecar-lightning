@@ -69,4 +69,46 @@ class DnsCacheTest {
         assertNotNull(c.get("github.com"))
         assertNotNull(c.get("GiThUb.CoM"))
     }
+
+    @Test
+    fun `expiry is inclusive and removes only the expired entry`() {
+        val c = cache()
+        c.put(" Example.COM. ", "192.0.2.1", 60, 10)
+        c.put("other.example", "192.0.2.2", 120, 20)
+
+        clock += 59_999
+        assertNotNull(c.get("example.com"))
+        clock += 1
+        assertNull(c.get("EXAMPLE.COM."))
+        assertEquals(1, c.size())
+        assertNotNull(c.get("other.example"))
+    }
+
+    @Test
+    fun `replacing and invalidating normalized host does not affect others`() {
+        val c = cache()
+        c.put("Example.COM.", "192.0.2.1", 60, 1)
+        c.put(" example.com ", "192.0.2.2", 120, 2)
+        c.put("other.example", "192.0.2.3", 120, 3)
+
+        assertEquals(2, c.size())
+        assertEquals("192.0.2.2", c.get("EXAMPLE.COM.")?.ip)
+        c.invalidate(" ExAmPlE.CoM. ")
+        assertNull(c.get("example.com"))
+        assertNotNull(c.get("other.example"))
+    }
+
+    @Test
+    fun `ttl clamps at both exact expiration boundaries`() {
+        val c = cache()
+        c.put("min.example", "192.0.2.1", -1, 0)
+        c.put("max.example", "192.0.2.2", Int.MAX_VALUE, 0)
+
+        clock += 60_000
+        assertNull(c.get("min.example"))
+        clock += 3_539_999
+        assertNotNull(c.get("max.example"))
+        clock += 1
+        assertNull(c.get("max.example"))
+    }
 }

@@ -64,6 +64,20 @@ JAVA_HOME=../.jdk/jdk-21.0.2 ./gradlew assembleLightningPlusRelease
 一条仍然成立的结论：**不能在链路上改写 TLS 字节**。SNI 参与握手 transcript，改字节会让 Finished 校验失败。
 回归测试见 `netcore/src/test/.../TlsClientHelloTest.kt`。
 
+## 回归基线
+
+Windows 下使用 PowerShell 统一运行测试：
+
+```powershell
+.\scripts\test-baseline.ps1 -Suite All
+# 依赖已缓存时可加 -Offline；也可单独选择 Node、Netcore 或 Browser
+```
+
+Node 测试验证当前 Android 核心入口的启动契约；Netcore 测试保护参考实现的
+规则、DNS、HTTP 和 TLS 行为；Browser 运行 Lightning 现有 JVM 测试。
+它们不能替代真机上的 WebView、证书和代理验收。
+真机检查步骤、证据采集命令和迁移顺序见 [回归指南](docs/REGRESSION.md)。
+
 ## 已知问题
 
 - **代理端口 31181 会被抢占**：多个测试包（`com.dsha.sidecar` / `com.dsha.browser` / EinkBro 版）同时装时，
