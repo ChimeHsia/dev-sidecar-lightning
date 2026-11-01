@@ -1,0 +1,1135 @@
+[
+  {
+    "name": "empty catalog",
+    "input": {
+      "operation": "normalize"
+    },
+    "expected": {
+      "descriptors": [
+        {
+          "key": "builtin:PreSet",
+          "name": "PreSet",
+          "transport": "preset",
+          "server": null,
+          "port": null,
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": null,
+          "nat64Options": null
+        }
+      ],
+      "bindings": {
+        "PreSet": "builtin:PreSet",
+        "ForSNI": "builtin:PreSet"
+      }
+    }
+  },
+  {
+    "name": "mixed descriptors aliases and IPv6",
+    "input": {
+      "operation": "normalize",
+      "providers": {
+        "blank": {},
+        "web": {
+          "server": " dns.example ",
+          "type": " DoH ",
+          "sni": "front",
+          "family": 6,
+          "cacheSize": 42
+        },
+        "tls": {
+          "server": "tls://[2001:db8::1]:8853",
+          "forSNI": true,
+          "servername": "resolver",
+          "ech": false
+        },
+        "raw6": {
+          "host": "2001:db8::1",
+          "type": "TCP",
+          "family": "4"
+        },
+        "port": {
+          "server": "[::1]:53",
+          "port": 5353,
+          "forSni": true
+        },
+        "unknown": {
+          "server": "udp://host:123",
+          "type": "unrecognized"
+        },
+        "url": {
+          "server": "http://dns.example",
+          "type": "https"
+        }
+      },
+      "options": {
+        "ech": {
+          "enabled": true,
+          "cacheSize": 9
+        },
+        "nat64": {
+          "enabled": true,
+          "prefix": "64:ff9b::",
+          "ech": false
+        }
+      }
+    },
+    "expected": {
+      "descriptors": [
+        {
+          "key": "provider:web",
+          "name": "web",
+          "transport": "udp",
+          "server": "dns.example ",
+          "port": null,
+          "family": 6,
+          "cacheSize": 42,
+          "sni": null,
+          "echOptions": {
+            "enabled": true,
+            "cacheSize": 9
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "provider:tls",
+          "name": "tls",
+          "transport": "tls",
+          "server": "2001:db8::1",
+          "port": "8853",
+          "family": null,
+          "cacheSize": null,
+          "sni": "resolver",
+          "echOptions": {
+            "enabled": false,
+            "cacheSize": 9
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "provider:raw6",
+          "name": "raw6",
+          "transport": "tcp",
+          "server": "2001:db8::1",
+          "port": null,
+          "family": "4",
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": {
+            "enabled": true,
+            "cacheSize": 9
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "provider:port",
+          "name": "port",
+          "transport": "udp",
+          "server": "::1:53",
+          "port": 5353,
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": {
+            "enabled": true,
+            "cacheSize": 9
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "provider:unknown",
+          "name": "unknown",
+          "transport": "udp",
+          "server": "host",
+          "port": "123",
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": {
+            "enabled": true,
+            "cacheSize": 9
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "provider:url",
+          "name": "url",
+          "transport": "https",
+          "server": "http://dns.example",
+          "port": null,
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": {
+            "enabled": true,
+            "cacheSize": 9
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "builtin:PreSet",
+          "name": "PreSet",
+          "transport": "preset",
+          "server": null,
+          "port": null,
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": null,
+          "nat64Options": null
+        },
+        {
+          "key": "builtin:Nat64",
+          "name": "NAT64",
+          "transport": "nat64",
+          "server": null,
+          "port": null,
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": {
+            "enabled": false,
+            "cacheSize": 9
+          },
+          "nat64Options": {
+            "enabled": true,
+            "prefix": "64:ff9b::",
+            "ech": false,
+            "providers": {
+              "blank": {},
+              "web": {
+                "server": " dns.example ",
+                "type": " DoH ",
+                "sni": "front",
+                "family": 6,
+                "cacheSize": 42
+              },
+              "tls": {
+                "server": "tls://[2001:db8::1]:8853",
+                "forSNI": true,
+                "servername": "resolver",
+                "ech": false
+              },
+              "raw6": {
+                "host": "2001:db8::1",
+                "type": "TCP",
+                "family": "4"
+              },
+              "port": {
+                "server": "[::1]:53",
+                "port": 5353,
+                "forSni": true
+              },
+              "unknown": {
+                "server": "udp://host:123",
+                "type": "unrecognized"
+              },
+              "url": {
+                "server": "http://dns.example",
+                "type": "https"
+              }
+            }
+          }
+        }
+      ],
+      "bindings": {
+        "web": "provider:web",
+        "tls": "provider:tls",
+        "ForSNI": "provider:port",
+        "raw6": "provider:raw6",
+        "port": "provider:port",
+        "unknown": "provider:unknown",
+        "url": "provider:url",
+        "PreSet": "builtin:PreSet",
+        "Nat64": "builtin:Nat64"
+      }
+    }
+  },
+  {
+    "name": "integer keys and reserved collisions",
+    "input": {
+      "operation": "normalize",
+      "providers": {
+        "2": {
+          "server": "b",
+          "forSNI": true
+        },
+        "10": {
+          "server": "a",
+          "forSni": true
+        },
+        "ForSNI": {
+          "server": "c"
+        },
+        "PreSet": {
+          "server": "d"
+        },
+        "Nat64": {
+          "server": "e"
+        }
+      },
+      "options": {
+        "ech": {
+          "enabled": false
+        },
+        "nat64": {
+          "enabled": true
+        }
+      }
+    },
+    "expected": {
+      "descriptors": [
+        {
+          "key": "provider:2",
+          "name": "2",
+          "transport": "udp",
+          "server": "b",
+          "port": null,
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": {
+            "enabled": false
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "provider:10",
+          "name": "10",
+          "transport": "udp",
+          "server": "a",
+          "port": null,
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": {
+            "enabled": false
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "provider:ForSNI",
+          "name": "ForSNI",
+          "transport": "udp",
+          "server": "c",
+          "port": null,
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": {
+            "enabled": false
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "provider:PreSet",
+          "name": "PreSet",
+          "transport": "udp",
+          "server": "d",
+          "port": null,
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": {
+            "enabled": false
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "provider:Nat64",
+          "name": "Nat64",
+          "transport": "udp",
+          "server": "e",
+          "port": null,
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": {
+            "enabled": false
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "builtin:PreSet",
+          "name": "PreSet",
+          "transport": "preset",
+          "server": null,
+          "port": null,
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": null,
+          "nat64Options": null
+        },
+        {
+          "key": "builtin:Nat64",
+          "name": "NAT64",
+          "transport": "nat64",
+          "server": null,
+          "port": null,
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": {
+            "enabled": false
+          },
+          "nat64Options": {
+            "enabled": true,
+            "providers": {
+              "2": {
+                "server": "b",
+                "forSNI": true
+              },
+              "10": {
+                "server": "a",
+                "forSni": true
+              },
+              "ForSNI": {
+                "server": "c"
+              },
+              "PreSet": {
+                "server": "d"
+              },
+              "Nat64": {
+                "server": "e"
+              }
+            }
+          }
+        }
+      ],
+      "bindings": {
+        "2": "provider:2",
+        "10": "provider:10",
+        "ForSNI": "provider:ForSNI",
+        "PreSet": "builtin:PreSet",
+        "Nat64": "builtin:Nat64"
+      }
+    }
+  },
+  {
+    "name": "explicit type overrides protocol",
+    "input": {
+      "operation": "normalize",
+      "providers": {
+        "a": {
+          "server": "tls://dns:123",
+          "type": "udp"
+        },
+        "b": {
+          "server": "doh.example",
+          "type": "dns-over-https"
+        },
+        "c": {
+          "server": "dot://resolver",
+          "type": "dot"
+        },
+        "d": {
+          "server": "dns:123",
+          "type": "tcp"
+        },
+        "e": {
+          "host": "dns",
+          "type": "dns-over-tls",
+          "servername": "front"
+        },
+        "f": {
+          "server": "x",
+          "type": "d n s"
+        }
+      }
+    },
+    "expected": {
+      "descriptors": [
+        {
+          "key": "provider:a",
+          "name": "a",
+          "transport": "udp",
+          "server": "dns",
+          "port": "123",
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": {
+            "enabled": true
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "provider:b",
+          "name": "b",
+          "transport": "https",
+          "server": "https://doh.example/dns-query",
+          "port": null,
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": {
+            "enabled": true
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "provider:c",
+          "name": "c",
+          "transport": "tls",
+          "server": "resolver",
+          "port": null,
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": {
+            "enabled": true
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "provider:d",
+          "name": "d",
+          "transport": "tcp",
+          "server": "dns",
+          "port": "123",
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": {
+            "enabled": true
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "provider:e",
+          "name": "e",
+          "transport": "tls",
+          "server": "dns",
+          "port": null,
+          "family": null,
+          "cacheSize": null,
+          "sni": "front",
+          "echOptions": {
+            "enabled": true
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "provider:f",
+          "name": "f",
+          "transport": "udp",
+          "server": "x",
+          "port": null,
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": {
+            "enabled": true
+          },
+          "nat64Options": null
+        },
+        {
+          "key": "builtin:PreSet",
+          "name": "PreSet",
+          "transport": "preset",
+          "server": null,
+          "port": null,
+          "family": null,
+          "cacheSize": null,
+          "sni": null,
+          "echOptions": null,
+          "nat64Options": null
+        }
+      ],
+      "bindings": {
+        "a": "provider:a",
+        "b": "provider:b",
+        "c": "provider:c",
+        "d": "provider:d",
+        "e": "provider:e",
+        "f": "provider:f",
+        "PreSet": "builtin:PreSet",
+        "ForSNI": "builtin:PreSet"
+      }
+    }
+  },
+  {
+    "name": "unknown scheme error",
+    "input": {
+      "operation": "normalize",
+      "providers": {
+        "bad": {
+          "server": "quic://dns"
+        }
+      }
+    },
+    "expected": {
+      "error": "Unknown type DNS: quic://dns, provider: bad"
+    }
+  },
+  {
+    "name": "doh csv",
+    "input": {
+      "operation": "toDohList",
+      "doh": " a, ,b,a,  c "
+    },
+    "expected": [
+      "a",
+      "b",
+      "a",
+      "c"
+    ]
+  },
+  {
+    "name": "doh array keeps commas",
+    "input": {
+      "operation": "toDohList",
+      "doh": [
+        " a,b ",
+        " ",
+        "https://one",
+        "https://one"
+      ]
+    },
+    "expected": [
+      "a,b",
+      "https://one",
+      "https://one"
+    ]
+  },
+  {
+    "name": "doh null",
+    "input": {
+      "operation": "toDohList",
+      "doh": null
+    },
+    "expected": []
+  },
+  {
+    "name": "selected doh first and duplicate keeps sni",
+    "input": {
+      "operation": "resolveDohList",
+      "config": {
+        "dns": " main ",
+        "doh": [
+          "https://dns.alidns.com/resolve",
+          "https://extra/query",
+          "https://extra/query"
+        ]
+      },
+      "providers": {
+        "main": {
+          "server": " dns.alidns.com/resolve ",
+          "type": " d o h ",
+          "servername": "front"
+        }
+      }
+    },
+    "expected": [
+      {
+        "url": "dns.alidns.com/resolve",
+        "sni": "front"
+      },
+      {
+        "url": "https://dns.alidns.com/resolve",
+        "sni": ""
+      },
+      {
+        "url": "https://extra/query",
+        "sni": ""
+      },
+      {
+        "url": "https://cloudflare-dns.com/dns-query",
+        "sni": ""
+      },
+      {
+        "url": "https://dns.google/resolve",
+        "sni": ""
+      }
+    ]
+  },
+  {
+    "name": "selected host default path and direct csv",
+    "input": {
+      "operation": "resolveDohList",
+      "config": {
+        "dns": "main",
+        "doh": " https://extra/query,https://dns.google/resolve "
+      },
+      "providers": {
+        "main": {
+          "host": " doh.example ",
+          "type": "https",
+          "sni": "edge"
+        }
+      }
+    },
+    "expected": [
+      {
+        "url": "https://doh.example/dns-query",
+        "sni": "edge"
+      },
+      {
+        "url": "https://extra/query",
+        "sni": ""
+      },
+      {
+        "url": "https://dns.google/resolve",
+        "sni": ""
+      },
+      {
+        "url": "https://dns.alidns.com/resolve",
+        "sni": ""
+      },
+      {
+        "url": "https://cloudflare-dns.com/dns-query",
+        "sni": ""
+      }
+    ]
+  },
+  {
+    "name": "inferred non doh and missing provider",
+    "input": {
+      "operation": "resolveDohList",
+      "config": {
+        "dns": "other",
+        "doh": ""
+      },
+      "providers": {
+        "other": {
+          "server": "dns.example"
+        }
+      }
+    },
+    "expected": [
+      {
+        "url": "https://dns.alidns.com/resolve",
+        "sni": ""
+      },
+      {
+        "url": "https://cloudflare-dns.com/dns-query",
+        "sni": ""
+      },
+      {
+        "url": "https://dns.google/resolve",
+        "sni": ""
+      }
+    ]
+  },
+  {
+    "name": "explicit non doh",
+    "input": {
+      "operation": "resolveDohList",
+      "config": {
+        "dns": "other"
+      },
+      "providers": {
+        "other": {
+          "server": "https://dns.example/query",
+          "type": "udp"
+        }
+      }
+    },
+    "expected": [
+      {
+        "url": "https://dns.alidns.com/resolve",
+        "sni": ""
+      },
+      {
+        "url": "https://cloudflare-dns.com/dns-query",
+        "sni": ""
+      },
+      {
+        "url": "https://dns.google/resolve",
+        "sni": ""
+      }
+    ]
+  },
+  {
+    "name": "mapping with family and usa alias",
+    "input": {
+      "operation": "select",
+      "providers": {
+        "cloudflare": {
+          "server": "1.1.1.1",
+          "family": 6
+        }
+      },
+      "mapping": {
+        "*.example.com": {
+          "dnsName": "usa",
+          "family": 4
+        }
+      },
+      "hostname": "www.example.com"
+    },
+    "expected": {
+      "choice": {
+        "providerKey": "provider:cloudflare",
+        "family": 4
+      },
+      "isNat64": false,
+      "isEch": false,
+      "ignorePreSet": true,
+      "echProviderKey": null
+    }
+  },
+  {
+    "name": "unknown mapped provider",
+    "input": {
+      "operation": "select",
+      "mapping": {
+        "*": {
+          "dnsName": "unknown",
+          "family": 6
+        }
+      },
+      "hostname": "x.example"
+    },
+    "expected": {
+      "choice": null,
+      "isNat64": false,
+      "isEch": false,
+      "ignorePreSet": true,
+      "echProviderKey": null
+    }
+  },
+  {
+    "name": "empty mapping",
+    "input": {
+      "operation": "select",
+      "hostname": "x.example"
+    },
+    "expected": {
+      "choice": null,
+      "isNat64": false,
+      "isEch": false,
+      "ignorePreSet": true,
+      "echProviderKey": null
+    }
+  },
+  {
+    "name": "preset takes precedence",
+    "input": {
+      "operation": "select",
+      "providers": {
+        "cloudflare": {
+          "server": "1.1.1.1"
+        }
+      },
+      "preSetIpList": {
+        "*.example.com": []
+      },
+      "mapping": {
+        "*": {
+          "dnsName": "cloudflare",
+          "family": 6
+        }
+      },
+      "hostname": "example.com"
+    },
+    "expected": {
+      "choice": {
+        "providerKey": "builtin:PreSet",
+        "family": null
+      },
+      "isNat64": false,
+      "isEch": false,
+      "ignorePreSet": true,
+      "echProviderKey": null
+    }
+  },
+  {
+    "name": "ech replaces preset",
+    "input": {
+      "operation": "select",
+      "providers": {
+        "doh": {
+          "server": "https://doh.test/query"
+        }
+      },
+      "preSetIpList": {
+        "*": {
+          "ip": "1.2.3.4"
+        }
+      },
+      "ech": {
+        "domains": [
+          "*.example.com"
+        ],
+        "dns": "doh"
+      },
+      "mapping": {
+        "*": {
+          "dnsName": "doh",
+          "family": 6
+        }
+      },
+      "hostname": "foo.example.com"
+    },
+    "expected": {
+      "choice": {
+        "providerKey": "provider:doh",
+        "family": null
+      },
+      "isNat64": false,
+      "isEch": true,
+      "ignorePreSet": true,
+      "echProviderKey": "provider:doh"
+    }
+  },
+  {
+    "name": "ech preset exception",
+    "input": {
+      "operation": "select",
+      "providers": {
+        "doh": {
+          "server": "https://doh.test/query"
+        }
+      },
+      "preSetIpList": {
+        "*": [
+          "1.2.3.4"
+        ]
+      },
+      "ech": {
+        "domains": [
+          "*.example.com"
+        ],
+        "preSetIpDomains": {
+          "foo.example.com": true
+        },
+        "dns": "doh"
+      },
+      "hostname": "foo.example.com"
+    },
+    "expected": {
+      "choice": {
+        "providerKey": "builtin:PreSet",
+        "family": null
+      },
+      "isNat64": false,
+      "isEch": true,
+      "ignorePreSet": false,
+      "echProviderKey": "provider:doh"
+    }
+  },
+  {
+    "name": "nat64 wins ech and preset",
+    "input": {
+      "operation": "select",
+      "providers": {
+        "doh": {
+          "server": "https://doh.test/query"
+        }
+      },
+      "options": {
+        "nat64": {
+          "enabled": true
+        }
+      },
+      "nat64Domains": [
+        "*.example.com"
+      ],
+      "preSetIpList": {
+        "*": [
+          "1.2.3.4"
+        ]
+      },
+      "ech": {
+        "enabled": false,
+        "dns": "doh"
+      },
+      "hostname": "foo.example.com"
+    },
+    "expected": {
+      "choice": {
+        "providerKey": "builtin:Nat64",
+        "family": null
+      },
+      "isNat64": true,
+      "isEch": true,
+      "ignorePreSet": true,
+      "echProviderKey": "provider:doh"
+    }
+  },
+  {
+    "name": "missing ech provider falls back to mapping",
+    "input": {
+      "operation": "select",
+      "providers": {
+        "local": {
+          "server": "127.0.0.1"
+        }
+      },
+      "ech": {
+        "domains": {
+          "example.com": 0
+        },
+        "dns": "missing"
+      },
+      "mapping": {
+        "example.com": {
+          "dnsName": "local",
+          "family": "6"
+        }
+      },
+      "hostname": "example.com"
+    },
+    "expected": {
+      "choice": {
+        "providerKey": "provider:local",
+        "family": "6"
+      },
+      "isNat64": false,
+      "isEch": true,
+      "ignorePreSet": true,
+      "echProviderKey": null
+    }
+  },
+  {
+    "name": "ech disabled uses preset",
+    "input": {
+      "operation": "select",
+      "preSetIpList": {
+        "example.com": true
+      },
+      "ech": {
+        "domains": [
+          "example.com"
+        ],
+        "use": false
+      },
+      "hostname": "example.com"
+    },
+    "expected": {
+      "choice": {
+        "providerKey": "builtin:PreSet",
+        "family": null
+      },
+      "isNat64": false,
+      "isEch": false,
+      "ignorePreSet": true,
+      "echProviderKey": null
+    }
+  },
+  {
+    "name": "nat64 provider reserved name without builtin",
+    "input": {
+      "operation": "select",
+      "providers": {
+        "Nat64": {
+          "server": "127.0.0.1"
+        }
+      },
+      "nat64Domains": [
+        "example.com"
+      ],
+      "hostname": "example.com"
+    },
+    "expected": {
+      "choice": {
+        "providerKey": "provider:Nat64",
+        "family": null
+      },
+      "isNat64": true,
+      "isEch": true,
+      "ignorePreSet": true,
+      "echProviderKey": null
+    }
+  },
+  {
+    "name": "ech provider alias ForSNI",
+    "input": {
+      "operation": "select",
+      "providers": {
+        "local": {
+          "server": "127.0.0.1",
+          "forSNI": true
+        }
+      },
+      "ech": {
+        "domains": [
+          "*"
+        ],
+        "dns": "ForSNI"
+      },
+      "hostname": "example.com"
+    },
+    "expected": {
+      "choice": {
+        "providerKey": "provider:local",
+        "family": null
+      },
+      "isNat64": false,
+      "isEch": true,
+      "ignorePreSet": true,
+      "echProviderKey": "provider:local"
+    }
+  },
+  {
+    "name": "explicit usa wins over cloudflare",
+    "input": {
+      "operation": "select",
+      "providers": {
+        "usa": {
+          "server": "1.1.1.1"
+        },
+        "cloudflare": {
+          "server": "8.8.8.8"
+        }
+      },
+      "mapping": {
+        "*": {
+          "dnsName": "usa"
+        }
+      },
+      "hostname": "example.com"
+    },
+    "expected": {
+      "choice": {
+        "providerKey": "provider:usa",
+        "family": null
+      },
+      "isNat64": false,
+      "isEch": false,
+      "ignorePreSet": true,
+      "echProviderKey": null
+    }
+  },
+  {
+    "name": "false preset and wildcard mapping precedence",
+    "input": {
+      "operation": "select",
+      "providers": {
+        "a": {
+          "server": "1.1.1.1"
+        },
+        "b": {
+          "server": "8.8.8.8"
+        }
+      },
+      "preSetIpList": {
+        "example.com": false,
+        "*": true
+      },
+      "mapping": {
+        "*": {
+          "dnsName": "a"
+        },
+        "example.com": {
+          "dnsName": "b",
+          "family": 6
+        }
+      },
+      "hostname": "example.com"
+    },
+    "expected": {
+      "choice": {
+        "providerKey": "provider:b",
+        "family": 6
+      },
+      "isNat64": false,
+      "isEch": false,
+      "ignorePreSet": true,
+      "echProviderKey": null
+    }
+  }
+]

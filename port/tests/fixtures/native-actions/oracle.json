@@ -1,0 +1,755 @@
+[
+  {
+    "id": "headers-cors",
+    "config": {
+      "options": true,
+      "responseReplace": {
+        "headers": {
+          "Server": "[remove]",
+          "X-Added": "yes"
+        }
+      }
+    },
+    "expected": {
+      "request": {
+        "host": "example.test",
+        "path": "/asset/a%20b.zip?token=x",
+        "method": "GET",
+        "headers": {
+          "origin": "https://caller.test"
+        }
+      },
+      "status": 200,
+      "inputHeaders": [
+        [
+          "Content-Type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "Vary",
+          "Accept-Encoding"
+        ],
+        [
+          "Server",
+          "origin"
+        ],
+        [
+          "Content-Length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "headers": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://caller.test",
+        "cross-origin-resource-policy": "cross-origin",
+        "ds-afteroptionsheaders-interceptor": "1",
+        "x-added": "yes",
+        "ds-responsereplace-interceptor": "headers",
+        "content-type": "text/html; charset=utf-8",
+        "vary": "Accept-Encoding, Origin",
+        "server": "",
+        "content-length": "72"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "encodedUnchanged": true,
+      "bodyBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+"
+    }
+  },
+  {
+    "id": "download-naming",
+    "config": {
+      "responseReplace": {
+        "doDownload": true
+      }
+    },
+    "headers": [
+      [
+        "Cache-Control",
+        "old"
+      ],
+      [
+        "Last-Modified",
+        "old"
+      ],
+      [
+        "Expires",
+        "old"
+      ]
+    ],
+    "expected": {
+      "request": {
+        "host": "example.test",
+        "path": "/asset/a%20b.zip?token=x",
+        "method": "GET",
+        "headers": {
+          "origin": "https://caller.test"
+        }
+      },
+      "status": 200,
+      "inputHeaders": [
+        [
+          "Content-Type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "Vary",
+          "Accept-Encoding"
+        ],
+        [
+          "Server",
+          "origin"
+        ],
+        [
+          "Cache-Control",
+          "old"
+        ],
+        [
+          "Last-Modified",
+          "old"
+        ],
+        [
+          "Expires",
+          "old"
+        ],
+        [
+          "Content-Length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "headers": {
+        "content-disposition": "attachment; filename=\"a%2520b.zip\"",
+        "ds-responsereplace-interceptor": "download:a%20b.zip,headers",
+        "content-type": "application/octet-stream",
+        "vary": "Accept-Encoding",
+        "server": "origin",
+        "cache-control": "",
+        "last-modified": "",
+        "expires": "",
+        "content-length": "72"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "encodedUnchanged": true,
+      "bodyBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+"
+    }
+  },
+  {
+    "id": "non200-skips-replacement",
+    "status": 404,
+    "config": {
+      "responseReplace": {
+        "doDownload": true,
+        "headers": {
+          "Server": "new"
+        }
+      }
+    },
+    "expected": {
+      "request": {
+        "host": "example.test",
+        "path": "/asset/a%20b.zip?token=x",
+        "method": "GET",
+        "headers": {
+          "origin": "https://caller.test"
+        }
+      },
+      "status": 404,
+      "inputHeaders": [
+        [
+          "Content-Type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "Vary",
+          "Accept-Encoding"
+        ],
+        [
+          "Server",
+          "origin"
+        ],
+        [
+          "Content-Length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "server": "origin",
+        "content-length": "72"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "encodedUnchanged": true,
+      "bodyBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+"
+    }
+  },
+  {
+    "id": "gate-disabled",
+    "gate": false,
+    "config": {
+      "options": true,
+      "responseReplace": {
+        "headers": {
+          "Server": "new"
+        }
+      }
+    },
+    "expected": {
+      "request": {
+        "host": "example.test",
+        "path": "/asset/a%20b.zip?token=x",
+        "method": "GET",
+        "headers": {
+          "origin": "https://caller.test"
+        }
+      },
+      "status": 200,
+      "inputHeaders": [
+        [
+          "Content-Type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "Vary",
+          "Accept-Encoding"
+        ],
+        [
+          "Server",
+          "origin"
+        ],
+        [
+          "Content-Length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "server": "origin",
+        "content-length": "72"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "encodedUnchanged": true,
+      "bodyBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+"
+    }
+  },
+  {
+    "id": "identity-head-body-injection",
+    "append": {
+      "head": "<!-- h 中 -->",
+      "body": "<!-- b -->"
+    },
+    "expected": {
+      "request": {
+        "host": "example.test",
+        "path": "/asset/a%20b.zip?token=x",
+        "method": "GET",
+        "headers": {
+          "origin": "https://caller.test"
+        }
+      },
+      "status": 200,
+      "inputHeaders": [
+        [
+          "Content-Type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "Vary",
+          "Accept-Encoding"
+        ],
+        [
+          "Server",
+          "origin"
+        ],
+        [
+          "Content-Length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "server": "origin"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwhLS0gaCDkuK0gLS0+PC9oZWFkPjxib2R5PmhlbGxvPCEtLSBiIC0tPjwvYm9keT48L2h0bWw+",
+      "encodedUnchanged": false,
+      "bodyBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwhLS0gaCDkuK0gLS0+PC9oZWFkPjxib2R5PmhlbGxvPCEtLSBiIC0tPjwvYm9keT48L2h0bWw+"
+    }
+  },
+  {
+    "id": "gzip-head-body-injection",
+    "append": {
+      "head": "<!-- h 中 -->",
+      "body": "<!-- b -->"
+    },
+    "encoding": "gzip",
+    "expected": {
+      "request": {
+        "host": "example.test",
+        "path": "/asset/a%20b.zip?token=x",
+        "method": "GET",
+        "headers": {
+          "origin": "https://caller.test"
+        }
+      },
+      "status": 200,
+      "inputHeaders": [
+        [
+          "Content-Type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "Vary",
+          "Accept-Encoding"
+        ],
+        [
+          "Server",
+          "origin"
+        ],
+        [
+          "Content-Encoding",
+          "gzip"
+        ],
+        [
+          "Content-Length",
+          "78"
+        ]
+      ],
+      "inputBase64": "H4sIAAAAAAAACrPJKMnNsbPJSE1MsbMpySzJSbVLTkw7vFLhyY61H+bParDRhwja6EOUJOWnVNplpObk5Nvog9k2+mATAI9w6FdIAAAA",
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "server": "origin",
+        "content-encoding": "gzip"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwhLS0gaCDkuK0gLS0+PC9oZWFkPjxib2R5PmhlbGxvPCEtLSBiIC0tPjwvYm9keT48L2h0bWw+",
+      "encodedUnchanged": false,
+      "bodyBase64": "H4sIAAAAAAAACrPJKMnNsbPJSE1MsbMpySzJSbVLTkw7vFLhyY61H+bParDRhwjaKOrqKmSARBV0de1s9CEakvJTKu0yUnNy8sHySRA5sKiNPthkAFXjLeRgAAAA"
+    }
+  },
+  {
+    "id": "deflate-head-body-injection",
+    "append": {
+      "head": "<!-- h 中 -->",
+      "body": "<!-- b -->"
+    },
+    "encoding": "deflate",
+    "expected": {
+      "request": {
+        "host": "example.test",
+        "path": "/asset/a%20b.zip?token=x",
+        "method": "GET",
+        "headers": {
+          "origin": "https://caller.test"
+        }
+      },
+      "status": 200,
+      "inputHeaders": [
+        [
+          "Content-Type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "Vary",
+          "Accept-Encoding"
+        ],
+        [
+          "Server",
+          "origin"
+        ],
+        [
+          "Content-Encoding",
+          "deflate"
+        ],
+        [
+          "Content-Length",
+          "66"
+        ]
+      ],
+      "inputBase64": "eJyzySjJzbGzyUhNTLGzKcksyUm1S05MO7xS4cmOtR/mz2qw0YcI2uhDlCTlp1TaZaTm5OTb6IPZNvpgEwAudBx3",
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "server": "origin",
+        "content-encoding": "deflate"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwhLS0gaCDkuK0gLS0+PC9oZWFkPjxib2R5PmhlbGxvPCEtLSBiIC0tPjwvYm9keT48L2h0bWw+",
+      "encodedUnchanged": false,
+      "bodyBase64": "eJyzySjJzbGzyUhNTLGzKcksyUm1S05MO7xS4cmOtR/mz2qw0YcI2ijq6ipkgEQVdHXtbPQhGpLyUyrtMlJzcvLB8kkQObCojT7YZAAKHiLI"
+    }
+  },
+  {
+    "id": "gzip-untouched-header-action",
+    "encoding": "gzip",
+    "config": {
+      "options": true
+    },
+    "expected": {
+      "request": {
+        "host": "example.test",
+        "path": "/asset/a%20b.zip?token=x",
+        "method": "GET",
+        "headers": {
+          "origin": "https://caller.test"
+        }
+      },
+      "status": 200,
+      "inputHeaders": [
+        [
+          "Content-Type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "Vary",
+          "Accept-Encoding"
+        ],
+        [
+          "Server",
+          "origin"
+        ],
+        [
+          "Content-Encoding",
+          "gzip"
+        ],
+        [
+          "Content-Length",
+          "78"
+        ]
+      ],
+      "inputBase64": "H4sIAAAAAAAACrPJKMnNsbPJSE1MsbMpySzJSbVLTkw7vFLhyY61H+bParDRhwja6EOUJOWnVNplpObk5Nvog9k2+mATAI9w6FdIAAAA",
+      "headers": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://caller.test",
+        "cross-origin-resource-policy": "cross-origin",
+        "ds-afteroptionsheaders-interceptor": "1",
+        "content-type": "text/html; charset=utf-8",
+        "vary": "Accept-Encoding, Origin",
+        "server": "origin",
+        "content-encoding": "gzip",
+        "content-length": "78"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "encodedUnchanged": true,
+      "bodyBase64": "H4sIAAAAAAAACrPJKMnNsbPJSE1MsbMpySzJSbVLTkw7vFLhyY61H+bParDRhwja6EOUJOWnVNplpObk5Nvog9k2+mATAI9w6FdIAAAA"
+    }
+  },
+  {
+    "id": "brotli-untouched-header-action",
+    "encoding": "br",
+    "config": {
+      "responseReplace": {
+        "headers": {
+          "X-Test": "br"
+        }
+      }
+    },
+    "expected": {
+      "request": {
+        "host": "example.test",
+        "path": "/asset/a%20b.zip?token=x",
+        "method": "GET",
+        "headers": {
+          "origin": "https://caller.test"
+        }
+      },
+      "status": 200,
+      "inputHeaders": [
+        [
+          "Content-Type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "Vary",
+          "Accept-Encoding"
+        ],
+        [
+          "Server",
+          "origin"
+        ],
+        [
+          "Content-Encoding",
+          "br"
+        ],
+        [
+          "Content-Length",
+          "68"
+        ]
+      ],
+      "inputBase64": "G0cAMKwO7NgVgFNt1OMVD2CDjJnBy89W3EbTTCVXYXTtw9Y2DBxy4HK7cd4CpmADziQIB3vyA5MegE8d3/wIWsiIEQM=",
+      "headers": {
+        "x-test": "br",
+        "ds-responsereplace-interceptor": "headers",
+        "content-type": "text/html; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "server": "origin",
+        "content-encoding": "br",
+        "content-length": "68"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "encodedUnchanged": true,
+      "bodyBase64": "G0cAMKwO7NgVgFNt1OMVD2CDjJnBy89W3EbTTCVXYXTtw9Y2DBxy4HK7cd4CpmADziQIB3vyA5MegE8d3/wIWsiIEQM="
+    }
+  },
+  {
+    "id": "non-html-append-skips",
+    "append": {
+      "head": "<!-- h 中 -->",
+      "body": "<!-- b -->"
+    },
+    "headers": [
+      [
+        "Content-Type",
+        "application/octet-stream"
+      ]
+    ],
+    "text": "binary é",
+    "expected": {
+      "request": {
+        "host": "example.test",
+        "path": "/asset/a%20b.zip?token=x",
+        "method": "GET",
+        "headers": {
+          "origin": "https://caller.test"
+        }
+      },
+      "status": 200,
+      "inputHeaders": [
+        [
+          "Vary",
+          "Accept-Encoding"
+        ],
+        [
+          "Server",
+          "origin"
+        ],
+        [
+          "Content-Type",
+          "application/octet-stream"
+        ],
+        [
+          "Content-Length",
+          "9"
+        ]
+      ],
+      "inputBase64": "YmluYXJ5IMOp",
+      "headers": {
+        "vary": "Accept-Encoding",
+        "server": "origin",
+        "content-type": "application/octet-stream",
+        "content-length": "9"
+      },
+      "decodedBase64": "YmluYXJ5IMOp",
+      "encodedUnchanged": true,
+      "bodyBase64": "YmluYXJ5IMOp"
+    }
+  },
+  {
+    "id": "uppercase-tags",
+    "append": {
+      "head": "<!-- h 中 -->",
+      "body": "<!-- b -->"
+    },
+    "text": "<HTML><HEAD></HEAD><BODY>value</BODY></HTML>",
+    "expected": {
+      "request": {
+        "host": "example.test",
+        "path": "/asset/a%20b.zip?token=x",
+        "method": "GET",
+        "headers": {
+          "origin": "https://caller.test"
+        }
+      },
+      "status": 200,
+      "inputHeaders": [
+        [
+          "Content-Type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "Vary",
+          "Accept-Encoding"
+        ],
+        [
+          "Server",
+          "origin"
+        ],
+        [
+          "Content-Length",
+          "44"
+        ]
+      ],
+      "inputBase64": "PEhUTUw+PEhFQUQ+PC9IRUFEPjxCT0RZPnZhbHVlPC9CT0RZPjwvSFRNTD4=",
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "server": "origin"
+      },
+      "decodedBase64": "PEhUTUw+PEhFQUQ+PCEtLSBoIOS4rSAtLT48L0hFQUQ+PEJPRFk+dmFsdWU8IS0tIGIgLS0+PC9CT0RZPjwvSFRNTD4=",
+      "encodedUnchanged": false,
+      "bodyBase64": "PEhUTUw+PEhFQUQ+PCEtLSBoIOS4rSAtLT48L0hFQUQ+PEJPRFk+dmFsdWU8IS0tIGIgLS0+PC9CT0RZPjwvSFRNTD4="
+    }
+  },
+  {
+    "id": "missing-tags",
+    "append": {
+      "head": "<!-- h 中 -->",
+      "body": "<!-- b -->"
+    },
+    "text": "<html>plain</html>",
+    "expected": {
+      "request": {
+        "host": "example.test",
+        "path": "/asset/a%20b.zip?token=x",
+        "method": "GET",
+        "headers": {
+          "origin": "https://caller.test"
+        }
+      },
+      "status": 200,
+      "inputHeaders": [
+        [
+          "Content-Type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "Vary",
+          "Accept-Encoding"
+        ],
+        [
+          "Server",
+          "origin"
+        ],
+        [
+          "Content-Length",
+          "18"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+cGxhaW48L2h0bWw+",
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "server": "origin"
+      },
+      "decodedBase64": "PGh0bWw+cGxhaW48L2h0bWw+",
+      "encodedUnchanged": false,
+      "bodyBase64": "PGh0bWw+cGxhaW48L2h0bWw+"
+    }
+  },
+  {
+    "id": "csp-self",
+    "append": {
+      "head": "<!-- h 中 -->",
+      "body": "<!-- b -->"
+    },
+    "headers": [
+      [
+        "Content-Security-Policy",
+        "default-src 'none'; script-src 'nonce-test'; script-src-elem https:"
+      ]
+    ],
+    "expected": {
+      "request": {
+        "host": "example.test",
+        "path": "/asset/a%20b.zip?token=x",
+        "method": "GET",
+        "headers": {
+          "origin": "https://caller.test"
+        }
+      },
+      "status": 200,
+      "inputHeaders": [
+        [
+          "Content-Type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "Vary",
+          "Accept-Encoding"
+        ],
+        [
+          "Server",
+          "origin"
+        ],
+        [
+          "Content-Security-Policy",
+          "default-src 'none'; script-src 'nonce-test'; script-src-elem https:"
+        ],
+        [
+          "Content-Length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "server": "origin",
+        "content-security-policy": "default-src 'none'; script-src 'self' 'nonce-test'; script-src-elem 'self' https:"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwhLS0gaCDkuK0gLS0+PC9oZWFkPjxib2R5PmhlbGxvPCEtLSBiIC0tPjwvYm9keT48L2h0bWw+",
+      "encodedUnchanged": false,
+      "bodyBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwhLS0gaCDkuK0gLS0+PC9oZWFkPjxib2R5PmhlbGxvPCEtLSBiIC0tPjwvYm9keT48L2h0bWw+"
+    }
+  },
+  {
+    "id": "csp-default-only",
+    "append": {
+      "head": "<!-- h 中 -->",
+      "body": "<!-- b -->"
+    },
+    "headers": [
+      [
+        "Content-Security-Policy",
+        "default-src 'none'"
+      ]
+    ],
+    "expected": {
+      "request": {
+        "host": "example.test",
+        "path": "/asset/a%20b.zip?token=x",
+        "method": "GET",
+        "headers": {
+          "origin": "https://caller.test"
+        }
+      },
+      "status": 200,
+      "inputHeaders": [
+        [
+          "Content-Type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "Vary",
+          "Accept-Encoding"
+        ],
+        [
+          "Server",
+          "origin"
+        ],
+        [
+          "Content-Security-Policy",
+          "default-src 'none'"
+        ],
+        [
+          "Content-Length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "headers": {
+        "content-type": "text/html; charset=utf-8",
+        "vary": "Accept-Encoding",
+        "server": "origin",
+        "content-security-policy": "script-src 'self'; default-src 'none'"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwhLS0gaCDkuK0gLS0+PC9oZWFkPjxib2R5PmhlbGxvPCEtLSBiIC0tPjwvYm9keT48L2h0bWw+",
+      "encodedUnchanged": false,
+      "bodyBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwhLS0gaCDkuK0gLS0+PC9oZWFkPjxib2R5PmhlbGxvPCEtLSBiIC0tPjwvYm9keT48L2h0bWw+"
+    }
+  }
+]

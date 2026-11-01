@@ -1,0 +1,655 @@
+[
+  {
+    "name": "type https",
+    "input": {
+      "op": "type",
+      "code": 65,
+      "type": "HTTPS"
+    },
+    "expected": {
+      "name": "HTTPS",
+      "isSvc": true,
+      "code": 65
+    }
+  },
+  {
+    "name": "type svcb numeric",
+    "input": {
+      "op": "type",
+      "code": 64,
+      "type": 64
+    },
+    "expected": {
+      "name": "SVCB",
+      "isSvc": true,
+      "code": 64
+    }
+  },
+  {
+    "name": "type fallback",
+    "input": {
+      "op": "type",
+      "code": 65000,
+      "type": "OTHER"
+    },
+    "expected": {
+      "name": "65000",
+      "isSvc": false,
+      "code": 65
+    }
+  },
+  {
+    "name": "type cname",
+    "input": {
+      "op": "type",
+      "code": 5,
+      "type": "SVCB"
+    },
+    "expected": {
+      "name": "CNAME",
+      "isSvc": true,
+      "code": 64
+    }
+  },
+  {
+    "name": "root name",
+    "input": {
+      "op": "encodeName",
+      "text": "."
+    },
+    "expected": "00"
+  },
+  {
+    "name": "utf8 name",
+    "input": {
+      "op": "encodeName",
+      "text": "café.example."
+    },
+    "expected": "05636166c3a9076578616d706c6500"
+  },
+  {
+    "name": "empty labels",
+    "input": {
+      "op": "encodeName",
+      "text": "a..b."
+    },
+    "expected": "0161016200"
+  },
+  {
+    "name": "https query",
+    "input": {
+      "op": "query",
+      "name": "example.test",
+      "options": {
+        "id": 65535
+      }
+    },
+    "expected": "ffff01000001000000000001076578616d706c650474657374000041000100002904d0000000000000"
+  },
+  {
+    "name": "svcb query dnssec",
+    "input": {
+      "op": "query",
+      "name": "www.example.test.",
+      "options": {
+        "id": 4660,
+        "type": 64,
+        "udpPayloadSize": 4096,
+        "dnssecOk": true
+      }
+    },
+    "expected": "12340100000100000000000103777777076578616d706c65047465737400004000010000291000000080000000"
+  },
+  {
+    "name": "unknown query type",
+    "input": {
+      "op": "query",
+      "name": ".",
+      "options": {
+        "id": 0,
+        "type": 65000,
+        "udpPayloadSize": 512
+      }
+    },
+    "expected": "00000100000100000000000100fde800010000290200000000000000"
+  },
+  {
+    "name": "compressed name offset",
+    "input": {
+      "op": "decodeName",
+      "wire": "03666f6f076578616d706c6504746573740003777777c004ff",
+      "offset": 18
+    },
+    "expected": {
+      "name": "www.example.test",
+      "offset": 24
+    }
+  },
+  {
+    "name": "pointer chain",
+    "input": {
+      "op": "decodeName",
+      "wire": "016100c000c003ff",
+      "offset": 5
+    },
+    "expected": {
+      "name": "a",
+      "offset": 7
+    }
+  },
+  {
+    "name": "mandatory",
+    "input": {
+      "op": "param",
+      "key": 0,
+      "wire": "0001000300ff"
+    },
+    "expected": {
+      "key": 0,
+      "name": "mandatory",
+      "value": [
+        "alpn",
+        "port",
+        "key255"
+      ],
+      "raw": "0001000300ff"
+    }
+  },
+  {
+    "name": "alpn",
+    "input": {
+      "op": "param",
+      "key": 1,
+      "wire": "02683208687474702f312e31"
+    },
+    "expected": {
+      "key": 1,
+      "name": "alpn",
+      "value": [
+        "h2",
+        "http/1.1"
+      ],
+      "raw": "02683208687474702f312e31"
+    }
+  },
+  {
+    "name": "no default alpn",
+    "input": {
+      "op": "param",
+      "key": 2,
+      "wire": ""
+    },
+    "expected": {
+      "key": 2,
+      "name": "no_default_alpn",
+      "value": true,
+      "raw": ""
+    }
+  },
+  {
+    "name": "port",
+    "input": {
+      "op": "param",
+      "key": 3,
+      "wire": "01bb"
+    },
+    "expected": {
+      "key": 3,
+      "name": "port",
+      "value": 443,
+      "raw": "01bb"
+    }
+  },
+  {
+    "name": "ipv4 hints",
+    "input": {
+      "op": "param",
+      "key": 4,
+      "wire": "c0000201cb007107"
+    },
+    "expected": {
+      "key": 4,
+      "name": "ipv4hint",
+      "value": [
+        "192.0.2.1",
+        "203.0.113.7"
+      ],
+      "raw": "c0000201cb007107"
+    }
+  },
+  {
+    "name": "ech opaque",
+    "input": {
+      "op": "param",
+      "key": 5,
+      "wire": "0004fe0d0102"
+    },
+    "expected": {
+      "key": 5,
+      "name": "ech",
+      "value": {
+        "hex": "0004fe0d0102"
+      },
+      "raw": "0004fe0d0102"
+    }
+  },
+  {
+    "name": "ipv6 hints",
+    "input": {
+      "op": "param",
+      "key": 6,
+      "wire": "20010db800000000000000000000000100000000000000000000000000000001"
+    },
+    "expected": {
+      "key": 6,
+      "name": "ipv6hint",
+      "value": [
+        "2001:db8:0:0:0:0:0:1",
+        "0:0:0:0:0:0:0:1"
+      ],
+      "raw": "20010db800000000000000000000000100000000000000000000000000000001"
+    }
+  },
+  {
+    "name": "dohpath",
+    "input": {
+      "op": "param",
+      "key": 7,
+      "wire": "2f646e732d71756572797b3f646e737d"
+    },
+    "expected": {
+      "key": 7,
+      "name": "dohpath",
+      "value": "/dns-query{?dns}",
+      "raw": "2f646e732d71756572797b3f646e737d"
+    }
+  },
+  {
+    "name": "ohttp",
+    "input": {
+      "op": "param",
+      "key": 8,
+      "wire": ""
+    },
+    "expected": {
+      "key": 8,
+      "name": "ohttp",
+      "value": true,
+      "raw": ""
+    }
+  },
+  {
+    "name": "unknown parameter",
+    "input": {
+      "op": "param",
+      "key": 65400,
+      "wire": "00ff8081"
+    },
+    "expected": {
+      "key": 65400,
+      "name": "key65400",
+      "value": {
+        "hex": "00ff8081"
+      },
+      "raw": "00ff8081"
+    }
+  },
+  {
+    "name": "service record",
+    "input": {
+      "op": "record",
+      "wire": "beef83830001000200010001076578616d706c6504746573740000410001c00c00410001ffffffff00780001c00c000000060001000300050001000c02683208687474702f312e31000200000003000201bb00040008c0000201cb007107000500060004fe0d01020006001020010db8000000000000000000000001000700102f646e732d71756572797b3f646e737d00080000ff78000400ff8081000300022053c00c000500010000012c000603777777c00cc00cfde800030000002a0004deadbeef00002904d0000080000000",
+      "offset": 42,
+      "length": 120
+    },
+    "expected": {
+      "priority": 1,
+      "target": "example.test",
+      "params": [
+        {
+          "key": 0,
+          "name": "mandatory",
+          "value": [
+            "alpn",
+            "port",
+            "ech"
+          ],
+          "raw": "000100030005"
+        },
+        {
+          "key": 1,
+          "name": "alpn",
+          "value": [
+            "h2",
+            "http/1.1"
+          ],
+          "raw": "02683208687474702f312e31"
+        },
+        {
+          "key": 2,
+          "name": "no_default_alpn",
+          "value": true,
+          "raw": ""
+        },
+        {
+          "key": 3,
+          "name": "port",
+          "value": 443,
+          "raw": "01bb"
+        },
+        {
+          "key": 4,
+          "name": "ipv4hint",
+          "value": [
+            "192.0.2.1",
+            "203.0.113.7"
+          ],
+          "raw": "c0000201cb007107"
+        },
+        {
+          "key": 5,
+          "name": "ech",
+          "value": {
+            "hex": "0004fe0d0102"
+          },
+          "raw": "0004fe0d0102"
+        },
+        {
+          "key": 6,
+          "name": "ipv6hint",
+          "value": [
+            "2001:db8:0:0:0:0:0:1"
+          ],
+          "raw": "20010db8000000000000000000000001"
+        },
+        {
+          "key": 7,
+          "name": "dohpath",
+          "value": "/dns-query{?dns}",
+          "raw": "2f646e732d71756572797b3f646e737d"
+        },
+        {
+          "key": 8,
+          "name": "ohttp",
+          "value": true,
+          "raw": ""
+        },
+        {
+          "key": 65400,
+          "name": "key65400",
+          "value": {
+            "hex": "00ff8081"
+          },
+          "raw": "00ff8081"
+        },
+        {
+          "key": 3,
+          "name": "port",
+          "value": 8275,
+          "raw": "2053"
+        }
+      ]
+    }
+  },
+  {
+    "name": "response all sections",
+    "input": {
+      "op": "response",
+      "wire": "beef83830001000200010001076578616d706c6504746573740000410001c00c00410001ffffffff00780001c00c000000060001000300050001000c02683208687474702f312e31000200000003000201bb00040008c0000201cb007107000500060004fe0d01020006001020010db8000000000000000000000001000700102f646e732d71756572797b3f646e737d00080000ff78000400ff8081000300022053c00c000500010000012c000603777777c00cc00cfde800030000002a0004deadbeef00002904d0000080000000"
+    },
+    "expected": {
+      "id": 48879,
+      "flags": 33667,
+      "rcode": 3,
+      "truncated": true,
+      "questions": [
+        {
+          "name": "example.test",
+          "type": "HTTPS",
+          "typeCode": 65,
+          "klass": 1
+        }
+      ],
+      "answers": [
+        {
+          "name": "example.test",
+          "type": "HTTPS",
+          "typeCode": 65,
+          "klass": 1,
+          "ttl": 4294967295,
+          "section": "ANSWER",
+          "raw": "0001c00c000000060001000300050001000c02683208687474702f312e31000200000003000201bb00040008c0000201cb007107000500060004fe0d01020006001020010db8000000000000000000000001000700102f646e732d71756572797b3f646e737d00080000ff78000400ff8081000300022053",
+          "service": {
+            "priority": 1,
+            "target": "example.test",
+            "params": [
+              {
+                "key": 0,
+                "name": "mandatory",
+                "value": [
+                  "alpn",
+                  "port",
+                  "ech"
+                ],
+                "raw": "000100030005"
+              },
+              {
+                "key": 1,
+                "name": "alpn",
+                "value": [
+                  "h2",
+                  "http/1.1"
+                ],
+                "raw": "02683208687474702f312e31"
+              },
+              {
+                "key": 2,
+                "name": "no_default_alpn",
+                "value": true,
+                "raw": ""
+              },
+              {
+                "key": 3,
+                "name": "port",
+                "value": 443,
+                "raw": "01bb"
+              },
+              {
+                "key": 4,
+                "name": "ipv4hint",
+                "value": [
+                  "192.0.2.1",
+                  "203.0.113.7"
+                ],
+                "raw": "c0000201cb007107"
+              },
+              {
+                "key": 5,
+                "name": "ech",
+                "value": {
+                  "hex": "0004fe0d0102"
+                },
+                "raw": "0004fe0d0102"
+              },
+              {
+                "key": 6,
+                "name": "ipv6hint",
+                "value": [
+                  "2001:db8:0:0:0:0:0:1"
+                ],
+                "raw": "20010db8000000000000000000000001"
+              },
+              {
+                "key": 7,
+                "name": "dohpath",
+                "value": "/dns-query{?dns}",
+                "raw": "2f646e732d71756572797b3f646e737d"
+              },
+              {
+                "key": 8,
+                "name": "ohttp",
+                "value": true,
+                "raw": ""
+              },
+              {
+                "key": 65400,
+                "name": "key65400",
+                "value": {
+                  "hex": "00ff8081"
+                },
+                "raw": "00ff8081"
+              },
+              {
+                "key": 3,
+                "name": "port",
+                "value": 8275,
+                "raw": "2053"
+              }
+            ]
+          }
+        },
+        {
+          "name": "example.test",
+          "type": "CNAME",
+          "typeCode": 5,
+          "klass": 1,
+          "ttl": 300,
+          "section": "ANSWER",
+          "raw": "03777777c00c",
+          "cname": "www.example.test"
+        },
+        {
+          "name": "example.test",
+          "type": "65000",
+          "typeCode": 65000,
+          "klass": 3,
+          "ttl": 42,
+          "section": "AUTHORITY",
+          "raw": "deadbeef"
+        },
+        {
+          "name": "",
+          "type": "OPT",
+          "typeCode": 41,
+          "klass": 1232,
+          "ttl": 32768,
+          "section": "ADDITIONAL",
+          "raw": ""
+        }
+      ]
+    }
+  },
+  {
+    "name": "tokens quotes escapes",
+    "input": {
+      "op": "tokenize",
+      "text": "1 . alpn=\"h2,h3\" dohpath=\"/dns query\\\"v1\" ohttp"
+    },
+    "expected": [
+      "1",
+      ".",
+      "alpn=h2,h3",
+      "dohpath=/dns query\"v1",
+      "ohttp"
+    ]
+  },
+  {
+    "name": "presentation complete",
+    "input": {
+      "op": "presentation",
+      "text": "1 . alpn=\"h2,h3\" port=443 ipv4hint=\"192.0.2.1,203.0.113.7\" ech=\"AAT+DQEC\" ipv6hint=\"2001:db8::1\" mandatory=\"alpn,port\" no-default-alpn dohpath=\"/dns query\" ohttp key123=\"opaque\" port=8443"
+    },
+    "expected": {
+      "priority": 1,
+      "target": ".",
+      "params": [
+        {
+          "key": 1,
+          "name": "alpn",
+          "value": [
+            "h2",
+            "h3"
+          ]
+        },
+        {
+          "key": 3,
+          "name": "port",
+          "value": 443
+        },
+        {
+          "key": 4,
+          "name": "ipv4hint",
+          "value": [
+            "192.0.2.1",
+            "203.0.113.7"
+          ]
+        },
+        {
+          "key": 5,
+          "name": "ech",
+          "value": {
+            "hex": "0004fe0d0102"
+          }
+        },
+        {
+          "key": 6,
+          "name": "ipv6hint",
+          "value": [
+            "2001:db8::1"
+          ]
+        },
+        {
+          "key": 0,
+          "name": "mandatory",
+          "value": [
+            "alpn",
+            "port"
+          ]
+        },
+        {
+          "key": 2,
+          "name": "no-default-alpn",
+          "value": true
+        },
+        {
+          "key": 7,
+          "name": "dohpath",
+          "value": "/dns query"
+        },
+        {
+          "key": 8,
+          "name": "ohttp",
+          "value": true
+        },
+        {
+          "key": -1,
+          "name": "key123",
+          "value": "opaque"
+        },
+        {
+          "key": 3,
+          "name": "port",
+          "value": 8443
+        }
+      ]
+    }
+  },
+  {
+    "name": "presentation root default and flag",
+    "input": {
+      "op": "presentation",
+      "text": "0 example.test unknown"
+    },
+    "expected": {
+      "priority": 0,
+      "target": "example.test",
+      "params": [
+        {
+          "key": -1,
+          "name": "unknown",
+          "value": true
+        }
+      ]
+    }
+  }
+]
