@@ -15,6 +15,7 @@ const configFile = androidPath.join(base, 'config.json');
 const serverConfigFile = androidPath.join(base, 'server.json');
 const coreModule = androidPath.join(core, 'node_modules/@blue-frontier/dev-sidecar');
 const proxyModule = androidPath.join(core, 'node_modules/@blue-frontier/mitmproxy');
+const kotlinModule = androidPath.join(root, 'kotlin/dev-sidecar-lightning-netcore-js.js');
 
 function defaultServerConfig() {
     return {
@@ -55,6 +56,7 @@ async function boot(options = {}) {
         handlers: new Map(),
         systemProxyAttempts: [],
         hookResults: [],
+        installations: [],
     };
     const fakeProcess = {
         pid: 4242,
@@ -135,6 +137,20 @@ async function boot(options = {}) {
         [androidPath.join(coreModule, 'package.json'), { version: 'offline-test' }],
         [proxyModule, server],
         [androidPath.join(proxyModule, 'src/json.js'), { parse: JSON.parse }],
+        [kotlinModule, { marker: 'compiled kotlin module' }],
+        ['./kotlin-helpers', {
+            install(corePath, helpers) {
+                assert.equal(corePath, core);
+                assert.equal(helpers, modules.get(kotlinModule));
+                observed.installations.push('kotlin');
+            },
+        }],
+        ['./http-navigation', {
+            install(corePath) {
+                assert.equal(corePath, core);
+                observed.installations.push('navigation');
+            },
+        }],
     ]);
 
     vm.runInNewContext(source, {
@@ -147,11 +163,15 @@ async function boot(options = {}) {
         require(id) {
             assert.ok(modules.has(id), `Unexpected module load: ${id}`);
             if (id === coreModule) {
+                assert.deepEqual(observed.installations, ['kotlin']);
                 observed.coreLoads.push({
                     env: { ...fakeProcess.env },
                     config: files.get(configFile),
                     directories: structuredClone(observed.directories),
                 });
+            }
+            if (id === proxyModule) {
+                assert.deepEqual(observed.installations, ['kotlin', 'navigation']);
             }
             return modules.get(id);
         },
@@ -179,6 +199,8 @@ test('default startup prepares Android paths and minimal config before loading c
     assert.equal(loaded.env.HOME, home);
     assert.equal(loaded.env.USERPROFILE, home);
     assert.equal(loaded.env.DS_EXTRA_PATH, androidPath.join(core, 'extra'));
+    assert.equal(loaded.env.DSHA_KOTLIN_HELPERS, kotlinModule);
+    assert.deepEqual(observed.installations, ['kotlin', 'navigation']);
     assert.ok(loaded.directories.some((item) => item.directory === base && item.recursive),
         'The user directory must exist before core initialization');
     const config = JSON.parse(loaded.config);
