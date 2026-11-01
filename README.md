@@ -30,6 +30,7 @@ patches/             EinkBro 对照实验的改动补丁（对应源码未入库
 |---|---|
 | `LIGHTNING.md` | **主线文档**：集成细节、三个致命坑、改动清单 |
 | `PORT.md` | 核心移植：Node 运行时怎么来、8 处必改点、真机验证 |
+| `KOTLIN-MIGRATION.md` | Kotlin 替代差距、首批可单测模块、接线边界与后续拆分 |
 | `EINKBRO.md` | 换壳对照实验记录（EinkBro 版，可用但未采用） |
 
 ## 从零构建
@@ -37,18 +38,26 @@ patches/             EinkBro 对照实验的改动补丁（对应源码未入库
 payload（`libnodebin.so` 46MB + node libs 30MB）不进版本库，必须先重建：
 
 ```bash
-# 1) 生成 Node 运行时 + dev-sidecar 核心（需要本机装有 dev-sidecar）
+# 1) 编译共享 Kotlin 纯逻辑，供 Node 直接调用
+./build.sh :netcore-js:jsNodeProductionLibraryDistribution
+
+# 2) 生成 Node 运行时 + dev-sidecar 核心（需要本机装有 dev-sidecar）
 python port/build-payload.py --resources "D:/App/Net/dev-sidecar/resources"
 
-# 2) 同步进壳
+# 3) 同步进壳
 ./port/sync-payload.sh
 
-# 3) 构建
+# 4) 构建
 cd lightning-browser
 JAVA_HOME=../.jdk/jdk-21.0.2 ./gradlew assembleLightningPlusRelease
 ```
 
 `build-payload.py` 里硬编码了 Termux 清华镜像的 deb 版本（node 24.22.1 + 7 个依赖），升级时改那几个常量。
+
+已有 payload 时，重新编译 Kotlin 后可用
+`python port/kotlin_payload.py app/src/main/assets/nodejs-project.zip` 更新脚本和编译产物，
+再运行同步脚本。域名单结果匹配、配置合并/清理、NAT64 地址转换现由同一份 Kotlin 源码编译成 JS 后在 Node 内执行；
+MITM/TLS 仍由原版核心承担。细节及验证见 `KOTLIN-MIGRATION.md`。
 
 ## 为什么和最初设想不一样
 
