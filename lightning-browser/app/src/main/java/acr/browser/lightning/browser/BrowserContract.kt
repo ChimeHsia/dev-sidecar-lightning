@@ -147,6 +147,11 @@ interface BrowserContract {
          * launch the incognito browser and load the provided [url].
          */
         fun launchIncognito(url: String?)
+
+        /**
+         * End the incognito session and return to the regular browser.
+         */
+        suspend fun exitIncognito()
     }
 
     /**

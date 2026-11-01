@@ -86,6 +86,7 @@
     <string name="title_edit_bookmark">Edit bookmark</string>
     <string name="action_edit">Edit</string>
     <string name="action_incognito">New incognito tab</string>
+    <string name="action_exit_incognito">Exit incognito</string>
     <string name="action_homepage">Default</string>
     <string name="action_back">Back</string>
     <string name="action_find">Find in page</string>

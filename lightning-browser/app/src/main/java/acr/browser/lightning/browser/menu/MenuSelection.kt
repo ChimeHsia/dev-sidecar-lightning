@@ -15,6 +15,7 @@ enum class MenuSelection {
     BOOKMARKS,
     ADD_BOOKMARK,
     SETTINGS,
+    EXIT_INCOGNITO,
     BACK,
     FORWARD
 }

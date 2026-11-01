@@ -83,6 +83,7 @@
     <string name="title_edit_bookmark">編輯書籤</string>
     <string name="action_edit">編輯</string>
     <string name="action_incognito">新增無痕式分頁</string>
+    <string name="action_exit_incognito">退出無痕模式</string>
     <string name="action_homepage">預設</string>
     <string name="action_back">返回</string>
     <string name="action_find">在網頁中尋找</string>

@@ -138,12 +138,20 @@ fun BrowserOverflowMenu(presenter: BrowserPresenter, browserViewState: BrowserCo
                     }
                 )
             }
-            if (!browserViewState.isIncognito) {
+            DropdownMenuItem(
+                text = { DropdownText(stringResource(R.string.settings)) },
+                leadingIcon = { Icon(painterResource(R.drawable.ic_settings), contentDescription = null) },
+                onClick = {
+                    presenter.onEvent(BrowserUiEvent.MenuClick(MenuSelection.SETTINGS))
+                    dropDownExpanded = false
+                }
+            )
+            if (browserViewState.isIncognito) {
                 DropdownMenuItem(
-                    text = { DropdownText(stringResource(R.string.settings)) },
-                    leadingIcon = { Icon(painterResource(R.drawable.ic_settings), contentDescription = null) },
+                    text = { DropdownText(stringResource(R.string.action_exit_incognito)) },
+                    leadingIcon = { Icon(painterResource(R.drawable.ic_logout), contentDescription = null) },
                     onClick = {
-                        presenter.onEvent(BrowserUiEvent.MenuClick(MenuSelection.SETTINGS))
+                        presenter.onEvent(BrowserUiEvent.MenuClick(MenuSelection.EXIT_INCOGNITO))
                         dropDownExpanded = false
                     }
                 )
