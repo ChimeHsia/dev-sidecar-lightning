@@ -1,7 +1,6 @@
 package acr.browser.lightning.browser.compose
 
 import acr.browser.lightning.BrowserUiEvent
-import acr.browser.lightning.R
 import acr.browser.lightning.browser.BrowserComposeState
 import acr.browser.lightning.browser.BrowserPresenter
 import acr.browser.lightning.browser.compose.sheets.BookmarksBottomSheet
@@ -23,15 +22,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -47,11 +43,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -172,60 +167,11 @@ fun TabsBottomSheet(
         sheetState = sheetState,
         onDismissRequest = { presenter.onEvent(BrowserUiEvent.TabDrawerMoved(isOpen = false)) }
     ) {
-        Row(
-            modifier = Modifier
-                .height(64.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            IconButton(
-                enabled = browserViewState.isBackEnabled,
-                onClick = { presenter.onEvent(BrowserUiEvent.BackClick) }
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_action_back),
-                    contentDescription = ""
-                )
-            }
-            IconButton(
-                enabled = browserViewState.isForwardEnabled,
-                onClick = { presenter.onEvent(BrowserUiEvent.ForwardClick) }
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_action_forward),
-                    contentDescription = ""
-                )
-            }
-            IconButton(onClick = { presenter.onEvent(BrowserUiEvent.HomeClick) }) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_action_home),
-                    contentDescription = ""
-                )
-            }
-            IconButton(onClick = { presenter.onEvent(BrowserUiEvent.ToolsClick) }) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_page_tools),
-                    contentDescription = ""
-                )
-            }
-            IconButton(
-                enabled = browserViewState.isBookmarkEnabled,
-                onClick = { presenter.onEvent(BrowserUiEvent.StarClick) }
-            ) {
-                BookmarkIcon(browserViewState.isBookmarked)
-            }
-            IconButton(onClick = { presenter.onEvent(BrowserUiEvent.NewTabClick) }) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_action_plus),
-                    contentDescription = ""
-                )
-            }
-        }
+        TabSheetToolbar(browserViewState, presenter)
         LazyRow(
             modifier = Modifier.height(200.dp),
             state = lazyListState,
-            contentPadding = PaddingValues(8.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             itemsIndexed(
@@ -240,69 +186,34 @@ fun TabsBottomSheet(
                             fadeInSpec = null,
                             fadeOutSpec = null
                         )
-                        .background(
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            shape = MaterialTheme.shapes.medium
-                        )
+                        .clip(MaterialTheme.shapes.medium)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                         .combinedClickable(
                             onClick = { presenter.onEvent(BrowserUiEvent.TabClick(index)) },
                             onLongClick = { presenter.onEvent(BrowserUiEvent.TabLongClick(index)) }
                         )
                         .optionalBorder(tab.isSelected)
-                        .padding(start = 4.dp, end = 4.dp, bottom = 4.dp)
+                        .padding(start = 8.dp, end = 4.dp, bottom = 8.dp)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(36.dp),
+                            .height(48.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        when (tab.icon) {
-                            TabModel.Favicon.Frozen -> Icon(
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .padding(horizontal = 4.dp),
-                                tint = MaterialTheme.colorScheme.onSurface,
-                                painter = painterResource(R.drawable.ic_frozen),
-                                contentDescription = "test"
-                            )
-
-                            is TabModel.Favicon.Icon -> Image(
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .padding(horizontal = 4.dp),
-                                bitmap = tab.icon.bitmap,
-                                contentDescription = "test"
-                            )
-
-                            TabModel.Favicon.None -> Icon(
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .padding(horizontal = 4.dp),
-                                tint = MaterialTheme.colorScheme.onSurface,
-                                painter = painterResource(R.drawable.ic_webpage),
-                                contentDescription = "test"
-                            )
-                        }
+                        TabFavicon(tab.icon)
                         Text(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f, false),
-                            style = MaterialTheme.typography.bodyMedium,
+                                .padding(start = 8.dp)
+                                .weight(1f),
+                            style = MaterialTheme.typography.labelLarge,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             text = tab.title
                         )
-                        IconButton(
-                            modifier = Modifier
-                                .size(30.dp),
-                            onClick = { presenter.onEvent(BrowserUiEvent.TabClose(index)) }) {
-                            Icon(
-                                modifier = Modifier.size(20.dp),
-                                painter = painterResource(R.drawable.ic_action_delete),
-                                contentDescription = stringResource(R.string.close_tab)
-                            )
-                        }
+                        TabCloseButton(
+                            onClick = { presenter.onEvent(BrowserUiEvent.TabClose(index)) }
+                        )
                     }
                     val transformations = with(LocalDensity.current) {
                         remember {
@@ -322,7 +233,7 @@ fun TabsBottomSheet(
 
                             TabModel.Preview.None -> null
                         },
-                        contentDescription = "test",
+                        contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxSize()
