@@ -22,7 +22,7 @@ class IntentUtils @Inject constructor(
 ) {
 
     fun startActivityForUrl(tab: WebView?, url: String): Boolean {
-        if (url.isSpecialUrl()) {
+        if (url.isSpecialUrl() || ExternalAppUrlPolicy.shouldStayInBrowser(url)) {
             return false
         }
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

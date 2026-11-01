@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicLong
  * 本地 HTTP 代理（默认 127.0.0.1:8118）。WebView 通过 ProxyController 把流量指到这里。
  *
  * 两条路径：
- *  - CONNECT host:443 —— HTTPS，建连到优选 IP，必要时改写 ClientHello 的 SNI，然后原样透传；
+ *  - CONNECT host:443 —— HTTPS，建连到候选 IP，保持 ClientHello/SNI 不变并原样透传；
  *  - 绝对 URI 的普通 HTTP —— 改写成 origin-form 后转发。
  *
  * 全过程不解密、不需要证书、不接管其它 App 的流量。

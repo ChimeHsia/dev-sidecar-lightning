@@ -30,3 +30,4 @@ rootProject.name = "dev-sidecar-lightning"
 
 include(":app")
 include(":netcore")
+include(":netcore-js")

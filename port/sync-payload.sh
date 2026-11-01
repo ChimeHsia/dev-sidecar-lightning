@@ -6,6 +6,7 @@
 # 不进版本库。克隆仓库后要按下面顺序重建：
 #
 #   # 1) 生成 payload（需要本机装有 dev-sidecar，取它的 app.asar 作为核心源码）
+#   ./build.sh :netcore-js:jsNodeProductionLibraryDistribution
 #   python port/build-payload.py --resources "D:/App/Net/dev-sidecar/resources"
 #
 #   # 2) 同步进壳

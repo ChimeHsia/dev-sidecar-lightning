@@ -9,6 +9,7 @@ captures/
 .cxx/
 tools/
 .jdk/
+__pycache__/
 
 # ---- 构建产物 ----
 *.apk

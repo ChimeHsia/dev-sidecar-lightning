@@ -1,5 +1,6 @@
 package acr.browser.lightning.browser.tab
 
+import acr.browser.lightning.accel.DshaAccel
 import acr.browser.lightning.browser.view.CustomGestureListener
 import acr.browser.lightning.browser.view.ToggleListener
 import acr.browser.lightning.browser.view.TouchListener
@@ -28,6 +29,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.webkit.WebView
+import android.webkit.URLUtil
 import androidx.activity.result.ActivityResult
 import androidx.core.graphics.createBitmap
 import dagger.assisted.Assisted
@@ -99,6 +101,7 @@ class TabAdapter @AssistedInject constructor(
 
     private var findInPageQuery: String? = null
     private var toggleDesktop: Boolean = false
+    private var navigationGeneration = 0
     private val downloadsShareFlow = MutableSharedFlow<PendingDownload>()
     private val focusSharedFlow = MutableSharedFlow<Unit>()
     private val showHideFlow = MutableSharedFlow<Boolean>()
@@ -257,7 +260,13 @@ class TabAdapter @AssistedInject constructor(
     }
 
     override suspend fun loadUrl(url: String) {
-        webView().loadUrl(url, requestHeaders)
+        val generation = ++navigationGeneration
+        val view = webView()
+        if (URLUtil.isNetworkUrl(url)) DshaAccel.awaitReady()
+        // Ignore an old startup load if the user navigated or stopped meanwhile.
+        if (generation == navigationGeneration && view === webViewIfInitialized()) {
+            view.loadUrl(url, requestHeaders)
+        }
     }
 
     override fun loadFromInitializer(tabInitializer: TabInitializer) {
@@ -267,6 +276,7 @@ class TabAdapter @AssistedInject constructor(
     }
 
     override suspend fun goBack() {
+        navigationGeneration++
         webView().goBack()
     }
 
@@ -275,6 +285,7 @@ class TabAdapter @AssistedInject constructor(
     override fun canGoBackChanges(): Flow<Boolean> = tabWebViewClient.goBackSharedFlow
 
     override suspend fun goForward() {
+        navigationGeneration++
         webView().goForward()
     }
 
@@ -293,10 +304,12 @@ class TabAdapter @AssistedInject constructor(
     }
 
     override suspend fun reload() {
+        navigationGeneration++
         webView().reload()
     }
 
     override suspend fun stopLoading() {
+        navigationGeneration++
         webView().stopLoading()
     }
 
@@ -435,6 +448,7 @@ class TabAdapter @AssistedInject constructor(
     }
 
     override suspend fun freeze() {
+        navigationGeneration++
         webViewIfInitialized()?.apply {
             stopLoading()
             onPause()
@@ -458,7 +472,12 @@ class TabAdapter @AssistedInject constructor(
     }
 
     override suspend fun restore(bundle: Bundle) {
-        webView().restoreState(bundle)
+        val generation = ++navigationGeneration
+        val view = webView()
+        DshaAccel.awaitReady()
+        if (generation == navigationGeneration && view === webViewIfInitialized()) {
+            view.restoreState(bundle)
+        }
     }
 
     override suspend fun save(): Bundle = latentInitializer?.bundle

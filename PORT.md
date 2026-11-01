@@ -120,7 +120,7 @@ node port/harness.js /path/to/app
   （首次启动解压 assets → 起进程 → stdout 打到 `dsha-node` tag）
 - `app/build.gradle.kts`：`androidResources.noCompress += zip/pem`、`packaging.jniLibs.useLegacyPackaging = true`
 - `MainActivity.onCreate` 里启动 Node（暂不接管 WebView 代理）
-- `port/build-payload.py`：一条命令重建全部产物
+- `port/build-payload.py`：重建全部产物；现需先运行 `./build.sh :netcore-js:jsNodeProductionLibraryDistribution` 编译共享 Kotlin 逻辑
 
 ### 产物
 

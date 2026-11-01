@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "enabled": true,
+      "sourceHosts": ["google.cn", "www.google.cn"],
+      "sourceSchemes": ["http", "https"],
+      "targetOrigin": "https://www.google.com.hk"
+    },
+    {
+      "enabled": true,
+      "sourceHosts": ["google.com", "www.google.com"],
+      "sourceSchemes": ["http"],
+      "targetOrigin": "https://www.google.com"
+    },
+    {
+      "enabled": true,
+      "sourceHosts": ["google.com.hk", "www.google.com.hk"],
+      "sourceSchemes": ["http"],
+      "targetOrigin": "https://www.google.com.hk"
+    }
+  ]
+}
