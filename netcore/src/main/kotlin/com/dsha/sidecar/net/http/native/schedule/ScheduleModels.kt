@@ -130,6 +130,7 @@ sealed interface AttemptResult<out T> {
         val value: T,
         val release: () -> Unit = {},
         val slow: Boolean = false,
+        val responseStarted: Boolean = false,
     ) : AttemptResult<T>
     data class Failure(
         val cause: Throwable,

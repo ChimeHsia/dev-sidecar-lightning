@@ -53,6 +53,18 @@ class RequestAttemptSchedulerTest {
         assertEquals(1, scheduler.execute(ReplayableRequest.empty(request()), retryPolicy()) { _, _ -> AttemptResult.Response(404, "missing") }.attempts)
     }
 
+    @Test fun `committed response cannot retry even when its status is configured`() {
+        var released = 0
+        val result = scheduler.execute(ReplayableRequest.empty(request()), retryPolicy()) { _, _ ->
+            AttemptResult.Response(500, "committed", release = { released++ }, responseStarted = true)
+        }
+        assertEquals(1, result.attempts)
+        assertEquals("committed", (result.result as AttemptResult.Response).value)
+        assertEquals(0, released)
+        assertEquals(0, scheduler.activeExchanges)
+        assertEquals(0, scheduler.activeReplayBytes)
+    }
+
     @Test fun `successful POST buffering replays identical bytes only with explicit side effect authorization`() {
         val input = request(headers = listOf(ActionHeader("Content-Length", "4"))).copy(method = "POST")
         val replay = ReplayableRequest.buffer(input, "body".byteInputStream())

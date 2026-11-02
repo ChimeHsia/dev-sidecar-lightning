@@ -102,7 +102,8 @@ class RequestAttemptScheduler(
                             throw IllegalArgumentException("Invalid attempt response status")
                         }
                         if (result.slow) selection?.failure()
-                        val again = configured != null && result.status in configured.statuses && number <= retryLimit &&
+                        val again = !result.responseStarted && configured != null &&
+                            result.status in configured.statuses && number <= retryLimit &&
                             (input.method in idempotent || allowNonIdempotentReplay)
                         if (!again && result.status >= 400) selection?.failure()
                         again
