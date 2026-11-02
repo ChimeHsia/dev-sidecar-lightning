@@ -1,6 +1,8 @@
 package com.dsha.sidecar.net.runtime
 
 import com.dsha.sidecar.net.config.native.BoundedJson5
+import com.dsha.sidecar.net.http.native.script.CatalogSource
+import com.dsha.sidecar.net.proxy.http.Http1ChunkMode
 import com.dsha.sidecar.net.proxy.http.Http1Header
 import com.dsha.sidecar.net.proxy.http.Http1Headers
 import com.dsha.sidecar.net.proxy.http.Http1Reader
@@ -13,6 +15,7 @@ import com.dsha.sidecar.net.proxy.native.NativeProxyServer
 import com.dsha.sidecar.net.proxy.native.NativeRequestDecision
 import com.dsha.sidecar.net.proxy.native.RouteResolver
 import com.dsha.sidecar.net.proxy.tls.EphemeralTestCa
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.net.Socket
 import java.util.concurrent.atomic.AtomicInteger
@@ -172,7 +175,7 @@ class NativeNavigationTest {
     }
 
     @Test
-    fun runtimeReloadsNavigationWithoutStartingDnsQueries() {
+    fun runtimeReloadsNavigationAndServesAuthorizedScriptsWithoutDns() {
         val file = temporaryFolder.newFile("navigation.json")
         file.writeText(defaults)
         val store = NativeNavigationRuleStore(defaults, file)
@@ -180,10 +183,14 @@ class NativeNavigationTest {
             "dns" to mapOf("providers" to mapOf("fixture" to mapOf(
                 "type" to "udp", "server" to "127.0.0.1", "port" to 9, "family" to 4,
             ))),
-            "setting" to mapOf("script" to mapOf("enabled" to false)),
+            "setting" to mapOf("script" to mapOf("enabled" to true)),
         ))
+        val scripts = NativeRuntimeScriptRoutes(
+            mapOf("sample" to CatalogSource("window.sample = true;")),
+            setOf("http://google.cn"),
+        )
         NativeRuntime.fromDecoded(
-            config, EphemeralTestCa.create().authority(), navigationRules = store::getRules,
+            config, EphemeralTestCa.create().authority(), navigationRules = store::getRules, scriptRoutes = scripts,
         ).use { runtime ->
             val address = runtime.start()
             for (destination in listOf("https://www.google.com.hk", "https://destination.test")) {
@@ -198,6 +205,18 @@ class NativeNavigationTest {
                     assertEquals(307, response.head.status)
                     assertEquals(listOf("$destination/search?q=%2F"), response.head.headers.values("Location"))
                 }
+            }
+            Socket(address.address, address.port).use { socket ->
+                socket.soTimeout = 5_000
+                socket.getOutputStream().write(
+                    "GET /____ds_script____/sample HTTP/1.1\r\nHost: google.cn\r\nSec-Fetch-Dest: script\r\n\r\n"
+                        .toByteArray(Charsets.ISO_8859_1),
+                )
+                val reader = Http1Reader(socket.getInputStream())
+                assertEquals(200, reader.readResponse("GET")!!.head.status)
+                val body = ByteArrayOutputStream()
+                reader.transferBody(body, Http1ChunkMode.DECODE)
+                assertEquals("window.sample = true;", body.toString("UTF-8"))
             }
             assertEquals(0L, runtime.routes.state().selections)
         }
