@@ -88,6 +88,11 @@ class NativeNavigationTest {
         assertNull(rules().target(request(path = "/\\attacker.test/")))
         assertNull(rules().target(request(headers = listOf(Http1Header("Accept", " application/json")))))
         assertNull(rules().target(request(headers = listOf(Http1Header("Sec-Fetch-Dest", " script"), Http1Header("Accept", " text/html")))))
+        assertNull(rules().target(request(headers = listOf(
+            Http1Header("Sec-Fetch-Dest", " script"),
+            Http1Header("Sec-Fetch-Dest", " document"),
+            Http1Header("Accept", " text/html"),
+        ))))
         assertNull(rules().target(request(headers = listOf(Http1Header("Content-Length", " 1"), Http1Header("Accept", " text/html")))))
         assertNull(rules().target(request(headers = listOf(Http1Header("Transfer-Encoding", " chunked"), Http1Header("Accept", " text/html")))))
         assertTrue(rules().target(request(headers = listOf(Http1Header("Sec-Fetch-Dest", " iframe")))) != null)

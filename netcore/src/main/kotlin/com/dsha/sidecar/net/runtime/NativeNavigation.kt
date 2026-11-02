@@ -26,7 +26,9 @@ class NativeNavigationRules private constructor(private val rules: Map<String, S
         if (headers.values("Transfer-Encoding").isNotEmpty()) return null
         val lengths = headers.values("Content-Length")
         if (lengths.isNotEmpty() && lengths != listOf("0")) return null
-        val destination = headers.values("Sec-Fetch-Dest").singleOrNull()?.lowercase(Locale.ROOT).orEmpty()
+        val destinations = headers.values("Sec-Fetch-Dest")
+        if (destinations.size > 1) return null
+        val destination = destinations.singleOrNull()?.lowercase(Locale.ROOT).orEmpty()
         val acceptsHtml = headers.values("Accept").any { HTML_ACCEPT.containsMatchIn(it) }
         if (destination != "document" && destination != "iframe" && (destination.isNotEmpty() || !acceptsHtml)) {
             return null
