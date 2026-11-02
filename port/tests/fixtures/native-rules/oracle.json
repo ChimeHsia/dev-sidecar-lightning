@@ -1,0 +1,3016 @@
+[
+  {
+    "id": "plain",
+    "layers": [],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [],
+      "executed": [],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "captures-and-exact-layer",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "^(?<sub>api)\\.(example)\\.test$": {
+              "^/items/(?<id>[0-9]+)": {
+                "proxy": "https://mirror.test/${sub}/${h[2]}/${id}/${p[1]}/${missing}",
+                "order": 1
+              }
+            },
+            "^api\\.(?<zone>example)\\.test$": {
+              ".*": {
+                "requestReplace": {
+                  "headers": {
+                    "Cookie": "[remove]",
+                    "X-Test": "yes"
+                  }
+                }
+              }
+            },
+            "api.example.test": {
+              "^/items/(?<id>[0-9]+)": {
+                "verifyHost": "mirror.test"
+              }
+            }
+          }
+        }
+      },
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "responseReplace": {
+                  "headers": {
+                    "Server": "[remove]",
+                    "X-Added": "ok"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "requestReplace",
+          "priority": 111,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": [
+            "api.example.test",
+            "api",
+            "example",
+            "example"
+          ],
+          "hostNamed": {
+            "zone": "example"
+          }
+        },
+        {
+          "name": "proxy",
+          "priority": 121,
+          "key": "^/items/(?<id>[0-9]+)",
+          "order": 1,
+          "matched": [
+            "/items/42",
+            "42"
+          ],
+          "named": {
+            "id": "42"
+          },
+          "hostMatched": [
+            "api.example.test",
+            "api",
+            "example",
+            "example"
+          ],
+          "hostNamed": {
+            "zone": "example"
+          }
+        },
+        {
+          "name": "responseReplace",
+          "priority": 203,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": [
+            "api.example.test",
+            "api",
+            "example",
+            "example"
+          ],
+          "hostNamed": {
+            "zone": "example"
+          }
+        }
+      ],
+      "executed": [
+        "requestReplace",
+        "proxy"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "mirror.test",
+        "port": 443,
+        "path": "//example/42/42/"
+      },
+      "headers": {
+        "host": "mirror.test",
+        "origin": "https://caller.test",
+        "x-test": "yes"
+      },
+      "serverName": "mirror.test",
+      "verifyHost": "mirror.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {
+        "x-added": "ok"
+      }
+    }
+  },
+  {
+    "id": "order-and-ties",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              "42": {
+                "requestReplace": {
+                  "headers": {
+                    "X-Order": "higher"
+                  }
+                },
+                "order": 5
+              },
+              "^/": {
+                "proxy": "first.test",
+                "order": 2
+              },
+              "items": {
+                "proxy": "tie.test",
+                "order": 2,
+                "retry": 2
+              },
+              ".*": {
+                "requestReplace": {
+                  "headers": {
+                    "X-Order": "lower"
+                  }
+                },
+                "order": 0
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "retry",
+          "priority": 100,
+          "key": "items",
+          "order": 2,
+          "matched": [
+            "items"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "requestReplace",
+          "priority": 111,
+          "key": "42",
+          "order": 5,
+          "matched": [
+            "42"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "proxy",
+          "priority": 121,
+          "key": "^/",
+          "order": 2,
+          "matched": [
+            "/"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "retry",
+        "requestReplace",
+        "proxy"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "first.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "first.test",
+        "origin": "https://caller.test",
+        "cookie": "secret",
+        "x-order": "higher"
+      },
+      "serverName": "first.test",
+      "verifyHost": "first.test",
+      "verify": true,
+      "terminal": null,
+      "retry": {
+        "times": 2,
+        "statuses": [
+          500
+        ],
+        "methods": [
+          "GET",
+          "HEAD",
+          "OPTIONS"
+        ]
+      },
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "higher-order-replaces",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              "^/": {
+                "proxy": "first.test"
+              },
+              "items": {
+                "proxy": "winner.test",
+                "order": 3
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "proxy",
+          "priority": 121,
+          "key": "items",
+          "order": 3,
+          "matched": [
+            "items"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "proxy"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "winner.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "winner.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "winner.test",
+      "verifyHost": "winner.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "exclusion-object-values-ignored",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              "^/": {
+                "abort": true,
+                "exclusions": {
+                  "items": false
+                }
+              },
+              ".*": {
+                "sni": ""
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "sni",
+          "priority": 123,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "sni"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "exclusion-array",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "abort": true,
+                "exclusions": [
+                  "items"
+                ]
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [],
+      "executed": [],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "sni-suppress-keeps-verification",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "sni": "",
+                "verifyHost": "certificate.test"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "sni",
+          "priority": 123,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "sni"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "",
+      "verifyHost": "certificate.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "sni-rewrite-compat-unverified",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "sni": "front.test",
+                "verifyHost": "certificate.test"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "sni",
+          "priority": 123,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "sni"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "front.test",
+      "verifyHost": "certificate.test",
+      "verify": false,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "verify-host-only-compat-unverified",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "verifyHost": "certificate.test"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "sni",
+          "priority": 123,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "sni"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "certificate.test",
+      "verify": false,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "sni-empty-verify-host",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "verifyHost": ""
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "sni",
+          "priority": 123,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "sni"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": false,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "proxy-stops-other-sni",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              "^/": {
+                "proxy": "mirror.test"
+              },
+              ".*": {
+                "sni": "front.test",
+                "unVerifySsl": true
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "proxy",
+          "priority": 121,
+          "key": "^/",
+          "order": 0,
+          "matched": [
+            "/"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "sni",
+          "priority": 123,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "unVerifySsl",
+          "priority": 124,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "proxy"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "mirror.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "mirror.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "mirror.test",
+      "verifyHost": "mirror.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "proxy-inline-sni",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "proxy": "mirror.test",
+                "sni": "front.test",
+                "verifyHost": "certificate.test",
+                "backup": [
+                  "backup.test"
+                ]
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "proxy",
+          "priority": 121,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "proxy"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "mirror.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "mirror.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "front.test",
+      "verifyHost": "certificate.test",
+      "verify": false,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "proxy-inline-empty-sni-ignored",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "proxy": "mirror.test",
+                "sni": ""
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "proxy",
+          "priority": 121,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "proxy"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "mirror.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "mirror.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "mirror.test",
+      "verifyHost": "mirror.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "ech-ignores-sni-and-verify-host",
+    "layers": [
+      {
+        "server": {
+          "dns": {
+            "ech": {
+              "domains": [
+                "api.example.test"
+              ]
+            }
+          },
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "sni": "front.test",
+                "verifyHost": "certificate.test"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [],
+      "executed": [],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "ech-inline-proxy-source-exception",
+    "layers": [
+      {
+        "server": {
+          "dns": {
+            "ech": {
+              "domains": [
+                "api.example.test"
+              ]
+            }
+          },
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "proxy": "mirror.test",
+                "sni": "front.test"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "proxy",
+          "priority": 121,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "proxy"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "mirror.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "mirror.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "front.test",
+      "verifyHost": "mirror.test",
+      "verify": false,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "ech-disabled",
+    "layers": [
+      {
+        "server": {
+          "dns": {
+            "ech": {
+              "enabled": false,
+              "domains": [
+                "api.example.test"
+              ]
+            }
+          },
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "sni": ""
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "sni",
+          "priority": 123,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "sni"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "nat64-forces-ech-when-ech-disabled",
+    "layers": [
+      {
+        "server": {
+          "dns": {
+            "ech": {
+              "enabled": false
+            },
+            "nat64": {
+              "enabled": true,
+              "prefix": "64:ff9b::/96",
+              "domains": [
+                "api.example.test"
+              ]
+            }
+          },
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "sni": ""
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [],
+      "executed": [],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "unverify-explicit",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "ssl": false
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "unVerifySsl",
+          "priority": 124,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "unVerifySsl"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": false,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "setting-verification-disabled",
+    "layers": [
+      {
+        "server": {
+          "setting": {
+            "verifySsl": false
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [],
+      "executed": [],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": false,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "success-wins-abort-and-proxy",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "success": {
+                  "status": 201,
+                  "text": "created"
+                },
+                "abort": true,
+                "proxy": "mirror.test",
+                "cacheDays": 2
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "success",
+          "priority": 102,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "abort",
+          "priority": 103,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "cacheRequest",
+          "priority": 104,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "proxy",
+          "priority": 121,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "cacheResponse",
+          "priority": 202,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "success"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": {
+        "status": 201,
+        "headers": {
+          "DS-Interceptor": "success",
+          "Content-Type": "text/plain; charset=utf-8",
+          "Access-Control-Allow-Credentials": "true",
+          "Access-Control-Allow-Origin": "https://caller.test"
+        },
+        "body": "created"
+      },
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {
+        "Cache-Control": "public, max-age=172801, immutable"
+      }
+    }
+  },
+  {
+    "id": "abort-no-content",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "abort": {
+                  "status": 204,
+                  "text": "discarded"
+                }
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "abort",
+          "priority": 103,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "abort"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": {
+        "status": 204,
+        "headers": {
+          "DS-Interceptor": "abort",
+          "Access-Control-Allow-Credentials": "true",
+          "Access-Control-Allow-Origin": "https://caller.test"
+        },
+        "body": ""
+      },
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "abort-cors-custom",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "abort": {
+                  "status": 451,
+                  "html": "<p>blocked</p>",
+                  "headers": {
+                    "Access-Control-Allow-Origin": "*"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "abort",
+          "priority": 103,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "abort"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": {
+        "status": 451,
+        "headers": {
+          "Access-Control-Allow-Origin": "*",
+          "DS-Interceptor": "abort",
+          "Content-Type": "text/html; charset=utf-8"
+        },
+        "body": "<p>blocked</p>"
+      },
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "redirect-captures",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              "^/items/([0-9]+)": {
+                "redirect": "https://new.test/${p[1]}",
+                "cacheDays": 1
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "cacheRequest",
+          "priority": 104,
+          "key": "^/items/([0-9]+)",
+          "order": 0,
+          "matched": [
+            "/items/42",
+            "42"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "redirect",
+          "priority": 105,
+          "key": "^/items/([0-9]+)",
+          "order": 0,
+          "matched": [
+            "/items/42",
+            "42"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "cacheResponse",
+          "priority": 202,
+          "key": "^/items/([0-9]+)",
+          "order": 0,
+          "matched": [
+            "/items/42",
+            "42"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "cacheRequest",
+        "redirect"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": {
+        "status": 302,
+        "headers": {
+          "Location": "https://new.test/42",
+          "DS-Interceptor": "redirect",
+          "Access-Control-Allow-Credentials": "true",
+          "Access-Control-Allow-Origin": "https://caller.test"
+        },
+        "body": ""
+      },
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {
+        "Cache-Control": "public, max-age=86401, immutable"
+      }
+    }
+  },
+  {
+    "id": "replace-regex-target",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "proxy": "https://new.test/$1",
+                "replace": "^/items/([0-9]+).*"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "proxy",
+          "priority": 121,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "proxy"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "new.test",
+        "port": 443,
+        "path": "/42"
+      },
+      "headers": {
+        "host": "new.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "new.test",
+      "verifyHost": "new.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "placeholder-first-only",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "proxy": "https://new.test/${host}/${host}/${p[0]}/${p[0]}"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "proxy",
+          "priority": 121,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "proxy"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "new.test",
+        "port": 443,
+        "path": "/api.example.test///items/42?q=x/"
+      },
+      "headers": {
+        "host": "new.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "new.test",
+      "verifyHost": "new.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "request-download",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "requestReplace": {
+                  "doDownload": true,
+                  "headers": {
+                    "Cookie": "[remove]",
+                    "X-Empty": "",
+                    "X-Zero": 0
+                  }
+                },
+                "responseReplace": {
+                  "doDownload": true
+                }
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/asset/file.zip?DS_DOWNLOAD=1",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "requestReplace",
+          "priority": 111,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/asset/file.zip?DS_DOWNLOAD=1"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "responseReplace",
+          "priority": 203,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/asset/file.zip?DS_DOWNLOAD=1"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "requestReplace"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/asset/file.zip"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": true,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {
+        "content-disposition": "attachment; filename=\"file.zip\"",
+        "content-type": "application/octet-stream"
+      }
+    }
+  },
+  {
+    "id": "response-headers-and-cors",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "options": true,
+                "responseReplace": {
+                  "headers": {
+                    "SERVER": "[remove]",
+                    "X-Added": "ok"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "options",
+          "priority": 101,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "AfterOPTIONSHeaders",
+          "priority": 201,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "responseReplace",
+          "priority": 203,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "options"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "",
+        "Vary",
+        "Accept-Encoding, Origin"
+      ],
+      "responseSet": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://caller.test",
+        "cross-origin-resource-policy": "cross-origin",
+        "x-added": "ok"
+      }
+    }
+  },
+  {
+    "id": "preflight",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "options": true,
+                "optionsCredentials": false,
+                "optionsMaxAge": 42,
+                "success": true
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/",
+      "method": "OPTIONS",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "access-control-request-headers": "x-test"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "options",
+          "priority": 101,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "success",
+          "priority": 102,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "AfterOPTIONSHeaders",
+          "priority": 201,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "options"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "access-control-request-headers": "x-test"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": {
+        "status": 200,
+        "headers": {
+          "DS-Interceptor": "options",
+          "Access-Control-Allow-Origin": "https://caller.test",
+          "Access-Control-Allow-Headers": "x-test",
+          "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,HEAD,OPTIONS,PATCH",
+          "Access-Control-Max-Age": 42,
+          "Vary": "Origin"
+        },
+        "body": ""
+      },
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "options-without-origin-falls-through",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "options": true,
+                "proxy": "mirror.test"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/",
+      "method": "OPTIONS",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "options",
+          "priority": 101,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "proxy",
+          "priority": 121,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "AfterOPTIONSHeaders",
+          "priority": 201,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "options",
+        "proxy"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "mirror.test",
+        "port": 443,
+        "path": "/"
+      },
+      "headers": {
+        "host": "mirror.test"
+      },
+      "serverName": "mirror.test",
+      "verifyHost": "mirror.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "retry-object-and-cache-descriptors",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "retry": {
+                  "times": 3.9,
+                  "statuses": [
+                    "502bad",
+                    503
+                  ],
+                  "methods": [
+                    "get",
+                    "post"
+                  ]
+                },
+                "cacheDays": 3,
+                "proxy": "mirror.test"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "retry",
+          "priority": 100,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "cacheRequest",
+          "priority": 104,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "proxy",
+          "priority": 121,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "cacheResponse",
+          "priority": 202,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "retry",
+        "cacheRequest",
+        "proxy"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "mirror.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "mirror.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "mirror.test",
+      "verifyHost": "mirror.test",
+      "verify": true,
+      "terminal": null,
+      "retry": {
+        "times": 3,
+        "statuses": [
+          502,
+          503
+        ],
+        "methods": [
+          "GET",
+          "POST"
+        ]
+      },
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "cache-unit-precedence",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "cacheSeconds": -1,
+                "cacheMaxAge": 20,
+                "cacheDays": 3
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [],
+      "executed": [],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "script-generated-route",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "script": [
+                  "https://scripts.test/tool.js"
+                ]
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/____ds_script_proxy____/https_scripts_test_tool.js",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "cacheRequest",
+          "priority": 104,
+          "key": "^/____ds_script_proxy____/https_scripts_test_tool\\.js$",
+          "order": 0,
+          "matched": [
+            "/____ds_script_proxy____/https_scripts_test_tool.js"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "requestReplace",
+          "priority": 111,
+          "key": "^/____ds_script_proxy____/https_scripts_test_tool\\.js$",
+          "order": 0,
+          "matched": [
+            "/____ds_script_proxy____/https_scripts_test_tool.js"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "proxy",
+          "priority": 121,
+          "key": "^/____ds_script_proxy____/https_scripts_test_tool\\.js$",
+          "order": 0,
+          "matched": [
+            "/____ds_script_proxy____/https_scripts_test_tool.js"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "cacheResponse",
+          "priority": 202,
+          "key": "^/____ds_script_proxy____/https_scripts_test_tool\\.js$",
+          "order": 0,
+          "matched": [
+            "/____ds_script_proxy____/https_scripts_test_tool.js"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "responseReplace",
+          "priority": 203,
+          "key": "^/____ds_script_proxy____/https_scripts_test_tool\\.js$",
+          "order": 0,
+          "matched": [
+            "/____ds_script_proxy____/https_scripts_test_tool.js"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "script",
+          "priority": 211,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/____ds_script_proxy____/https_scripts_test_tool.js"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "cacheRequest",
+        "requestReplace",
+        "proxy"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "scripts.test",
+        "port": 443,
+        "path": "/tool.js"
+      },
+      "headers": {
+        "origin": "https://caller.test",
+        "host": "scripts.test"
+      },
+      "serverName": "scripts.test",
+      "verifyHost": "scripts.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {
+        "content-type": "application/javascript; charset=utf-8"
+      }
+    }
+  },
+  {
+    "id": "script-selection-only",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "script": [
+                  "custom"
+                ],
+                "tampermonkeyScript": "/monkey.js"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "script",
+          "priority": 211,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "unknown-enabled-action",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "mysteryAction": true
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [],
+      "executed": [],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "api.example.test",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": null,
+      "retry": null,
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  },
+  {
+    "id": "layer-deletions-and-array-replacement",
+    "layers": [
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "proxy": "old.test",
+                "retry": {
+                  "times": 2,
+                  "methods": [
+                    "GET",
+                    "POST"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "server": {
+          "intercepts": {
+            "api.example.test": {
+              ".*": {
+                "proxy": null,
+                "retry": {
+                  "methods": [
+                    "HEAD"
+                  ]
+                },
+                "sni": ""
+              }
+            }
+          }
+        }
+      }
+    ],
+    "request": {
+      "host": "api.example.test",
+      "path": "/items/42?q=x",
+      "method": "GET",
+      "scheme": "https",
+      "port": 443,
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      }
+    },
+    "expected": {
+      "selected": [
+        {
+          "name": "retry",
+          "priority": 100,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        },
+        {
+          "name": "sni",
+          "priority": 123,
+          "key": ".*",
+          "order": 0,
+          "matched": [
+            "/items/42?q=x"
+          ],
+          "named": null,
+          "hostMatched": null,
+          "hostNamed": null
+        }
+      ],
+      "executed": [
+        "retry",
+        "sni"
+      ],
+      "route": {
+        "scheme": "https",
+        "host": "api.example.test",
+        "port": 443,
+        "path": "/items/42?q=x"
+      },
+      "headers": {
+        "host": "api.example.test",
+        "origin": "https://caller.test",
+        "cookie": "secret"
+      },
+      "serverName": "",
+      "verifyHost": "api.example.test",
+      "verify": true,
+      "terminal": null,
+      "retry": {
+        "times": 2,
+        "statuses": [
+          500
+        ],
+        "methods": [
+          "HEAD"
+        ]
+      },
+      "doDownload": false,
+      "responseRaw": [
+        "Server",
+        "origin-server",
+        "Vary",
+        "Accept-Encoding"
+      ],
+      "responseSet": {}
+    }
+  }
+]

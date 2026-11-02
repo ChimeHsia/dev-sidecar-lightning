@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "baseCommit": "754ff423b59c743cf94e68b3417c1fde4a6f42b7",
+  "upstreamPackage": "@blue-frontier/mitmproxy",
+  "upstreamCapture": "offline-proxy-fixes-20261101/runtime/core/node_modules/@blue-frontier/mitmproxy/src",
+  "sourceHashes": {
+    "lib/dns/util.svcb.js": "8f2fc47ae1ea9e9df4e020b581810d97f3192e026031952464fee7ee960ee6b4",
+    "lib/dns/base.js": "60d1cbe1c24d4a6d44391bf4d4dd630b739d3bcf84f7ec0c4b5e39b3e1ec7284",
+    "lib/proxy/common/ech/ech.js": "b58d1392a182ff6f7d497fa4aeb999942313e541c2096930c3fa29f6a628f234",
+    "lib/proxy/common/ech/hpke.js": "8bc1288aea0be20934b36bd6686cae8df13ef0bd0bbb26714e11df94ea1f0c7e",
+    "lib/proxy/common/ech/EchHttpsAgent.js": "9a89e904ffd867dd1b00cc8db43a782f4e50f6eab55ede2e467e1da4f4a88e13",
+    "lib/proxy/common/ech/tls13.js": "5bb2f76dcdffa4024f7a72e980b905fd6718adaecb5b8b03cb3a99d7f3391035",
+    "lib/proxy/common/ech/tlsSocket.js": "5aa6ce4c139cb4b42360753e6d0657224b5daeadf8c53f2dc91c9042954338ec"
+  },
+  "generator": {
+    "path": "port/tests/oracles/wave3/ech-config.cjs",
+    "sha256": "20c2d19f0782f8609ed5e2156a38640c7fb3e24ba3994802396257771fc8213c"
+  },
+  "fixture": {
+    "path": "port/tests/fixtures/wave3/ech-config.valid.json",
+    "sha256": "d36c0b921f783edecac79bad391f5dc10259d2fe50eb801647b2ab9c87d59df9",
+    "cases": 13
+  },
+  "safetyFixture": {
+    "path": "port/tests/fixtures/wave3/ech-config.safety.json",
+    "sha256": "ef1773249a0fbc21691f1461f142099c65153524393e5993158c10b6cf8ae258",
+    "origin": "Local strict-policy expectations; not upstream oracle output"
+  },
+  "schema": "docs/migration-wave3/ech-config.md#fixture-schema",
+  "note": "Expected values come from actual upstream functions on well-formed inputs; keys are arbitrary octets, not cryptographically validated."
+}

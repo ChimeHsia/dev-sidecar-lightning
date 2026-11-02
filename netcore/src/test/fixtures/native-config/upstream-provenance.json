@@ -1,0 +1,32 @@
+{
+  "json5Version": "2.2.3",
+  "packageVersion": "2.3.1",
+  "sourceSha256": {
+    "node_modules/@blue-frontier/dev-sidecar/src/config/local-config-loader.js": "ee44e8c850bd84e202f4f16a300048d7807399ed992826616831fd771c23a008",
+    "node_modules/@blue-frontier/dev-sidecar/src/config/remote-config-rule.js": "09f82b54647e8681e96412edc7e3936a9dc14011b9e45a9649f5957bcda00419",
+    "node_modules/@blue-frontier/dev-sidecar/src/config/remote-config-url.js": "0506473b203a2c2edb1c66bd117c3a9f3b73dd628bdd87ff348153c39f474e5e",
+    "node_modules/@blue-frontier/dev-sidecar/src/merge.js": "2ea04ddbb229f7bfeab0856ecf42a8dae6826765f9b3335023d4d98dee8d6207",
+    "node_modules/@blue-frontier/dev-sidecar/src/modules/server/index.js": "0c186b8830c33e918f982baab882fcfdb695cdcb9ad9e7194c11a5463198f159",
+    "node_modules/@blue-frontier/mitmproxy/src/json.js": "f5c5c7b06f065922afa117f0a8ef6c8944cdbd9202b7b585c6d2b867fe7a17f4",
+    "node_modules/json5/lib/parse.js": "a0a7c71884a9b55f336da99227c901993b5c4af975adfa21ad1af1e873e605ba",
+    "node_modules/json5/lib/index.js": "e7b7e397d488b168e08e867d599f2ea4ce8e64a65a94cb91bb26584df3234700",
+    "node_modules/json5/lib/stringify.js": "2da4304f0fd2eeb02bde5914abc3ed03fad91f9f7972d96e407b927a8d209609",
+    "node_modules/json5/lib/util.js": "2a72dabfd1dc982a11749b561809de1e4eb1f47a5baa17520633693bbce4679d",
+    "node_modules/json5/lib/unicode.js": "13b9e922ff410bec1cc288cf229e6e3b30941ccd86e910cd507fb72a8eac7fe1",
+    "node_modules/json5/package.json": "5fbbe265e5a892d50a325ed169f0ef8927404c35dbb35198e1c28160fef1239e",
+    "node_modules/lodash/lodash.js": "f5465f55566bf544aad0a31c6135889ca1ed81eea8f53ec61c6cbe86926f07cf",
+    "node_modules/lodash/package.json": "26c94bdd04a02e9e1ad9b4c6770bdcf7049a8b9e725c415e7dca7472113e6c07"
+  },
+  "generatedCases": {
+    "parse": 55,
+    "rejectedSubsetOrInvalid": 17,
+    "layers": 40
+  },
+  "personalConfigurationRead": false,
+  "productionNodeRequired": false,
+  "oracleSyntheticSubstitutions": [
+    "CLOUDFLARE_DOH_SERVER literal -> synthetic .test HTTPS endpoint",
+    "provider server.includes hostname literal -> synthetic .test hostname",
+    "preset policy -> caller-supplied 192.0.2.0/24 fixture"
+  ]
+}

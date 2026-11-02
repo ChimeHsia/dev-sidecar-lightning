@@ -1,0 +1,2305 @@
+[
+  {
+    "name": "default method",
+    "input": {
+      "operation": "retry",
+      "method": null,
+      "headers": {},
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "empty method",
+    "input": {
+      "operation": "retry",
+      "method": "",
+      "headers": {},
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "method uppercase",
+    "input": {
+      "operation": "retry",
+      "method": "post",
+      "headers": {
+        "content-length": "10"
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "configured method exact case",
+    "input": {
+      "operation": "retry",
+      "method": "get",
+      "headers": {},
+      "methods": [
+        "get"
+      ],
+      "threshold": 10
+    },
+    "expected": false
+  },
+  {
+    "name": "unknown length",
+    "input": {
+      "operation": "retry",
+      "method": "POST",
+      "headers": {},
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": false
+  },
+  {
+    "name": "negative length accepted",
+    "input": {
+      "operation": "retry",
+      "method": "POST",
+      "headers": {
+        "content-length": "-1"
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "length prefix accepted",
+    "input": {
+      "operation": "retry",
+      "method": "POST",
+      "headers": {
+        "content-length": "  +10junk"
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "hex prefix decimal parsing",
+    "input": {
+      "operation": "retry",
+      "method": "POST",
+      "headers": {
+        "content-length": "0x99"
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "over threshold",
+    "input": {
+      "operation": "retry",
+      "method": "PUT",
+      "headers": {
+        "content-length": "11"
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": false
+  },
+  {
+    "name": "enormous length",
+    "input": {
+      "operation": "retry",
+      "method": "PATCH",
+      "headers": {
+        "content-length": "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": false
+  },
+  {
+    "name": "array parsed by js",
+    "input": {
+      "operation": "retry",
+      "method": "DELETE",
+      "headers": {
+        "content-length": [
+          "9",
+          "100"
+        ]
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "length ignored for get",
+    "input": {
+      "operation": "retry",
+      "method": "GET",
+      "headers": {
+        "content-length": "nonsense"
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "transfer encoding empty",
+    "input": {
+      "operation": "retry",
+      "method": "GET",
+      "headers": {
+        "transfer-encoding": ""
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "transfer encoding empty array truthy",
+    "input": {
+      "operation": "retry",
+      "method": "GET",
+      "headers": {
+        "transfer-encoding": []
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": false
+  },
+  {
+    "name": "mixed case transfer encoding ignored",
+    "input": {
+      "operation": "retry",
+      "method": "GET",
+      "headers": {
+        "Transfer-Encoding": "chunked"
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "expect case insensitive",
+    "input": {
+      "operation": "retry",
+      "method": "GET",
+      "headers": {
+        "expect": "prefix 100-ConTinue suffix"
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": false
+  },
+  {
+    "name": "expect absent string",
+    "input": {
+      "operation": "retry",
+      "method": "GET",
+      "headers": {
+        "expect": ""
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "numeric decimal prefix",
+    "input": {
+      "operation": "retry",
+      "method": "POST",
+      "headers": {
+        "content-length": 9.9
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "request mutation and truthiness",
+    "input": {
+      "operation": "request",
+      "headers": {
+        "x": "old",
+        "empty": "",
+        "zero": 0,
+        "flag": false,
+        "Upper": "retained",
+        "remove": "present"
+      },
+      "replacements": {
+        "X": "new",
+        "Empty": null,
+        "Zero": false,
+        "Flag": "[remove]",
+        "UPPER": "lower",
+        "REMOVE": "",
+        "Added": [],
+        "Nil": null
+      }
+    },
+    "expected": {
+      "x": "new",
+      "empty": "",
+      "zero": 0,
+      "flag": false,
+      "Upper": "retained",
+      "upper": "lower",
+      "added": []
+    }
+  },
+  {
+    "name": "request collisions",
+    "input": {
+      "operation": "request",
+      "headers": {
+        "a": "old"
+      },
+      "replacements": {
+        "A": "first",
+        "a": "second"
+      }
+    },
+    "expected": {
+      "a": "second"
+    }
+  },
+  {
+    "name": "request empty objects truthy",
+    "input": {
+      "operation": "request",
+      "headers": {
+        "x": 0
+      },
+      "replacements": {
+        "X": {},
+        "y": 0,
+        "z": false
+      }
+    },
+    "expected": {
+      "x": {}
+    }
+  },
+  {
+    "name": "response duplicates and additions",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [
+        "X-Foo",
+        "one",
+        "x-foo",
+        "two",
+        "Vary",
+        "Accept",
+        "X-Keep",
+        "yes"
+      ],
+      "replacements": {
+        "X-FOO": "new",
+        "Vary": "[remove]",
+        "Added": [
+          "a",
+          "b"
+        ],
+        "Skip": null,
+        "Absent": "[remove]"
+      }
+    },
+    "expected": {
+      "rawHeaders": [
+        "X-Foo",
+        "new",
+        "x-foo",
+        "new",
+        "Vary",
+        "",
+        "X-Keep",
+        "yes"
+      ],
+      "setHeaders": {
+        "added": [
+          "a",
+          "b"
+        ]
+      },
+      "previousHeaders": {
+        "x-foo": "two",
+        "vary": "Accept",
+        "added": null
+      },
+      "remainingReplacements": {
+        "added": [
+          "a",
+          "b"
+        ],
+        "skip": null,
+        "absent": "[remove]"
+      }
+    }
+  },
+  {
+    "name": "response same then different duplicate",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [
+        "X",
+        "same",
+        "x",
+        "old"
+      ],
+      "replacements": {
+        "x": "same"
+      }
+    },
+    "expected": {
+      "rawHeaders": [
+        "X",
+        "same",
+        "x",
+        "same"
+      ],
+      "setHeaders": {},
+      "previousHeaders": {
+        "x": "old"
+      },
+      "remainingReplacements": {}
+    }
+  },
+  {
+    "name": "response duplicate previous is last changed",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [
+        "X",
+        "first",
+        "x",
+        "second"
+      ],
+      "replacements": {
+        "x": "new"
+      }
+    },
+    "expected": {
+      "rawHeaders": [
+        "X",
+        "new",
+        "x",
+        "new"
+      ],
+      "setHeaders": {},
+      "previousHeaders": {
+        "x": "second"
+      },
+      "remainingReplacements": {}
+    }
+  },
+  {
+    "name": "response null does not replace",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [
+        "X",
+        "old"
+      ],
+      "replacements": {
+        "X": null
+      }
+    },
+    "expected": {
+      "rawHeaders": [
+        "X",
+        "old"
+      ],
+      "setHeaders": {},
+      "previousHeaders": null,
+      "remainingReplacements": {
+        "x": null
+      }
+    }
+  },
+  {
+    "name": "response false zero empty replace and add",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [
+        "X",
+        "old",
+        "Y",
+        "old",
+        "Z",
+        "old"
+      ],
+      "replacements": {
+        "X": false,
+        "Y": 0,
+        "Z": "",
+        "Added": false
+      }
+    },
+    "expected": {
+      "rawHeaders": [
+        "X",
+        false,
+        "Y",
+        0,
+        "Z",
+        ""
+      ],
+      "setHeaders": {
+        "added": false
+      },
+      "previousHeaders": {
+        "x": "old",
+        "y": "old",
+        "z": "old",
+        "added": null
+      },
+      "remainingReplacements": {
+        "added": false
+      }
+    }
+  },
+  {
+    "name": "response collision uppercase wins",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [
+        "X",
+        "old"
+      ],
+      "replacements": {
+        "x": "lower",
+        "X": "upper"
+      }
+    },
+    "expected": {
+      "rawHeaders": [
+        "X",
+        "upper"
+      ],
+      "setHeaders": {},
+      "previousHeaders": {
+        "x": "old"
+      },
+      "remainingReplacements": {}
+    }
+  },
+  {
+    "name": "response collision later mixed wins",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [
+        "X",
+        "old"
+      ],
+      "replacements": {
+        "X": "first",
+        "x": "lower",
+        "xX": "other",
+        "XX": "last"
+      }
+    },
+    "expected": {
+      "rawHeaders": [
+        "X",
+        "first"
+      ],
+      "setHeaders": {
+        "xx": "last"
+      },
+      "previousHeaders": {
+        "x": "old",
+        "xx": null
+      },
+      "remainingReplacements": {
+        "xx": "last"
+      }
+    }
+  },
+  {
+    "name": "response no changes",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [
+        "X",
+        "same"
+      ],
+      "replacements": {
+        "x": "same"
+      }
+    },
+    "expected": {
+      "rawHeaders": [
+        "X",
+        "same"
+      ],
+      "setHeaders": {},
+      "previousHeaders": null,
+      "remainingReplacements": {}
+    }
+  },
+  {
+    "name": "response empty",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [
+        "X",
+        "same"
+      ],
+      "replacements": {}
+    },
+    "expected": {
+      "rawHeaders": [
+        "X",
+        "same"
+      ],
+      "setHeaders": {},
+      "previousHeaders": null,
+      "remainingReplacements": {}
+    }
+  },
+  {
+    "name": "cors skipped options",
+    "input": {
+      "operation": "cors",
+      "method": "OPTIONS",
+      "requestHeaders": {
+        "origin": "https://example.test"
+      },
+      "rawHeaders": [],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [],
+      "setHeaders": {},
+      "previousHeaders": null,
+      "remainingReplacements": {}
+    }
+  },
+  {
+    "name": "cors method exact",
+    "input": {
+      "operation": "cors",
+      "method": "options",
+      "requestHeaders": {
+        "origin": "https://example.test"
+      },
+      "rawHeaders": [],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://example.test",
+        "cross-origin-resource-policy": "cross-origin",
+        "vary": "Origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null,
+        "vary": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://example.test",
+        "cross-origin-resource-policy": "cross-origin",
+        "vary": "Origin"
+      }
+    }
+  },
+  {
+    "name": "cors skipped missing origin",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {},
+      "rawHeaders": [],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [],
+      "setHeaders": {},
+      "previousHeaders": null,
+      "remainingReplacements": {}
+    }
+  },
+  {
+    "name": "cors empty origin",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": ""
+      },
+      "rawHeaders": [],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [],
+      "setHeaders": {},
+      "previousHeaders": null,
+      "remainingReplacements": {}
+    }
+  },
+  {
+    "name": "cors adds headers",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "https://example.test"
+      },
+      "rawHeaders": [],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://example.test",
+        "cross-origin-resource-policy": "cross-origin",
+        "vary": "Origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null,
+        "vary": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://example.test",
+        "cross-origin-resource-policy": "cross-origin",
+        "vary": "Origin"
+      }
+    }
+  },
+  {
+    "name": "cors vary append and duplicate",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "https://example.test"
+      },
+      "rawHeaders": [
+        "Vary",
+        "Accept-Encoding",
+        "vary",
+        "Origin"
+      ],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [
+        "Vary",
+        "Accept-Encoding, Origin",
+        "vary",
+        "Accept-Encoding, Origin"
+      ],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://example.test",
+        "cross-origin-resource-policy": "cross-origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "vary": "Origin",
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://example.test",
+        "cross-origin-resource-policy": "cross-origin"
+      }
+    }
+  },
+  {
+    "name": "cors existing origin exact",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "https://example.test"
+      },
+      "rawHeaders": [
+        "Vary",
+        "Accept, Origin"
+      ],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [
+        "Vary",
+        "Accept, Origin"
+      ],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://example.test",
+        "cross-origin-resource-policy": "cross-origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://example.test",
+        "cross-origin-resource-policy": "cross-origin"
+      }
+    }
+  },
+  {
+    "name": "cors existing lowercase origin",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "https://example.test"
+      },
+      "rawHeaders": [
+        "Vary",
+        "origin"
+      ],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [
+        "Vary",
+        "origin, Origin"
+      ],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://example.test",
+        "cross-origin-resource-policy": "cross-origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "vary": "origin",
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://example.test",
+        "cross-origin-resource-policy": "cross-origin"
+      }
+    }
+  },
+  {
+    "name": "cors empty vary",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "https://example.test"
+      },
+      "rawHeaders": [
+        "Vary",
+        ""
+      ],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [
+        "Vary",
+        ""
+      ],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://example.test",
+        "cross-origin-resource-policy": "cross-origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://example.test",
+        "cross-origin-resource-policy": "cross-origin"
+      }
+    }
+  },
+  {
+    "name": "cors null vary",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "https://example.test"
+      },
+      "rawHeaders": [
+        "Vary",
+        null
+      ],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [
+        "Vary",
+        null
+      ],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://example.test",
+        "cross-origin-resource-policy": "cross-origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "https://example.test",
+        "cross-origin-resource-policy": "cross-origin",
+        "vary": null
+      }
+    }
+  },
+  {
+    "name": "cors policy truthy",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": [
+          "one",
+          "two"
+        ]
+      },
+      "rawHeaders": [],
+      "optionsCrossPolicy": "same-site"
+    },
+    "expected": {
+      "rawHeaders": [],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": [
+          "one",
+          "two"
+        ],
+        "cross-origin-resource-policy": "same-site",
+        "vary": "Origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null,
+        "vary": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": [
+          "one",
+          "two"
+        ],
+        "cross-origin-resource-policy": "same-site",
+        "vary": "Origin"
+      }
+    }
+  },
+  {
+    "name": "cors policy falsy",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [],
+      "optionsCrossPolicy": false
+    },
+    "expected": {
+      "rawHeaders": [],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "vary": "Origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null,
+        "vary": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "vary": "Origin"
+      }
+    }
+  },
+  {
+    "name": "cors unchanged diagnostic",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [
+        "Access-Control-Allow-Credentials",
+        "true",
+        "Access-Control-Allow-Origin",
+        "site",
+        "Cross-Origin-Resource-Policy",
+        "cross-origin",
+        "Vary",
+        "Origin"
+      ],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [
+        "Access-Control-Allow-Credentials",
+        "true",
+        "Access-Control-Allow-Origin",
+        "site",
+        "Cross-Origin-Resource-Policy",
+        "cross-origin",
+        "Vary",
+        "Origin"
+      ],
+      "setHeaders": {
+        "DS-AfterOPTIONSHeaders-Interceptor": "0"
+      },
+      "previousHeaders": null,
+      "remainingReplacements": {}
+    }
+  },
+  {
+    "name": "request value null",
+    "input": {
+      "operation": "request",
+      "headers": {
+        "x": "old",
+        "kept": null
+      },
+      "replacements": {
+        "X": null,
+        "Added": null
+      }
+    },
+    "expected": {
+      "kept": null
+    }
+  },
+  {
+    "name": "response value null",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [
+        "X",
+        "old",
+        "x",
+        "other"
+      ],
+      "replacements": {
+        "X": null,
+        "Added": null
+      }
+    },
+    "expected": {
+      "rawHeaders": [
+        "X",
+        "old",
+        "x",
+        "other"
+      ],
+      "setHeaders": {},
+      "previousHeaders": null,
+      "remainingReplacements": {
+        "x": null,
+        "added": null
+      }
+    }
+  },
+  {
+    "name": "cors policy null",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "vary": "Origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null,
+        "vary": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "vary": "Origin"
+      }
+    }
+  },
+  {
+    "name": "request value false",
+    "input": {
+      "operation": "request",
+      "headers": {
+        "x": "old",
+        "kept": false
+      },
+      "replacements": {
+        "X": false,
+        "Added": false
+      }
+    },
+    "expected": {
+      "kept": false
+    }
+  },
+  {
+    "name": "response value false",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [
+        "X",
+        "old",
+        "x",
+        "other"
+      ],
+      "replacements": {
+        "X": false,
+        "Added": false
+      }
+    },
+    "expected": {
+      "rawHeaders": [
+        "X",
+        false,
+        "x",
+        false
+      ],
+      "setHeaders": {
+        "added": false
+      },
+      "previousHeaders": {
+        "x": "other",
+        "added": null
+      },
+      "remainingReplacements": {
+        "added": false
+      }
+    }
+  },
+  {
+    "name": "cors policy false",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [],
+      "optionsCrossPolicy": false
+    },
+    "expected": {
+      "rawHeaders": [],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "vary": "Origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null,
+        "vary": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "vary": "Origin"
+      }
+    }
+  },
+  {
+    "name": "request value zero",
+    "input": {
+      "operation": "request",
+      "headers": {
+        "x": "old",
+        "kept": 0
+      },
+      "replacements": {
+        "X": 0,
+        "Added": 0
+      }
+    },
+    "expected": {
+      "kept": 0
+    }
+  },
+  {
+    "name": "response value zero",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [
+        "X",
+        "old",
+        "x",
+        "other"
+      ],
+      "replacements": {
+        "X": 0,
+        "Added": 0
+      }
+    },
+    "expected": {
+      "rawHeaders": [
+        "X",
+        0,
+        "x",
+        0
+      ],
+      "setHeaders": {
+        "added": 0
+      },
+      "previousHeaders": {
+        "x": "other",
+        "added": null
+      },
+      "remainingReplacements": {
+        "added": 0
+      }
+    }
+  },
+  {
+    "name": "cors policy zero",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [],
+      "optionsCrossPolicy": 0
+    },
+    "expected": {
+      "rawHeaders": [],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "vary": "Origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null,
+        "vary": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "vary": "Origin"
+      }
+    }
+  },
+  {
+    "name": "request value empty-string",
+    "input": {
+      "operation": "request",
+      "headers": {
+        "x": "old",
+        "kept": ""
+      },
+      "replacements": {
+        "X": "",
+        "Added": ""
+      }
+    },
+    "expected": {
+      "kept": ""
+    }
+  },
+  {
+    "name": "response value empty-string",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [
+        "X",
+        "old",
+        "x",
+        "other"
+      ],
+      "replacements": {
+        "X": "",
+        "Added": ""
+      }
+    },
+    "expected": {
+      "rawHeaders": [
+        "X",
+        "",
+        "x",
+        ""
+      ],
+      "setHeaders": {
+        "added": ""
+      },
+      "previousHeaders": {
+        "x": "other",
+        "added": null
+      },
+      "remainingReplacements": {
+        "added": ""
+      }
+    }
+  },
+  {
+    "name": "cors policy empty-string",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [],
+      "optionsCrossPolicy": ""
+    },
+    "expected": {
+      "rawHeaders": [],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "vary": "Origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null,
+        "vary": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "vary": "Origin"
+      }
+    }
+  },
+  {
+    "name": "request value empty-list",
+    "input": {
+      "operation": "request",
+      "headers": {
+        "x": "old",
+        "kept": []
+      },
+      "replacements": {
+        "X": [],
+        "Added": []
+      }
+    },
+    "expected": {
+      "x": [],
+      "kept": [],
+      "added": []
+    }
+  },
+  {
+    "name": "response value empty-list",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [
+        "X",
+        "old",
+        "x",
+        "other"
+      ],
+      "replacements": {
+        "X": [],
+        "Added": []
+      }
+    },
+    "expected": {
+      "rawHeaders": [
+        "X",
+        [],
+        "x",
+        []
+      ],
+      "setHeaders": {
+        "added": []
+      },
+      "previousHeaders": {
+        "x": "other",
+        "added": null
+      },
+      "remainingReplacements": {
+        "added": []
+      }
+    }
+  },
+  {
+    "name": "cors policy empty-list",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [],
+      "optionsCrossPolicy": []
+    },
+    "expected": {
+      "rawHeaders": [],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": [],
+        "vary": "Origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null,
+        "vary": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": [],
+        "vary": "Origin"
+      }
+    }
+  },
+  {
+    "name": "request value empty-object",
+    "input": {
+      "operation": "request",
+      "headers": {
+        "x": "old",
+        "kept": {}
+      },
+      "replacements": {
+        "X": {},
+        "Added": {}
+      }
+    },
+    "expected": {
+      "x": {},
+      "kept": {},
+      "added": {}
+    }
+  },
+  {
+    "name": "response value empty-object",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [
+        "X",
+        "old",
+        "x",
+        "other"
+      ],
+      "replacements": {
+        "X": {},
+        "Added": {}
+      }
+    },
+    "expected": {
+      "rawHeaders": [
+        "X",
+        {},
+        "x",
+        {}
+      ],
+      "setHeaders": {
+        "added": {}
+      },
+      "previousHeaders": {
+        "x": "other",
+        "added": null
+      },
+      "remainingReplacements": {
+        "added": {}
+      }
+    }
+  },
+  {
+    "name": "cors policy empty-object",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [],
+      "optionsCrossPolicy": {}
+    },
+    "expected": {
+      "rawHeaders": [],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": {},
+        "vary": "Origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null,
+        "vary": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": {},
+        "vary": "Origin"
+      }
+    }
+  },
+  {
+    "name": "request value remove",
+    "input": {
+      "operation": "request",
+      "headers": {
+        "x": "old",
+        "kept": "[remove]"
+      },
+      "replacements": {
+        "X": "[remove]",
+        "Added": "[remove]"
+      }
+    },
+    "expected": {
+      "kept": "[remove]"
+    }
+  },
+  {
+    "name": "response value remove",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [
+        "X",
+        "old",
+        "x",
+        "other"
+      ],
+      "replacements": {
+        "X": "[remove]",
+        "Added": "[remove]"
+      }
+    },
+    "expected": {
+      "rawHeaders": [
+        "X",
+        "",
+        "x",
+        ""
+      ],
+      "setHeaders": {},
+      "previousHeaders": {
+        "x": "other"
+      },
+      "remainingReplacements": {
+        "added": "[remove]"
+      }
+    }
+  },
+  {
+    "name": "cors policy remove",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [],
+      "optionsCrossPolicy": "[remove]"
+    },
+    "expected": {
+      "rawHeaders": [],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "vary": "Origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "vary": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "[remove]",
+        "vary": "Origin"
+      }
+    }
+  },
+  {
+    "name": "cors vary \"*\"",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [
+        "Vary",
+        "*"
+      ],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [
+        "Vary",
+        "*, Origin"
+      ],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "vary": "*",
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin"
+      }
+    }
+  },
+  {
+    "name": "cors vary \"Origin \"",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [
+        "Vary",
+        "Origin "
+      ],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [
+        "Vary",
+        "Origin , Origin"
+      ],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "vary": "Origin ",
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin"
+      }
+    }
+  },
+  {
+    "name": "cors vary \" Origin\"",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [
+        "Vary",
+        " Origin"
+      ],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [
+        "Vary",
+        " Origin, Origin"
+      ],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "vary": " Origin",
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin"
+      }
+    }
+  },
+  {
+    "name": "cors vary \"Accept,\\tOrigin\"",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [
+        "Vary",
+        "Accept,\tOrigin"
+      ],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [
+        "Vary",
+        "Accept,\tOrigin"
+      ],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin"
+      }
+    }
+  },
+  {
+    "name": "cors vary \"Accept, Origin \"",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [
+        "Vary",
+        "Accept, Origin "
+      ],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [
+        "Vary",
+        "Accept, Origin , Origin"
+      ],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "vary": "Accept, Origin ",
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin"
+      }
+    }
+  },
+  {
+    "name": "cors vary \"Origin, Accept\"",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [
+        "Vary",
+        "Origin, Accept"
+      ],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [
+        "Vary",
+        "Origin, Accept"
+      ],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin"
+      }
+    }
+  },
+  {
+    "name": "cors vary \"Accept,,Origin\"",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [
+        "Vary",
+        "Accept,,Origin"
+      ],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [
+        "Vary",
+        "Accept,,Origin"
+      ],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin"
+      }
+    }
+  },
+  {
+    "name": "cors vary false",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [
+        "Vary",
+        false
+      ],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [
+        "Vary",
+        false
+      ],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin"
+      }
+    }
+  },
+  {
+    "name": "cors vary 0",
+    "input": {
+      "operation": "cors",
+      "method": "GET",
+      "requestHeaders": {
+        "origin": "site"
+      },
+      "rawHeaders": [
+        "Vary",
+        0
+      ],
+      "optionsCrossPolicy": null
+    },
+    "expected": {
+      "rawHeaders": [
+        "Vary",
+        0
+      ],
+      "setHeaders": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin",
+        "DS-AfterOPTIONSHeaders-Interceptor": "1"
+      },
+      "previousHeaders": {
+        "access-control-allow-credentials": null,
+        "access-control-allow-origin": null,
+        "cross-origin-resource-policy": null
+      },
+      "remainingReplacements": {
+        "access-control-allow-credentials": "true",
+        "access-control-allow-origin": "site",
+        "cross-origin-resource-policy": "cross-origin"
+      }
+    }
+  },
+  {
+    "name": "retry length \"\"",
+    "input": {
+      "operation": "retry",
+      "method": "POST",
+      "headers": {
+        "content-length": ""
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": false
+  },
+  {
+    "name": "retry length \" \ufeff+10stuff\"",
+    "input": {
+      "operation": "retry",
+      "method": "POST",
+      "headers": {
+        "content-length": " \ufeff+10stuff"
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "retry length \"1e9\"",
+    "input": {
+      "operation": "retry",
+      "method": "POST",
+      "headers": {
+        "content-length": "1e9"
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "retry length \"10.9\"",
+    "input": {
+      "operation": "retry",
+      "method": "POST",
+      "headers": {
+        "content-length": "10.9"
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "retry length true",
+    "input": {
+      "operation": "retry",
+      "method": "POST",
+      "headers": {
+        "content-length": true
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": false
+  },
+  {
+    "name": "retry length null",
+    "input": {
+      "operation": "retry",
+      "method": "POST",
+      "headers": {
+        "content-length": null
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": false
+  },
+  {
+    "name": "retry length []",
+    "input": {
+      "operation": "retry",
+      "method": "POST",
+      "headers": {
+        "content-length": []
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": false
+  },
+  {
+    "name": "retry length {}",
+    "input": {
+      "operation": "retry",
+      "method": "POST",
+      "headers": {
+        "content-length": {}
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": false
+  },
+  {
+    "name": "retry length [[\"9\"]]",
+    "input": {
+      "operation": "retry",
+      "method": "POST",
+      "headers": {
+        "content-length": [
+          [
+            "9"
+          ]
+        ]
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "retry length [\"bad\",\"9\"]",
+    "input": {
+      "operation": "retry",
+      "method": "POST",
+      "headers": {
+        "content-length": [
+          "bad",
+          "9"
+        ]
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": false
+  },
+  {
+    "name": "retry length -0.5",
+    "input": {
+      "operation": "retry",
+      "method": "POST",
+      "headers": {
+        "content-length": -0.5
+      },
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE"
+      ],
+      "threshold": 10
+    },
+    "expected": true
+  },
+  {
+    "name": "response numeric keys enumerate first",
+    "input": {
+      "operation": "response",
+      "rawHeaders": [],
+      "replacements": {
+        "2": "two",
+        "10": "ten",
+        "Z": "z",
+        "A": "a"
+      }
+    },
+    "expected": {
+      "rawHeaders": [],
+      "setHeaders": {
+        "2": "two",
+        "10": "ten",
+        "z": "z",
+        "a": "a"
+      },
+      "previousHeaders": {
+        "2": null,
+        "10": null,
+        "z": null,
+        "a": null
+      },
+      "remainingReplacements": {
+        "2": "two",
+        "10": "ten",
+        "z": "z",
+        "a": "a"
+      }
+    }
+  },
+  {
+    "name": "request numeric keys enumerate first",
+    "input": {
+      "operation": "request",
+      "headers": {
+        "2": "two",
+        "10": "ten",
+        "z": "z"
+      },
+      "replacements": {
+        "1": "one",
+        "B": "b"
+      }
+    },
+    "expected": {
+      "1": "one",
+      "2": "two",
+      "10": "ten",
+      "z": "z",
+      "b": "b"
+    }
+  }
+]

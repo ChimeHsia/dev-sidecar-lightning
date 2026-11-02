@@ -1,0 +1,612 @@
+[
+  {
+    "name": "single-x25519",
+    "input": {
+      "kind": "wireHex",
+      "value": "0041fe0d003d07002000200708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20212223242526000400010001400e7075626c69632e6578616d706c650000"
+    },
+    "expected": {
+      "configs": [
+        {
+          "versionCode": 65037,
+          "length": 61,
+          "rawHex": "07002000200708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20212223242526000400010001400e7075626c69632e6578616d706c650000",
+          "configId": 7,
+          "kemId": 32,
+          "publicKeyHex": "0708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20212223242526",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        }
+      ],
+      "pickIndex": 0,
+      "selectIndex": 0,
+      "supportedCipherSuites": [
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        }
+      ]
+    }
+  },
+  {
+    "name": "p256-only-fallback",
+    "input": {
+      "kind": "wireHex",
+      "value": "0062fe0d005e080010004108090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748000400010001400e7075626c69632e6578616d706c650000"
+    },
+    "expected": {
+      "configs": [
+        {
+          "versionCode": 65037,
+          "length": 94,
+          "rawHex": "080010004108090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748000400010001400e7075626c69632e6578616d706c650000",
+          "configId": 8,
+          "kemId": 16,
+          "publicKeyHex": "08090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        }
+      ],
+      "pickIndex": 0,
+      "selectIndex": null,
+      "supportedCipherSuites": [
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        }
+      ]
+    }
+  },
+  {
+    "name": "prefer-x25519-after-p256",
+    "input": {
+      "kind": "wireHex",
+      "value": "00a3fe0d005e0900100041090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40414243444546474849000400010001400e7075626c69632e6578616d706c650000fe0d003d0a002000200a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20212223242526272829000400010001400e7075626c69632e6578616d706c650000"
+    },
+    "expected": {
+      "configs": [
+        {
+          "versionCode": 65037,
+          "length": 94,
+          "rawHex": "0900100041090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40414243444546474849000400010001400e7075626c69632e6578616d706c650000",
+          "configId": 9,
+          "kemId": 16,
+          "publicKeyHex": "090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40414243444546474849",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        },
+        {
+          "versionCode": 65037,
+          "length": 61,
+          "rawHex": "0a002000200a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20212223242526272829000400010001400e7075626c69632e6578616d706c650000",
+          "configId": 10,
+          "kemId": 32,
+          "publicKeyHex": "0a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20212223242526272829",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        }
+      ],
+      "pickIndex": 1,
+      "selectIndex": 1,
+      "supportedCipherSuites": [
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        },
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        }
+      ]
+    }
+  },
+  {
+    "name": "first-x25519-is-stable",
+    "input": {
+      "kind": "wireHex",
+      "value": "00e4fe0d003d0b002000200b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a000400010001400e7075626c69632e6578616d706c650000fe0d003d0c002000200c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b000400010001400e7075626c69632e6578616d706c650000fe0d005e0d001000410d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d000400010001400e7075626c69632e6578616d706c650000"
+    },
+    "expected": {
+      "configs": [
+        {
+          "versionCode": 65037,
+          "length": 61,
+          "rawHex": "0b002000200b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a000400010001400e7075626c69632e6578616d706c650000",
+          "configId": 11,
+          "kemId": 32,
+          "publicKeyHex": "0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        },
+        {
+          "versionCode": 65037,
+          "length": 61,
+          "rawHex": "0c002000200c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b000400010001400e7075626c69632e6578616d706c650000",
+          "configId": 12,
+          "kemId": 32,
+          "publicKeyHex": "0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        },
+        {
+          "versionCode": 65037,
+          "length": 94,
+          "rawHex": "0d001000410d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d000400010001400e7075626c69632e6578616d706c650000",
+          "configId": 13,
+          "kemId": 16,
+          "publicKeyHex": "0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        }
+      ],
+      "pickIndex": 0,
+      "selectIndex": 0,
+      "supportedCipherSuites": [
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        },
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        },
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        }
+      ]
+    }
+  },
+  {
+    "name": "unknown-kem-falls-back-in-wire-order",
+    "input": {
+      "kind": "wireHex",
+      "value": "0081fe0d00240ebeef00070e0f1011121314000400010001400e7075626c69632e6578616d706c650000fe0d00550f002100380f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40414243444546000400010001400e7075626c69632e6578616d706c650000"
+    },
+    "expected": {
+      "configs": [
+        {
+          "versionCode": 65037,
+          "length": 36,
+          "rawHex": "0ebeef00070e0f1011121314000400010001400e7075626c69632e6578616d706c650000",
+          "configId": 14,
+          "kemId": 48879,
+          "publicKeyHex": "0e0f1011121314",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        },
+        {
+          "versionCode": 65037,
+          "length": 85,
+          "rawHex": "0f002100380f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40414243444546000400010001400e7075626c69632e6578616d706c650000",
+          "configId": 15,
+          "kemId": 33,
+          "publicKeyHex": "0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40414243444546",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        }
+      ],
+      "pickIndex": 0,
+      "selectIndex": null,
+      "supportedCipherSuites": [
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        },
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        }
+      ]
+    }
+  },
+  {
+    "name": "unknown-kdf-aead-retained",
+    "input": {
+      "kind": "wireHex",
+      "value": "0041fe0d003d1000200020101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f0004beefcafe400e7075626c69632e6578616d706c650000"
+    },
+    "expected": {
+      "configs": [
+        {
+          "versionCode": 65037,
+          "length": 61,
+          "rawHex": "1000200020101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f0004beefcafe400e7075626c69632e6578616d706c650000",
+          "configId": 16,
+          "kemId": 32,
+          "publicKeyHex": "101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f",
+          "cipherSuites": [
+            48879,
+            51966
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        }
+      ],
+      "pickIndex": 0,
+      "selectIndex": null,
+      "supportedCipherSuites": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "suite-pairs-must-not-cross-boundaries",
+    "input": {
+      "kind": "wireHex",
+      "value": "0045fe0d004111002000201112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3000080002000100010002400e7075626c69632e6578616d706c650000"
+    },
+    "expected": {
+      "configs": [
+        {
+          "versionCode": 65037,
+          "length": 65,
+          "rawHex": "11002000201112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3000080002000100010002400e7075626c69632e6578616d706c650000",
+          "configId": 17,
+          "kemId": 32,
+          "publicKeyHex": "1112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f30",
+          "cipherSuites": [
+            2,
+            1,
+            1,
+            2
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        }
+      ],
+      "pickIndex": 0,
+      "selectIndex": null,
+      "supportedCipherSuites": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "supported-pair-later-in-vector",
+    "input": {
+      "kind": "wireHex",
+      "value": "0049fe0d0045120020002012131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3031000c0003000300010001beefcafe400e7075626c69632e6578616d706c650000"
+    },
+    "expected": {
+      "configs": [
+        {
+          "versionCode": 65037,
+          "length": 69,
+          "rawHex": "120020002012131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3031000c0003000300010001beefcafe400e7075626c69632e6578616d706c650000",
+          "configId": 18,
+          "kemId": 32,
+          "publicKeyHex": "12131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3031",
+          "cipherSuites": [
+            3,
+            3,
+            1,
+            1,
+            48879,
+            51966
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        }
+      ],
+      "pickIndex": 0,
+      "selectIndex": 0,
+      "supportedCipherSuites": [
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        }
+      ]
+    }
+  },
+  {
+    "name": "picker-and-profile-filter-differ",
+    "input": {
+      "kind": "wireHex",
+      "value": "0082fe0d003d1300200020131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132000400020002400e7075626c69632e6578616d706c650000fe0d003d14002000201415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f30313233000400010001400e7075626c69632e6578616d706c650000"
+    },
+    "expected": {
+      "configs": [
+        {
+          "versionCode": 65037,
+          "length": 61,
+          "rawHex": "1300200020131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132000400020002400e7075626c69632e6578616d706c650000",
+          "configId": 19,
+          "kemId": 32,
+          "publicKeyHex": "131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132",
+          "cipherSuites": [
+            2,
+            2
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        },
+        {
+          "versionCode": 65037,
+          "length": 61,
+          "rawHex": "14002000201415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f30313233000400010001400e7075626c69632e6578616d706c650000",
+          "configId": 20,
+          "kemId": 32,
+          "publicKeyHex": "1415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f30313233",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        }
+      ],
+      "pickIndex": 0,
+      "selectIndex": 1,
+      "supportedCipherSuites": [
+        null,
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        }
+      ]
+    }
+  },
+  {
+    "name": "optional-extensions-and-empty-data",
+    "input": {
+      "kind": "wireHex",
+      "value": "004dfe0d0049150020002015161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3031323334000400010001400e7075626c69632e6578616d706c65000c1234000400ff108023450000"
+    },
+    "expected": {
+      "configs": [
+        {
+          "versionCode": 65037,
+          "length": 73,
+          "rawHex": "150020002015161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3031323334000400010001400e7075626c69632e6578616d706c65000c1234000400ff108023450000",
+          "configId": 21,
+          "kemId": 32,
+          "publicKeyHex": "15161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f3031323334",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 12
+        }
+      ],
+      "pickIndex": 0,
+      "selectIndex": 0,
+      "supportedCipherSuites": [
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        }
+      ]
+    }
+  },
+  {
+    "name": "zero-maximum-name-length",
+    "input": {
+      "kind": "wireHex",
+      "value": "0041fe0d003d1600200020161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435000400010001000e5075626c69632e4578616d706c650000"
+    },
+    "expected": {
+      "configs": [
+        {
+          "versionCode": 65037,
+          "length": 61,
+          "rawHex": "1600200020161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435000400010001000e5075626c69632e4578616d706c650000",
+          "configId": 22,
+          "kemId": 32,
+          "publicKeyHex": "161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 0,
+          "publicName": "Public.Example",
+          "extensionsLength": 0
+        }
+      ],
+      "pickIndex": 0,
+      "selectIndex": 0,
+      "supportedCipherSuites": [
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        }
+      ]
+    }
+  },
+  {
+    "name": "maximum-name-length-is-not-public-name-limit",
+    "input": {
+      "kind": "wireHex",
+      "value": "0130fe0d012c17002000201718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f30313233343536000400010001fffd6161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161612e6262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262622e6363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363632e646464646464646464646464646464646464646464646464646464646464646464646464646464646464646464646464646464646464646464646464640000"
+    },
+    "expected": {
+      "configs": [
+        {
+          "versionCode": 65037,
+          "length": 300,
+          "rawHex": "17002000201718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f30313233343536000400010001fffd6161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161612e6262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262622e6363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363632e646464646464646464646464646464646464646464646464646464646464646464646464646464646464646464646464646464646464646464646464640000",
+          "configId": 23,
+          "kemId": 32,
+          "publicKeyHex": "1718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f30313233343536",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 255,
+          "publicName": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "extensionsLength": 0
+        }
+      ],
+      "pickIndex": 0,
+      "selectIndex": 0,
+      "supportedCipherSuites": [
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        }
+      ]
+    }
+  },
+  {
+    "name": "all-known-kem-encoding-lengths",
+    "input": {
+      "kind": "wireHex",
+      "value": "0224fe0d005e180010004118191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758000400010001400e7075626c69632e6578616d706c650000fe0d007e1900110061191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f70717273747576777879000400010001400e7075626c69632e6578616d706c650000fe0d00a21a001200851a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e000400010001400e7075626c69632e6578616d706c650000fe0d00551b002100381b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152000400010001400e7075626c69632e6578616d706c650000fe0d003d1c002000201c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b000400010001400e7075626c69632e6578616d706c650000"
+    },
+    "expected": {
+      "configs": [
+        {
+          "versionCode": 65037,
+          "length": 94,
+          "rawHex": "180010004118191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758000400010001400e7075626c69632e6578616d706c650000",
+          "configId": 24,
+          "kemId": 16,
+          "publicKeyHex": "18191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        },
+        {
+          "versionCode": 65037,
+          "length": 126,
+          "rawHex": "1900110061191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f70717273747576777879000400010001400e7075626c69632e6578616d706c650000",
+          "configId": 25,
+          "kemId": 17,
+          "publicKeyHex": "191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f70717273747576777879",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        },
+        {
+          "versionCode": 65037,
+          "length": 162,
+          "rawHex": "1a001200851a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e000400010001400e7075626c69632e6578616d706c650000",
+          "configId": 26,
+          "kemId": 18,
+          "publicKeyHex": "1a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        },
+        {
+          "versionCode": 65037,
+          "length": 85,
+          "rawHex": "1b002100381b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152000400010001400e7075626c69632e6578616d706c650000",
+          "configId": 27,
+          "kemId": 33,
+          "publicKeyHex": "1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        },
+        {
+          "versionCode": 65037,
+          "length": 61,
+          "rawHex": "1c002000201c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b000400010001400e7075626c69632e6578616d706c650000",
+          "configId": 28,
+          "kemId": 32,
+          "publicKeyHex": "1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b",
+          "cipherSuites": [
+            1,
+            1
+          ],
+          "maximumNameLength": 64,
+          "publicName": "public.example",
+          "extensionsLength": 0
+        }
+      ],
+      "pickIndex": 4,
+      "selectIndex": 4,
+      "supportedCipherSuites": [
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        },
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        },
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        },
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        },
+        {
+          "kdfId": 1,
+          "aeadId": 1
+        }
+      ]
+    }
+  }
+]

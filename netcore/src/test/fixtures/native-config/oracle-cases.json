@@ -1,0 +1,5034 @@
+{
+  "bootstrap": {
+    "dohUrl": "https://resolver.example.test/dns-query",
+    "providerName": "cf-DoH",
+    "providerHostMatch": "resolver.example.test",
+    "presetIpLists": {
+      "rules.example.test": {
+        "192.0.2.8": true
+      }
+    }
+  },
+  "parse": [
+    {
+      "id": "json5-0",
+      "source": "{}",
+      "expected": {},
+      "orders": [
+        [
+          "$",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "json5-1",
+      "source": "{unquoted:true}",
+      "expected": {
+        "unquoted": true
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "unquoted"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-2",
+      "source": "{single:'text',double:\"text\",}",
+      "expected": {
+        "single": "text",
+        "double": "text"
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "single",
+            "double"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-3",
+      "source": "/* a */ {a:1,// b\n b:2,}",
+      "expected": {
+        "a": 1,
+        "b": 2
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "a",
+            "b"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-4",
+      "source": "{n:+42,minus:-2,hex:0xff,neghex:-0X2a}",
+      "expected": {
+        "n": 42,
+        "minus": -2,
+        "hex": 255,
+        "neghex": -42
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "n",
+            "minus",
+            "hex",
+            "neghex"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-5",
+      "source": "{a:.5,b:5.,c:+.25,d:1e-3,e:-0}",
+      "expected": {
+        "a": 0.5,
+        "b": 5,
+        "c": 0.25,
+        "d": 0.001,
+        "e": 0
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "a",
+            "b",
+            "c",
+            "d",
+            "e"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-6",
+      "source": "{line:'a\\\nb',cr:'a\\\r\nb'}",
+      "expected": {
+        "line": "ab",
+        "cr": "ab"
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "line",
+            "cr"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-7",
+      "source": "{escape:'\\b\\f\\n\\r\\t\\v\\0\\x41\\u4e2d\\q'}",
+      "expected": {
+        "escape": "\b\f\n\r\t\u000b\u0000A中q"
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "escape"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-8",
+      "source": "{\"quoted Unicode\":\"\\uD83D\\uDE00\"}",
+      "expected": {
+        "quoted Unicode": "😀"
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "quoted Unicode"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-9",
+      "source": "{\\u0061:1,$key:2,_key:3}",
+      "expected": {
+        "a": 1,
+        "$key": 2,
+        "_key": 3
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "a",
+            "$key",
+            "_key"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-10",
+      "source": "﻿{ a:true, b:null}",
+      "expected": {
+        "a": true,
+        "b": null
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "a",
+            "b"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-11",
+      "source": "{nested:{z:1,'10':2,'2':3},list:[1,{a:2},],}",
+      "expected": {
+        "nested": {
+          "2": 3,
+          "10": 2,
+          "z": 1
+        },
+        "list": [
+          1,
+          {
+            "a": 2
+          }
+        ]
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "nested",
+            "list"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "2",
+            "10",
+            "z"
+          ]
+        ],
+        [
+          "$/list/1",
+          [
+            "a"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-12",
+      "source": "{'4294967294':1,'4294967295':2,'00':3,'0':4,z:5}",
+      "expected": {
+        "0": 4,
+        "4294967294": 1,
+        "4294967295": 2,
+        "00": 3,
+        "z": 5
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "0",
+            "4294967294",
+            "4294967295",
+            "00",
+            "z"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-13",
+      "source": "{null:null,true:true,false:false}",
+      "expected": {
+        "null": null,
+        "true": true,
+        "false": false
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "null",
+            "true",
+            "false"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-14",
+      "source": "{x:'\"quoted\"',y:\"'quoted'\"}",
+      "expected": {
+        "x": "\"quoted\"",
+        "y": "'quoted'"
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "x",
+            "y"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-15",
+      "source": "/* generated 0 */\n{\n  name: 'sample-0',\n  number: 0,\n  enabled: true,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      0,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-0",
+        "number": 0,
+        "enabled": true,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            0,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-16",
+      "source": "/* generated 1 */\n{\n  name: 'sample-1',\n  number: -0.125,\n  enabled: false,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      1,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-1",
+        "number": -0.125,
+        "enabled": false,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            1,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-17",
+      "source": "/* generated 2 */\n{\n  name: 'sample-2',\n  number: 2000,\n  enabled: false,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      2,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-2",
+        "number": 2000,
+        "enabled": false,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            2,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-18",
+      "source": "/* generated 3 */\n{\n  name: 'sample-3',\n  number: -0.375,\n  enabled: true,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      3,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-3",
+        "number": -0.375,
+        "enabled": true,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            3,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-19",
+      "source": "/* generated 4 */\n{\n  name: 'sample-4',\n  number: 4000,\n  enabled: false,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      4,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-4",
+        "number": 4000,
+        "enabled": false,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            4,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-20",
+      "source": "/* generated 5 */\n{\n  name: 'sample-5',\n  number: -0.625,\n  enabled: false,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      5,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-5",
+        "number": -0.625,
+        "enabled": false,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            5,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-21",
+      "source": "/* generated 6 */\n{\n  name: 'sample-6',\n  number: 6000,\n  enabled: true,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      6,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-6",
+        "number": 6000,
+        "enabled": true,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            6,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-22",
+      "source": "/* generated 7 */\n{\n  name: 'sample-7',\n  number: -0.875,\n  enabled: false,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      7,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-7",
+        "number": -0.875,
+        "enabled": false,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            7,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-23",
+      "source": "/* generated 8 */\n{\n  name: 'sample-8',\n  number: 8000,\n  enabled: false,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      8,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-8",
+        "number": 8000,
+        "enabled": false,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            8,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-24",
+      "source": "/* generated 9 */\n{\n  name: 'sample-9',\n  number: -1.125,\n  enabled: true,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      9,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-9",
+        "number": -1.125,
+        "enabled": true,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            9,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-25",
+      "source": "/* generated 10 */\n{\n  name: 'sample-10',\n  number: 10000,\n  enabled: false,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      10,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-10",
+        "number": 10000,
+        "enabled": false,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            10,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-26",
+      "source": "/* generated 11 */\n{\n  name: 'sample-11',\n  number: -1.375,\n  enabled: false,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      11,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-11",
+        "number": -1.375,
+        "enabled": false,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            11,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-27",
+      "source": "/* generated 12 */\n{\n  name: 'sample-12',\n  number: 12000,\n  enabled: true,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      12,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-12",
+        "number": 12000,
+        "enabled": true,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            12,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-28",
+      "source": "/* generated 13 */\n{\n  name: 'sample-13',\n  number: -1.625,\n  enabled: false,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      13,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-13",
+        "number": -1.625,
+        "enabled": false,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            13,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-29",
+      "source": "/* generated 14 */\n{\n  name: 'sample-14',\n  number: 14000,\n  enabled: false,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      14,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-14",
+        "number": 14000,
+        "enabled": false,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            14,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-30",
+      "source": "/* generated 15 */\n{\n  name: 'sample-15',\n  number: -1.875,\n  enabled: true,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      15,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-15",
+        "number": -1.875,
+        "enabled": true,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            15,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-31",
+      "source": "/* generated 16 */\n{\n  name: 'sample-16',\n  number: 16000,\n  enabled: false,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      16,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-16",
+        "number": 16000,
+        "enabled": false,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            16,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-32",
+      "source": "/* generated 17 */\n{\n  name: 'sample-17',\n  number: -2.125,\n  enabled: false,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      17,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-17",
+        "number": -2.125,
+        "enabled": false,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            17,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-33",
+      "source": "/* generated 18 */\n{\n  name: 'sample-18',\n  number: 18000,\n  enabled: true,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      18,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-18",
+        "number": 18000,
+        "enabled": true,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            18,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-34",
+      "source": "/* generated 19 */\n{\n  name: 'sample-19',\n  number: -2.375,\n  enabled: false,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      19,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-19",
+        "number": -2.375,
+        "enabled": false,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            19,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-35",
+      "source": "/* generated 20 */\n{\n  name: 'sample-20',\n  number: 20000,\n  enabled: false,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      20,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-20",
+        "number": 20000,
+        "enabled": false,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            20,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-36",
+      "source": "/* generated 21 */\n{\n  name: 'sample-21',\n  number: -2.625,\n  enabled: true,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      21,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-21",
+        "number": -2.625,
+        "enabled": true,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            21,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-37",
+      "source": "/* generated 22 */\n{\n  name: 'sample-22',\n  number: 22000,\n  enabled: false,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      22,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-22",
+        "number": 22000,
+        "enabled": false,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            22,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-38",
+      "source": "/* generated 23 */\n{\n  name: 'sample-23',\n  number: -2.875,\n  enabled: false,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      23,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-23",
+        "number": -2.875,
+        "enabled": false,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            23,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-39",
+      "source": "/* generated 24 */\n{\n  name: 'sample-24',\n  number: 24000,\n  enabled: true,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      24,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-24",
+        "number": 24000,
+        "enabled": true,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            24,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-40",
+      "source": "/* generated 25 */\n{\n  name: 'sample-25',\n  number: -3.125,\n  enabled: false,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      25,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-25",
+        "number": -3.125,
+        "enabled": false,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            25,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-41",
+      "source": "/* generated 26 */\n{\n  name: 'sample-26',\n  number: 26000,\n  enabled: false,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      26,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-26",
+        "number": 26000,
+        "enabled": false,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            26,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-42",
+      "source": "/* generated 27 */\n{\n  name: 'sample-27',\n  number: -3.375,\n  enabled: true,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      27,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-27",
+        "number": -3.375,
+        "enabled": true,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            27,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-43",
+      "source": "/* generated 28 */\n{\n  name: 'sample-28',\n  number: 28000,\n  enabled: false,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      28,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-28",
+        "number": 28000,
+        "enabled": false,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            28,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-44",
+      "source": "/* generated 29 */\n{\n  name: 'sample-29',\n  number: -3.625,\n  enabled: false,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      29,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-29",
+        "number": -3.625,
+        "enabled": false,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            29,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-45",
+      "source": "/* generated 30 */\n{\n  name: 'sample-30',\n  number: 30000,\n  enabled: true,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      30,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-30",
+        "number": 30000,
+        "enabled": true,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            30,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-46",
+      "source": "/* generated 31 */\n{\n  name: 'sample-31',\n  number: -3.875,\n  enabled: false,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      31,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-31",
+        "number": -3.875,
+        "enabled": false,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            31,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-47",
+      "source": "/* generated 32 */\n{\n  name: 'sample-32',\n  number: 32000,\n  enabled: false,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      32,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-32",
+        "number": 32000,
+        "enabled": false,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            32,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-48",
+      "source": "/* generated 33 */\n{\n  name: 'sample-33',\n  number: -4.125,\n  enabled: true,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      33,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-33",
+        "number": -4.125,
+        "enabled": true,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            33,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-49",
+      "source": "/* generated 34 */\n{\n  name: 'sample-34',\n  number: 34000,\n  enabled: false,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      34,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-34",
+        "number": 34000,
+        "enabled": false,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            34,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-50",
+      "source": "/* generated 35 */\n{\n  name: 'sample-35',\n  number: -4.375,\n  enabled: false,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      35,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-35",
+        "number": -4.375,
+        "enabled": false,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            35,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-51",
+      "source": "/* generated 36 */\n{\n  name: 'sample-36',\n  number: 36000,\n  enabled: true,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      36,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-36",
+        "number": 36000,
+        "enabled": true,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            36,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-52",
+      "source": "/* generated 37 */\n{\n  name: 'sample-37',\n  number: -4.625,\n  enabled: false,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      37,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-37",
+        "number": -4.625,
+        "enabled": false,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            37,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-53",
+      "source": "/* generated 38 */\n{\n  name: 'sample-38',\n  number: 38000,\n  enabled: false,\n  text: '\\\\path\\tvalue',\n  nested: {\n    first: [\n      38,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-38",
+        "number": 38000,
+        "enabled": false,
+        "text": "\\path\tvalue",
+        "nested": {
+          "first": [
+            38,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "json5-54",
+      "source": "/* generated 39 */\n{\n  name: 'sample-39',\n  number: -4.875,\n  enabled: true,\n  text: \"line\\nquoted'中\",\n  nested: {\n    first: [\n      39,\n      null,\n      false,\n    ],\n    second: {\n      keep: true,\n    },\n  },\n}\n// end",
+      "expected": {
+        "name": "sample-39",
+        "number": -4.875,
+        "enabled": true,
+        "text": "line\nquoted'中",
+        "nested": {
+          "first": [
+            39,
+            null,
+            false
+          ],
+          "second": {
+            "keep": true
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "name",
+            "number",
+            "enabled",
+            "text",
+            "nested"
+          ]
+        ],
+        [
+          "$/nested",
+          [
+            "first",
+            "second"
+          ]
+        ],
+        [
+          "$/nested/second",
+          [
+            "keep"
+          ]
+        ]
+      ]
+    }
+  ],
+  "reject": [
+    {
+      "id": "reject-0",
+      "source": "{a:Infinity}",
+      "upstreamAccepts": true
+    },
+    {
+      "id": "reject-1",
+      "source": "{a:NaN}",
+      "upstreamAccepts": true
+    },
+    {
+      "id": "reject-2",
+      "source": "{a:1e999}",
+      "upstreamAccepts": true
+    },
+    {
+      "id": "reject-3",
+      "source": "{a:1,a:2}",
+      "upstreamAccepts": true
+    },
+    {
+      "id": "reject-4",
+      "source": "{中:1}",
+      "upstreamAccepts": true
+    },
+    {
+      "id": "reject-5",
+      "source": "{x:'\\uD800'}",
+      "upstreamAccepts": true
+    },
+    {
+      "id": "reject-6",
+      "source": "{constructor:1}",
+      "upstreamAccepts": true
+    },
+    {
+      "id": "reject-7",
+      "source": "{__proto__:{x:1}}",
+      "upstreamAccepts": true
+    },
+    {
+      "id": "reject-8",
+      "source": "{a:undefined}",
+      "upstreamAccepts": false
+    },
+    {
+      "id": "reject-9",
+      "source": "{a:function(){}}",
+      "upstreamAccepts": false
+    },
+    {
+      "id": "reject-10",
+      "source": "{a:(1+1)}",
+      "upstreamAccepts": false
+    },
+    {
+      "id": "reject-11",
+      "source": "{a:01}",
+      "upstreamAccepts": false
+    },
+    {
+      "id": "reject-12",
+      "source": "{a:0x}",
+      "upstreamAccepts": false
+    },
+    {
+      "id": "reject-13",
+      "source": "{a:[,1]}",
+      "upstreamAccepts": false
+    },
+    {
+      "id": "reject-14",
+      "source": "{a:'\\09'}",
+      "upstreamAccepts": false
+    },
+    {
+      "id": "reject-15",
+      "source": "{a:0b10}",
+      "upstreamAccepts": false
+    },
+    {
+      "id": "reject-16",
+      "source": "{a:1} garbage",
+      "upstreamAccepts": false
+    }
+  ],
+  "layers": [
+    {
+      "id": "layer-0",
+      "documents": {
+        "defaults": "{server:{port:1}}",
+        "user": "{}"
+      },
+      "expected": {
+        "server": {
+          "port": 1
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "port"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-1",
+      "documents": {
+        "defaults": "{server:{port:1}}"
+      },
+      "expected": {
+        "app": {
+          "closeStrategy": 2
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {
+          "node": {
+            "enabled": false
+          },
+          "git": {
+            "enabled": false
+          },
+          "pip": {
+            "enabled": false
+          },
+          "share": {
+            "enabled": false
+          },
+          "free_eye": {
+            "enabled": false
+          },
+          "overwall": {
+            "enabled": false
+          }
+        },
+        "server": {
+          "enabled": true,
+          "port": 31181
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "app",
+            "proxy",
+            "plugin",
+            "server"
+          ]
+        ],
+        [
+          "$/app",
+          [
+            "closeStrategy"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          [
+            "node",
+            "git",
+            "pip",
+            "share",
+            "free_eye",
+            "overwall"
+          ]
+        ],
+        [
+          "$/plugin/node",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin/git",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin/pip",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin/share",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin/free_eye",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin/overwall",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "enabled",
+            "port"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "layer-2",
+      "documents": {
+        "defaults": "{server:{intercepts:{d:{'.*':{sni:'d.test'}},both:{'.*':{sni:'d.test'}}}}}",
+        "user": "{server:{intercepts:{u:{'.*':{sni:'u.test'}},both:{'.*':{sni:'u.test'}}}}}",
+        "personal": "{server:{intercepts:{p:{'.*':{sni:'p.test'}}}}}",
+        "shared": "{server:{intercepts:{s:{'.*':{sni:'s.test'}}}}}"
+      },
+      "expected": {
+        "server": {
+          "intercepts": {
+            "u": {
+              ".*": {
+                "sni": "u.test"
+              }
+            },
+            "both": {
+              ".*": {
+                "sni": "u.test"
+              }
+            },
+            "p": {
+              ".*": {
+                "sni": "p.test"
+              }
+            },
+            "s": {
+              ".*": {
+                "sni": "s.test"
+              }
+            },
+            "d": {
+              ".*": {
+                "sni": "d.test"
+              }
+            }
+          }
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "intercepts"
+          ]
+        ],
+        [
+          "$/server/intercepts",
+          [
+            "u",
+            "both",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/server/intercepts/u",
+          [
+            ".*"
+          ]
+        ],
+        [
+          "$/server/intercepts/u/.*",
+          [
+            "sni"
+          ]
+        ],
+        [
+          "$/server/intercepts/both",
+          [
+            ".*"
+          ]
+        ],
+        [
+          "$/server/intercepts/both/.*",
+          [
+            "sni"
+          ]
+        ],
+        [
+          "$/server/intercepts/p",
+          [
+            ".*"
+          ]
+        ],
+        [
+          "$/server/intercepts/p/.*",
+          [
+            "sni"
+          ]
+        ],
+        [
+          "$/server/intercepts/s",
+          [
+            ".*"
+          ]
+        ],
+        [
+          "$/server/intercepts/s/.*",
+          [
+            "sni"
+          ]
+        ],
+        [
+          "$/server/intercepts/d",
+          [
+            ".*"
+          ]
+        ],
+        [
+          "$/server/intercepts/d/.*",
+          [
+            "sni"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-3",
+      "documents": {
+        "defaults": "{server:{gone:{a:1},array:[1,2]}}",
+        "user": "{server:{gone:null,array:[null,'[delete]',{x:null,y:1}]}}"
+      },
+      "expected": {
+        "server": {
+          "array": [
+            null,
+            null,
+            {
+              "y": 1
+            }
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "array"
+          ]
+        ],
+        [
+          "$/server/array/2",
+          [
+            "y"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-4",
+      "documents": {
+        "defaults": "{'10':1,'2':2,z:3,server:{}}",
+        "user": "{'1':1,a:1}",
+        "personal": "{p:1}",
+        "shared": "{s:1}"
+      },
+      "expected": {
+        "1": 1,
+        "2": 2,
+        "10": 1,
+        "a": 1,
+        "p": 1,
+        "s": 1,
+        "z": 3,
+        "server": {},
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "1",
+            "2",
+            "10",
+            "a",
+            "p",
+            "s",
+            "z",
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          []
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-5",
+      "documents": {
+        "defaults": "{proxy:{enabled:true},plugin:{custom:{enabled:true}},server:{}}",
+        "user": "{}"
+      },
+      "expected": {
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {
+          "custom": {
+            "enabled": false
+          }
+        },
+        "server": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "proxy",
+            "plugin",
+            "server"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          [
+            "custom"
+          ]
+        ],
+        [
+          "$/plugin/custom",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/server",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-6",
+      "documents": {
+        "defaults": "{app:{remoteConfig:{enabled:false,url:' \\tHTTP://rules.example.test:80/a%2Fb?q=%26 '}}}",
+        "user": "{}"
+      },
+      "expected": {
+        "app": {
+          "remoteConfig": {
+            "enabled": false,
+            "url": "https://rules.example.test:80/a%2Fb?q=%26"
+          }
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "app",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/app",
+          [
+            "remoteConfig"
+          ]
+        ],
+        [
+          "$/app/remoteConfig",
+          [
+            "enabled",
+            "url"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-7",
+      "documents": {
+        "defaults": "{app:{remoteConfig:{enabled:true,url:'https://rules.example.test/a'}}}",
+        "user": "{}"
+      },
+      "expected": {
+        "app": {
+          "remoteConfig": {
+            "enabled": true,
+            "url": "https://rules.example.test/a"
+          }
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {},
+        "server": {
+          "dns": {
+            "providers": {
+              "cf-DoH": {
+                "server": "https://resolver.example.test/dns-query"
+              }
+            },
+            "mapping": {
+              "rules.example.test": "cf-DoH"
+            }
+          },
+          "intercepts": {},
+          "preSetIpList": {
+            "rules.example.test": {
+              "192.0.2.8": true
+            }
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "app",
+            "proxy",
+            "plugin",
+            "server"
+          ]
+        ],
+        [
+          "$/app",
+          [
+            "remoteConfig"
+          ]
+        ],
+        [
+          "$/app/remoteConfig",
+          [
+            "enabled",
+            "url"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ],
+        [
+          "$/server",
+          [
+            "dns",
+            "intercepts",
+            "preSetIpList"
+          ]
+        ],
+        [
+          "$/server/dns",
+          [
+            "providers",
+            "mapping"
+          ]
+        ],
+        [
+          "$/server/dns/providers",
+          [
+            "cf-DoH"
+          ]
+        ],
+        [
+          "$/server/dns/providers/cf-DoH",
+          [
+            "server"
+          ]
+        ],
+        [
+          "$/server/dns/mapping",
+          [
+            "rules.example.test"
+          ]
+        ],
+        [
+          "$/server/intercepts",
+          []
+        ],
+        [
+          "$/server/preSetIpList",
+          [
+            "rules.example.test"
+          ]
+        ],
+        [
+          "$/server/preSetIpList/rules.example.test",
+          [
+            "192.0.2.8"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "layer-8",
+      "documents": {
+        "defaults": "{app:{remoteConfig:{enabled:true,url:'http://rules.example.test/a',fetchRule:{sni:'edge.example.test'}}},server:{dns:{providers:{existing:{server:'https://resolver.example.test/custom'}},mapping:{'rules.example.test':'old'}},intercepts:{'rules.example.test':{'.*':{sni:'keep.example.test'}}},preSetIpList:{'rules.example.test':{'192.0.2.99':true}}}}",
+        "user": "{}"
+      },
+      "expected": {
+        "app": {
+          "remoteConfig": {
+            "enabled": true,
+            "url": "https://rules.example.test/a",
+            "fetchRule": {
+              "sni": "edge.example.test"
+            }
+          }
+        },
+        "server": {
+          "dns": {
+            "providers": {
+              "existing": {
+                "server": "https://resolver.example.test/custom"
+              }
+            },
+            "mapping": {
+              "rules.example.test": "existing"
+            }
+          },
+          "intercepts": {
+            "rules.example.test": {
+              ".*": {
+                "sni": "keep.example.test"
+              }
+            }
+          },
+          "preSetIpList": {
+            "rules.example.test": {
+              "192.0.2.99": true
+            }
+          }
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "app",
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/app",
+          [
+            "remoteConfig"
+          ]
+        ],
+        [
+          "$/app/remoteConfig",
+          [
+            "enabled",
+            "url",
+            "fetchRule"
+          ]
+        ],
+        [
+          "$/app/remoteConfig/fetchRule",
+          [
+            "sni"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "dns",
+            "intercepts",
+            "preSetIpList"
+          ]
+        ],
+        [
+          "$/server/dns",
+          [
+            "providers",
+            "mapping"
+          ]
+        ],
+        [
+          "$/server/dns/providers",
+          [
+            "existing"
+          ]
+        ],
+        [
+          "$/server/dns/providers/existing",
+          [
+            "server"
+          ]
+        ],
+        [
+          "$/server/dns/mapping",
+          [
+            "rules.example.test"
+          ]
+        ],
+        [
+          "$/server/intercepts",
+          [
+            "rules.example.test"
+          ]
+        ],
+        [
+          "$/server/intercepts/rules.example.test",
+          [
+            ".*"
+          ]
+        ],
+        [
+          "$/server/intercepts/rules.example.test/.*",
+          [
+            "sni"
+          ]
+        ],
+        [
+          "$/server/preSetIpList",
+          [
+            "rules.example.test"
+          ]
+        ],
+        [
+          "$/server/preSetIpList/rules.example.test",
+          [
+            "192.0.2.99"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-9",
+      "documents": {
+        "defaults": "{app:{remoteConfig:{enabled:true,url:'https://rules.example.test',personalUrl:'https://personal.example.test',fetchRule:{dns:'custom',sni:'edge.example.test',preSetIpList:null}}}}",
+        "user": "{}"
+      },
+      "expected": {
+        "app": {
+          "remoteConfig": {
+            "enabled": true,
+            "url": "https://rules.example.test",
+            "personalUrl": "https://personal.example.test",
+            "fetchRule": {
+              "dns": "custom",
+              "sni": "edge.example.test"
+            }
+          }
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {},
+        "server": {
+          "dns": {
+            "providers": {
+              "custom": {
+                "server": "https://resolver.example.test/dns-query"
+              }
+            },
+            "mapping": {
+              "rules.example.test": "custom",
+              "personal.example.test": "custom"
+            }
+          },
+          "intercepts": {
+            "rules.example.test": {
+              ".*": {
+                "sni": "edge.example.test",
+                "remark": "内置：远程配置拉取（默认对抗策略）"
+              }
+            },
+            "personal.example.test": {
+              ".*": {
+                "sni": "edge.example.test",
+                "remark": "内置：远程配置拉取（默认对抗策略）"
+              }
+            }
+          },
+          "preSetIpList": {
+            "rules.example.test": {
+              "192.0.2.8": true
+            }
+          }
+        }
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "app",
+            "proxy",
+            "plugin",
+            "server"
+          ]
+        ],
+        [
+          "$/app",
+          [
+            "remoteConfig"
+          ]
+        ],
+        [
+          "$/app/remoteConfig",
+          [
+            "enabled",
+            "url",
+            "personalUrl",
+            "fetchRule"
+          ]
+        ],
+        [
+          "$/app/remoteConfig/fetchRule",
+          [
+            "dns",
+            "sni"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ],
+        [
+          "$/server",
+          [
+            "dns",
+            "intercepts",
+            "preSetIpList"
+          ]
+        ],
+        [
+          "$/server/dns",
+          [
+            "providers",
+            "mapping"
+          ]
+        ],
+        [
+          "$/server/dns/providers",
+          [
+            "custom"
+          ]
+        ],
+        [
+          "$/server/dns/providers/custom",
+          [
+            "server"
+          ]
+        ],
+        [
+          "$/server/dns/mapping",
+          [
+            "rules.example.test",
+            "personal.example.test"
+          ]
+        ],
+        [
+          "$/server/intercepts",
+          [
+            "rules.example.test",
+            "personal.example.test"
+          ]
+        ],
+        [
+          "$/server/intercepts/rules.example.test",
+          [
+            ".*"
+          ]
+        ],
+        [
+          "$/server/intercepts/rules.example.test/.*",
+          [
+            "sni",
+            "remark"
+          ]
+        ],
+        [
+          "$/server/intercepts/personal.example.test",
+          [
+            ".*"
+          ]
+        ],
+        [
+          "$/server/intercepts/personal.example.test/.*",
+          [
+            "sni",
+            "remark"
+          ]
+        ],
+        [
+          "$/server/preSetIpList",
+          [
+            "rules.example.test"
+          ]
+        ],
+        [
+          "$/server/preSetIpList/rules.example.test",
+          [
+            "192.0.2.8"
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "layer-10",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":0,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":1,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":2,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":3,\"both\":3},\"list\":[0]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 3,
+            "both": 3,
+            "p": 2,
+            "s": 1,
+            "d": 0
+          },
+          "list": [
+            0
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "both",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-11",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":1,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":2,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":3,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":4,\"both\":null},\"list\":[1]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 4,
+            "p": 3,
+            "s": 2,
+            "d": 1
+          },
+          "list": [
+            1
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-12",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":2,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":3,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":4,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":5,\"both\":3},\"list\":[2]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 5,
+            "both": 3,
+            "p": 4,
+            "s": 3,
+            "d": 2
+          },
+          "list": [
+            2
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "both",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-13",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":3,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":4,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":5,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":6,\"both\":null},\"list\":[3]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 6,
+            "p": 5,
+            "s": 4,
+            "d": 3
+          },
+          "list": [
+            3
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-14",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":4,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":5,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":6,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":7,\"both\":3},\"list\":[4]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 7,
+            "both": 3,
+            "p": 6,
+            "s": 5,
+            "d": 4
+          },
+          "list": [
+            4
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "both",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-15",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":5,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":6,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":7,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":8,\"both\":null},\"list\":[5]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 8,
+            "p": 7,
+            "s": 6,
+            "d": 5
+          },
+          "list": [
+            5
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-16",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":6,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":7,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":8,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":9,\"both\":3},\"list\":[6]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 9,
+            "both": 3,
+            "p": 8,
+            "s": 7,
+            "d": 6
+          },
+          "list": [
+            6
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "both",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-17",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":7,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":8,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":9,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":10,\"both\":null},\"list\":[7]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 10,
+            "p": 9,
+            "s": 8,
+            "d": 7
+          },
+          "list": [
+            7
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-18",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":8,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":9,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":10,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":11,\"both\":3},\"list\":[8]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 11,
+            "both": 3,
+            "p": 10,
+            "s": 9,
+            "d": 8
+          },
+          "list": [
+            8
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "both",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-19",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":9,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":10,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":11,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":12,\"both\":null},\"list\":[9]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 12,
+            "p": 11,
+            "s": 10,
+            "d": 9
+          },
+          "list": [
+            9
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-20",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":10,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":11,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":12,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":13,\"both\":3},\"list\":[10]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 13,
+            "both": 3,
+            "p": 12,
+            "s": 11,
+            "d": 10
+          },
+          "list": [
+            10
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "both",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-21",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":11,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":12,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":13,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":14,\"both\":null},\"list\":[11]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 14,
+            "p": 13,
+            "s": 12,
+            "d": 11
+          },
+          "list": [
+            11
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-22",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":12,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":13,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":14,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":15,\"both\":3},\"list\":[12]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 15,
+            "both": 3,
+            "p": 14,
+            "s": 13,
+            "d": 12
+          },
+          "list": [
+            12
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "both",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-23",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":13,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":14,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":15,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":16,\"both\":null},\"list\":[13]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 16,
+            "p": 15,
+            "s": 14,
+            "d": 13
+          },
+          "list": [
+            13
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-24",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":14,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":15,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":16,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":17,\"both\":3},\"list\":[14]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 17,
+            "both": 3,
+            "p": 16,
+            "s": 15,
+            "d": 14
+          },
+          "list": [
+            14
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "both",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-25",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":15,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":16,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":17,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":18,\"both\":null},\"list\":[15]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 18,
+            "p": 17,
+            "s": 16,
+            "d": 15
+          },
+          "list": [
+            15
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-26",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":16,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":17,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":18,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":19,\"both\":3},\"list\":[16]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 19,
+            "both": 3,
+            "p": 18,
+            "s": 17,
+            "d": 16
+          },
+          "list": [
+            16
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "both",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-27",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":17,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":18,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":19,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":20,\"both\":null},\"list\":[17]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 20,
+            "p": 19,
+            "s": 18,
+            "d": 17
+          },
+          "list": [
+            17
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-28",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":18,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":19,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":20,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":21,\"both\":3},\"list\":[18]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 21,
+            "both": 3,
+            "p": 20,
+            "s": 19,
+            "d": 18
+          },
+          "list": [
+            18
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "both",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-29",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":19,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":20,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":21,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":22,\"both\":null},\"list\":[19]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 22,
+            "p": 21,
+            "s": 20,
+            "d": 19
+          },
+          "list": [
+            19
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-30",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":20,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":21,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":22,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":23,\"both\":3},\"list\":[20]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 23,
+            "both": 3,
+            "p": 22,
+            "s": 21,
+            "d": 20
+          },
+          "list": [
+            20
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "both",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-31",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":21,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":22,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":23,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":24,\"both\":null},\"list\":[21]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 24,
+            "p": 23,
+            "s": 22,
+            "d": 21
+          },
+          "list": [
+            21
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-32",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":22,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":23,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":24,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":25,\"both\":3},\"list\":[22]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 25,
+            "both": 3,
+            "p": 24,
+            "s": 23,
+            "d": 22
+          },
+          "list": [
+            22
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "both",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-33",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":23,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":24,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":25,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":26,\"both\":null},\"list\":[23]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 26,
+            "p": 25,
+            "s": 24,
+            "d": 23
+          },
+          "list": [
+            23
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-34",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":24,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":25,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":26,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":27,\"both\":3},\"list\":[24]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 27,
+            "both": 3,
+            "p": 26,
+            "s": 25,
+            "d": 24
+          },
+          "list": [
+            24
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "both",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-35",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":25,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":26,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":27,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":28,\"both\":null},\"list\":[25]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 28,
+            "p": 27,
+            "s": 26,
+            "d": 25
+          },
+          "list": [
+            25
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-36",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":26,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":27,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":28,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":29,\"both\":3},\"list\":[26]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 29,
+            "both": 3,
+            "p": 28,
+            "s": 27,
+            "d": 26
+          },
+          "list": [
+            26
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "both",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-37",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":27,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":28,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":29,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":30,\"both\":null},\"list\":[27]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 30,
+            "p": 29,
+            "s": 28,
+            "d": 27
+          },
+          "list": [
+            27
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-38",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":28,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":29,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":30,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":31,\"both\":3},\"list\":[28]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 31,
+            "both": 3,
+            "p": 30,
+            "s": 29,
+            "d": 28
+          },
+          "list": [
+            28
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "both",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    },
+    {
+      "id": "layer-39",
+      "documents": {
+        "defaults": "{\"server\":{\"order\":{\"d\":29,\"both\":0},\"list\":[0,1]}}",
+        "shared": "{\"server\":{\"order\":{\"s\":30,\"both\":1}}}",
+        "personal": "{\"server\":{\"order\":{\"p\":31,\"both\":2}}}",
+        "user": "{\"server\":{\"order\":{\"u\":32,\"both\":null},\"list\":[29]}}"
+      },
+      "expected": {
+        "server": {
+          "order": {
+            "u": 32,
+            "p": 31,
+            "s": 30,
+            "d": 29
+          },
+          "list": [
+            29
+          ]
+        },
+        "proxy": {
+          "enabled": false
+        },
+        "plugin": {}
+      },
+      "orders": [
+        [
+          "$",
+          [
+            "server",
+            "proxy",
+            "plugin"
+          ]
+        ],
+        [
+          "$/server",
+          [
+            "order",
+            "list"
+          ]
+        ],
+        [
+          "$/server/order",
+          [
+            "u",
+            "p",
+            "s",
+            "d"
+          ]
+        ],
+        [
+          "$/proxy",
+          [
+            "enabled"
+          ]
+        ],
+        [
+          "$/plugin",
+          []
+        ]
+      ]
+    }
+  ]
+}

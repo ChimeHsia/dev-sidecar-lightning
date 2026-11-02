@@ -1,0 +1,20 @@
+{
+  "readme_primary_url": "https://raw.githubusercontent.com/marhali/json5-java/master/README.md",
+  "readme_sha256": "71c7d4e9a3e66ded4c857058e4b5455063e54f33a1424ca2034dc7ac91f3541a",
+  "selected_readme_lines": [
+    "This is a reference implementation of the [JSON5 standard](https://json5.org/) in Java 11+, ",
+    "        <groupId>de.marhali</groupId>",
+    "        <artifactId>json5-java</artifactId>",
+    "  implementation(\"de.marhali:json5-java:3.0.0\")"
+  ],
+  "json5-java-3.0.0.pom": {
+    "primary_url": "https://repo.maven.apache.org/maven2/de/marhali/json5-java/3.0.0/json5-java-3.0.0.pom",
+    "sha256": "a3dc3d22e50be4677030f2d7394fcd03cf9f8cfe63326a7cf2effbb4bee6d8c4"
+  },
+  "json5-java-3.0.0-sources.jar": {
+    "primary_url": "https://repo.maven.apache.org/maven2/de/marhali/json5-java/3.0.0/json5-java-3.0.0-sources.jar",
+    "sha256": "461bb172d7128fe9842fd68debe59885cbb534ea220d2b9dcec6e25e461ce845"
+  },
+  "java11_source_boundary_observations": [],
+  "dependency_decision": "Not added. Use explicitly bounded native subset; upstream JSON5 2.2.3 remains independent test oracle. Java11 library needs separate min24 linkage/budget audit, not assumed Android compatible."
+}

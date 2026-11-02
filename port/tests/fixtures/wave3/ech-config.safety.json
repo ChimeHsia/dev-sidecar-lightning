@@ -1,0 +1,42 @@
+[
+  {
+    "name": "missing-list-length",
+    "input": { "kind": "wireHex", "value": "" },
+    "expected": { "error": "TRUNCATED", "offset": 0, "field": "list.length" }
+  },
+  {
+    "name": "partial-list-length",
+    "input": { "kind": "wireHex", "value": "00" },
+    "expected": { "error": "TRUNCATED", "offset": 0, "field": "list.length" }
+  },
+  {
+    "name": "empty-list-is-not-success",
+    "input": { "kind": "wireHex", "value": "0000" },
+    "expected": { "error": "EMPTY_VECTOR", "offset": 2, "field": "list" }
+  },
+  {
+    "name": "outer-length-mismatch",
+    "input": { "kind": "wireHex", "value": "000200" },
+    "expected": { "error": "LENGTH_MISMATCH", "offset": 0, "field": "list.length" }
+  },
+  {
+    "name": "partial-config-version",
+    "input": { "kind": "wireHex", "value": "0001fe" },
+    "expected": { "error": "TRUNCATED", "offset": 2, "field": "config.version" }
+  },
+  {
+    "name": "missing-config-length",
+    "input": { "kind": "wireHex", "value": "0002fe0d" },
+    "expected": { "error": "TRUNCATED", "offset": 4, "field": "config.length" }
+  },
+  {
+    "name": "config-exceeds-list-boundary",
+    "input": { "kind": "wireHex", "value": "0004fe0d0001" },
+    "expected": { "error": "TRUNCATED", "offset": 6, "field": "config.contents" }
+  },
+  {
+    "name": "known-version-empty-contents",
+    "input": { "kind": "wireHex", "value": "0004fe0d0000" },
+    "expected": { "error": "TRUNCATED", "offset": 6, "field": "config_id" }
+  }
+]

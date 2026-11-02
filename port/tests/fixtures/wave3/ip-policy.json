@@ -1,0 +1,614 @@
+[
+  {
+    "name": "zero-0",
+    "input": {
+      "operation": "zero",
+      "value": null
+    },
+    "expected": false
+  },
+  {
+    "name": "zero-1",
+    "input": {
+      "operation": "zero",
+      "value": false
+    },
+    "expected": false
+  },
+  {
+    "name": "zero-2",
+    "input": {
+      "operation": "zero",
+      "value": ""
+    },
+    "expected": false
+  },
+  {
+    "name": "zero-3",
+    "input": {
+      "operation": "zero",
+      "value": "0.0.0.0"
+    },
+    "expected": true
+  },
+  {
+    "name": "zero-4",
+    "input": {
+      "operation": "zero",
+      "value": " 0.0.0.0 "
+    },
+    "expected": true
+  },
+  {
+    "name": "zero-5",
+    "input": {
+      "operation": "zero",
+      "value": "[0.0.0.0]"
+    },
+    "expected": true
+  },
+  {
+    "name": "zero-6",
+    "input": {
+      "operation": "zero",
+      "value": "0.0.0.0]"
+    },
+    "expected": true
+  },
+  {
+    "name": "zero-7",
+    "input": {
+      "operation": "zero",
+      "value": "::"
+    },
+    "expected": true
+  },
+  {
+    "name": "zero-8",
+    "input": {
+      "operation": "zero",
+      "value": "[::]"
+    },
+    "expected": true
+  },
+  {
+    "name": "zero-9",
+    "input": {
+      "operation": "zero",
+      "value": " [::] "
+    },
+    "expected": true
+  },
+  {
+    "name": "zero-10",
+    "input": {
+      "operation": "zero",
+      "value": "::]"
+    },
+    "expected": true
+  },
+  {
+    "name": "zero-11",
+    "input": {
+      "operation": "zero",
+      "value": "[::"
+    },
+    "expected": true
+  },
+  {
+    "name": "zero-12",
+    "input": {
+      "operation": "zero",
+      "value": "[[::]]"
+    },
+    "expected": false
+  },
+  {
+    "name": "zero-13",
+    "input": {
+      "operation": "zero",
+      "value": "0000:0:00:000:0:0:0:0000"
+    },
+    "expected": true
+  },
+  {
+    "name": "zero-14",
+    "input": {
+      "operation": "zero",
+      "value": "::0.0.0.0"
+    },
+    "expected": false
+  },
+  {
+    "name": "zero-15",
+    "input": {
+      "operation": "zero",
+      "value": "::%eth0"
+    },
+    "expected": false
+  },
+  {
+    "name": "zero-16",
+    "input": {
+      "operation": "zero",
+      "value": "::1"
+    },
+    "expected": false
+  },
+  {
+    "name": "zero-17",
+    "input": {
+      "operation": "zero",
+      "value": "0::0::0"
+    },
+    "expected": false
+  },
+  {
+    "name": "zero-18",
+    "input": {
+      "operation": "zero",
+      "value": "00.0.0.0"
+    },
+    "expected": false
+  },
+  {
+    "name": "zero-19",
+    "input": {
+      "operation": "zero",
+      "value": "﻿::﻿"
+    },
+    "expected": true
+  },
+  {
+    "name": "zero-20",
+    "input": {
+      "operation": "zero",
+      "value": "::"
+    },
+    "expected": false
+  },
+  {
+    "name": "zero-21",
+    "input": {
+      "operation": "zero",
+      "value": "[ ::]"
+    },
+    "expected": false
+  },
+  {
+    "name": "zero-22",
+    "input": {
+      "operation": "zero",
+      "value": "::ffff:0.0.0.0"
+    },
+    "expected": false
+  },
+  {
+    "name": "zero-23",
+    "input": {
+      "operation": "zero",
+      "value": "[::%eth0]"
+    },
+    "expected": false
+  },
+  {
+    "name": "zero-24",
+    "input": {
+      "operation": "zero",
+      "value": "0:0:0:0:0:0:0.0.0.0"
+    },
+    "expected": false
+  },
+  {
+    "name": "zero-25",
+    "input": {
+      "operation": "zero",
+      "value": 0
+    },
+    "expected": false
+  },
+  {
+    "name": "zero-26",
+    "input": {
+      "operation": "zero",
+      "value": {}
+    },
+    "expected": false
+  },
+  {
+    "name": "zero-27",
+    "input": {
+      "operation": "zero",
+      "value": []
+    },
+    "expected": false
+  },
+  {
+    "name": "ipv6-0",
+    "input": {
+      "operation": "ipv6",
+      "value": "::"
+    },
+    "expected": true
+  },
+  {
+    "name": "ipv6-1",
+    "input": {
+      "operation": "ipv6",
+      "value": "::1"
+    },
+    "expected": true
+  },
+  {
+    "name": "ipv6-2",
+    "input": {
+      "operation": "ipv6",
+      "value": " 2001:db8::1 "
+    },
+    "expected": true
+  },
+  {
+    "name": "ipv6-3",
+    "input": {
+      "operation": "ipv6",
+      "value": "[invalid"
+    },
+    "expected": true
+  },
+  {
+    "name": "ipv6-4",
+    "input": {
+      "operation": "ipv6",
+      "value": "not[an-ip"
+    },
+    "expected": true
+  },
+  {
+    "name": "ipv6-5",
+    "input": {
+      "operation": "ipv6",
+      "value": "::1]"
+    },
+    "expected": false
+  },
+  {
+    "name": "ipv6-6",
+    "input": {
+      "operation": "ipv6",
+      "value": "bad"
+    },
+    "expected": false
+  },
+  {
+    "name": "ipv6-7",
+    "input": {
+      "operation": "ipv6",
+      "value": "fe80::1%eth0"
+    },
+    "expected": true
+  },
+  {
+    "name": "ipv6-8",
+    "input": {
+      "operation": "ipv6",
+      "value": "2001:db8::1%eth0"
+    },
+    "expected": false
+  },
+  {
+    "name": "ipv6-9",
+    "input": {
+      "operation": "ipv6",
+      "value": "::ffff:192.0.2.1"
+    },
+    "expected": true
+  },
+  {
+    "name": "ipv6-10",
+    "input": {
+      "operation": "ipv6",
+      "value": "1:2:3:4:5:6:7:8::"
+    },
+    "expected": false
+  },
+  {
+    "name": "ipv6-11",
+    "input": {
+      "operation": "ipv6",
+      "value": "﻿::1"
+    },
+    "expected": true
+  },
+  {
+    "name": "ipv6-12",
+    "input": {
+      "operation": "ipv6",
+      "value": "::1"
+    },
+    "expected": false
+  },
+  {
+    "name": "ipv6-13",
+    "input": {
+      "operation": "ipv6",
+      "value": "fe80::1%en_0"
+    },
+    "expected": false
+  },
+  {
+    "name": "ipv6-14",
+    "input": {
+      "operation": "ipv6",
+      "value": "FE80::1%eth0"
+    },
+    "expected": false
+  },
+  {
+    "name": "speed-zero-filter",
+    "input": {
+      "operation": "speed",
+      "candidates": [
+        "0.0.0.0",
+        "::",
+        "::0.0.0.0",
+        " 0.0.0.0 ",
+        "192.0.2.1",
+        "::1"
+      ]
+    },
+    "expected": [
+      "::0.0.0.0",
+      "192.0.2.1",
+      "::1"
+    ]
+  },
+  {
+    "name": "preset-array",
+    "input": {
+      "operation": "preset",
+      "preset": [
+        "::",
+        "192.0.2.1",
+        "192.0.2.1"
+      ],
+      "ignore": false
+    },
+    "expected": {
+      "addresses": [
+        "::",
+        "192.0.2.1",
+        "192.0.2.1"
+      ],
+      "isPreset": true
+    }
+  },
+  {
+    "name": "preset-empty",
+    "input": {
+      "operation": "preset",
+      "preset": [],
+      "ignore": false
+    },
+    "expected": null
+  },
+  {
+    "name": "preset-null",
+    "input": {
+      "operation": "preset",
+      "preset": null,
+      "ignore": false
+    },
+    "expected": null
+  },
+  {
+    "name": "preset-ignore",
+    "input": {
+      "operation": "preset",
+      "preset": [
+        "::1"
+      ],
+      "ignore": true
+    },
+    "expected": null
+  },
+  {
+    "name": "preset-object",
+    "input": {
+      "operation": "preset",
+      "preset": {
+        "192.0.2.1": true,
+        "::1": {},
+        "a": [],
+        "b": false,
+        "c": null,
+        "d": 0,
+        "e": "",
+        "f": "false",
+        "g": "0",
+        "h": "False",
+        "i": -1,
+        "j": " "
+      },
+      "ignore": false
+    },
+    "expected": {
+      "addresses": [
+        "192.0.2.1",
+        "::1",
+        "a",
+        "h",
+        "i",
+        "j"
+      ],
+      "isPreset": true
+    }
+  },
+  {
+    "name": "preset-object-js-order",
+    "input": {
+      "operation": "preset",
+      "preset": {
+        "0": true,
+        "2": true,
+        "10": true,
+        "4294967294": true,
+        "01": true,
+        "4294967295": true
+      },
+      "ignore": false
+    },
+    "expected": {
+      "addresses": [
+        "0",
+        "2",
+        "10",
+        "4294967294",
+        "01",
+        "4294967295"
+      ],
+      "isPreset": true
+    }
+  },
+  {
+    "name": "preset-no-enabled",
+    "input": {
+      "operation": "preset",
+      "preset": {
+        "a": false,
+        "b": null,
+        "c": "0"
+      },
+      "ignore": false
+    },
+    "expected": null
+  },
+  {
+    "name": "dns-no-ipv6",
+    "input": {
+      "operation": "dns",
+      "available": false,
+      "hostname": "example.test",
+      "candidates": [
+        "::",
+        "0.0.0.0",
+        " [broken",
+        "::1]",
+        "192.0.2.1",
+        "192.0.2.1"
+      ]
+    },
+    "expected": [
+      "0.0.0.0",
+      "::1]",
+      "192.0.2.1",
+      "192.0.2.1",
+      "example.test"
+    ]
+  },
+  {
+    "name": "dns-available",
+    "input": {
+      "operation": "dns",
+      "available": true,
+      "hostname": "example.test",
+      "candidates": [
+        "::",
+        "0.0.0.0",
+        "::1"
+      ]
+    },
+    "expected": [
+      "::",
+      "0.0.0.0",
+      "::1",
+      "example.test"
+    ]
+  },
+  {
+    "name": "dns-no-answer",
+    "input": {
+      "operation": "dns",
+      "available": false,
+      "hostname": "example.test",
+      "candidates": null
+    },
+    "expected": [
+      "example.test"
+    ]
+  },
+  {
+    "name": "availability-errors",
+    "input": {
+      "operation": "availability",
+      "available": true,
+      "reports": [
+        "192.0.2.1",
+        "::1",
+        "bad",
+        "[broken",
+        "2001:db8::1",
+        "::2"
+      ]
+    },
+    "expected": [
+      {
+        "available": true,
+        "errorCount": 0
+      },
+      {
+        "available": true,
+        "errorCount": 0
+      },
+      {
+        "available": true,
+        "errorCount": 1
+      },
+      {
+        "available": true,
+        "errorCount": 1
+      },
+      {
+        "available": true,
+        "errorCount": 2
+      },
+      {
+        "available": false,
+        "errorCount": 3
+      },
+      {
+        "available": false,
+        "errorCount": 3
+      }
+    ]
+  },
+  {
+    "name": "availability-disabled",
+    "input": {
+      "operation": "availability",
+      "available": false,
+      "reports": [
+        "::1",
+        "::2",
+        "::3"
+      ]
+    },
+    "expected": [
+      {
+        "available": false,
+        "errorCount": 0
+      },
+      {
+        "available": false,
+        "errorCount": 0
+      },
+      {
+        "available": false,
+        "errorCount": 0
+      },
+      {
+        "available": false,
+        "errorCount": 0
+      }
+    ]
+  }
+]

@@ -1,0 +1,674 @@
+[
+  {
+    "id": "builtin-order",
+    "type": "inject",
+    "script": [
+      "alpha",
+      "beta"
+    ],
+    "expected": {
+      "tags": "\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/tampermonkey\"></script>\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/alpha\"></script>\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/beta\"></script>\r\n",
+      "diagnostics": "true",
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "status": 200,
+      "outputHeaders": {
+        "ds-script-interceptor": "true",
+        "content-type": "text/html; charset=utf-8"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy90YW1wZXJtb25rZXkiPjwvc2NyaXB0Pg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy9hbHBoYSI+PC9zY3JpcHQ+DQoJPHNjcmlwdCBjcm9zc29yaWdpbj0iYW5vbnltb3VzIiBkZWZlcj0iZGVmZXIiIHR5cGU9ImFwcGxpY2F0aW9uL2phdmFzY3JpcHQiIHNyYz0iL19fX19kc19zY3JpcHRfX19fL2JldGEiPjwvc2NyaXB0Pg0KPC9oZWFkPjxib2R5PmhlbGxvPC9ib2R5PjwvaHRtbD4="
+    }
+  },
+  {
+    "id": "builtin-string",
+    "type": "inject",
+    "script": "alpha",
+    "expected": {
+      "tags": "\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/tampermonkey\"></script>\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/alpha\"></script>\r\n",
+      "diagnostics": "true",
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "status": 200,
+      "outputHeaders": {
+        "ds-script-interceptor": "true",
+        "content-type": "text/html; charset=utf-8"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy90YW1wZXJtb25rZXkiPjwvc2NyaXB0Pg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy9hbHBoYSI+PC9zY3JpcHQ+DQo8L2hlYWQ+PGJvZHk+aGVsbG88L2JvZHk+PC9odG1sPg=="
+    }
+  },
+  {
+    "id": "missing-optional",
+    "type": "inject",
+    "script": [
+      "missing",
+      "alpha"
+    ],
+    "expected": {
+      "tags": "\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/tampermonkey\"></script>\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/alpha\"></script>\r\n",
+      "diagnostics": "true",
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "status": 200,
+      "outputHeaders": {
+        "ds-script-interceptor": "true",
+        "content-type": "text/html; charset=utf-8"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy90YW1wZXJtb25rZXkiPjwvc2NyaXB0Pg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy9hbHBoYSI+PC9zY3JpcHQ+DQo8L2hlYWQ+PGJvZHk+aGVsbG88L2JvZHk+PC9odG1sPg=="
+    }
+  },
+  {
+    "id": "all-missing",
+    "type": "inject",
+    "script": [
+      "missing"
+    ],
+    "expected": {
+      "tags": null,
+      "diagnostics": null,
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "status": 200,
+      "outputHeaders": {},
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+"
+    }
+  },
+  {
+    "id": "reserved-only",
+    "type": "inject",
+    "script": [
+      "global",
+      "tampermonkey"
+    ],
+    "expected": {
+      "tags": null,
+      "diagnostics": null,
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "status": 200,
+      "outputHeaders": {},
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+"
+    }
+  },
+  {
+    "id": "relative-script-custom-bootstrap",
+    "type": "inject",
+    "script": [
+      "/scripts/alpha.js"
+    ],
+    "tampermonkeyScript": "/bootstrap.js",
+    "expected": {
+      "tags": "\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/bootstrap.js\"></script>\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/scripts/alpha.js\"></script>\r\n",
+      "diagnostics": "true",
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "status": 200,
+      "outputHeaders": {
+        "ds-script-interceptor": "true",
+        "content-type": "text/html; charset=utf-8"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9ib290c3RyYXAuanMiPjwvc2NyaXB0Pg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9zY3JpcHRzL2FscGhhLmpzIj48L3NjcmlwdD4NCjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+"
+    }
+  },
+  {
+    "id": "external-script",
+    "type": "inject",
+    "script": [
+      "https://scripts.test/alpha.js"
+    ],
+    "expected": {
+      "tags": "\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/tampermonkey\"></script>\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"https://scripts.test/alpha.js\"></script>\r\n",
+      "diagnostics": "true",
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "status": 200,
+      "outputHeaders": {
+        "ds-script-interceptor": "true",
+        "content-type": "text/html; charset=utf-8"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy90YW1wZXJtb25rZXkiPjwvc2NyaXB0Pg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Imh0dHBzOi8vc2NyaXB0cy50ZXN0L2FscGhhLmpzIj48L3NjcmlwdD4NCjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+"
+    }
+  },
+  {
+    "id": "csp-nonce",
+    "type": "inject",
+    "script": [
+      "alpha"
+    ],
+    "csp": "script-src 'nonce-AbCd0123=' 'strict-dynamic'",
+    "expected": {
+      "tags": "\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/tampermonkey\" nonce=\"AbCd0123=\"></script>\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/alpha\" nonce=\"AbCd0123=\"></script>\r\n",
+      "diagnostics": "true",
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "72"
+        ],
+        [
+          "content-security-policy",
+          "script-src 'nonce-AbCd0123=' 'strict-dynamic'"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "status": 200,
+      "outputHeaders": {
+        "ds-script-interceptor": "true",
+        "content-type": "text/html; charset=utf-8",
+        "content-security-policy": "script-src 'self' 'nonce-AbCd0123=' 'strict-dynamic'"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy90YW1wZXJtb25rZXkiIG5vbmNlPSJBYkNkMDEyMz0iPjwvc2NyaXB0Pg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy9hbHBoYSIgbm9uY2U9IkFiQ2QwMTIzPSI+PC9zY3JpcHQ+DQo8L2hlYWQ+PGJvZHk+aGVsbG88L2JvZHk+PC9odG1sPg=="
+    }
+  },
+  {
+    "id": "report-only-nonce",
+    "type": "inject",
+    "script": [
+      "alpha"
+    ],
+    "reportCsp": "script-src 'nonce-AbCd0123='",
+    "expected": {
+      "tags": "\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/tampermonkey\" nonce=\"AbCd0123=\"></script>\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/alpha\" nonce=\"AbCd0123=\"></script>\r\n",
+      "diagnostics": "true",
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "72"
+        ],
+        [
+          "content-security-policy-report-only",
+          "script-src 'nonce-AbCd0123='"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "status": 200,
+      "outputHeaders": {
+        "ds-script-interceptor": "true",
+        "content-type": "text/html; charset=utf-8",
+        "content-security-policy-report-only": "script-src 'nonce-AbCd0123='"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy90YW1wZXJtb25rZXkiIG5vbmNlPSJBYkNkMDEyMz0iPjwvc2NyaXB0Pg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy9hbHBoYSIgbm9uY2U9IkFiQ2QwMTIzPSI+PC9zY3JpcHQ+DQo8L2hlYWQ+PGJvZHk+aGVsbG88L2JvZHk+PC9odG1sPg=="
+    }
+  },
+  {
+    "id": "csp-self-repair",
+    "type": "inject",
+    "script": [
+      "alpha"
+    ],
+    "csp": "default-src 'none'; script-src https:",
+    "expected": {
+      "tags": "\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/tampermonkey\"></script>\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/alpha\"></script>\r\n",
+      "diagnostics": "true",
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "72"
+        ],
+        [
+          "content-security-policy",
+          "default-src 'none'; script-src https:"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "status": 200,
+      "outputHeaders": {
+        "ds-script-interceptor": "true",
+        "content-type": "text/html; charset=utf-8",
+        "content-security-policy": "default-src 'none'; script-src 'self' https:"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy90YW1wZXJtb25rZXkiPjwvc2NyaXB0Pg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy9hbHBoYSI+PC9zY3JpcHQ+DQo8L2hlYWQ+PGJvZHk+aGVsbG88L2JvZHk+PC9odG1sPg=="
+    }
+  },
+  {
+    "id": "github-tags",
+    "type": "inject",
+    "host": "github.com",
+    "script": [
+      "alpha"
+    ],
+    "expected": {
+      "tags": "\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/tampermonkey\"></script>\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/alpha\"></script>\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"https://github.githubassets.com/assets/fakefile.js\"></script>\r\n",
+      "diagnostics": "true",
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "status": 200,
+      "outputHeaders": {
+        "ds-script-interceptor": "true",
+        "content-type": "text/html; charset=utf-8"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy90YW1wZXJtb25rZXkiPjwvc2NyaXB0Pg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy9hbHBoYSI+PC9zY3JpcHQ+DQoJPHNjcmlwdCBjcm9zc29yaWdpbj0iYW5vbnltb3VzIiBkZWZlcj0iZGVmZXIiIHR5cGU9ImFwcGxpY2F0aW9uL2phdmFzY3JpcHQiIHNyYz0iaHR0cHM6Ly9naXRodWIuZ2l0aHViYXNzZXRzLmNvbS9hc3NldHMvZmFrZWZpbGUuanMiPjwvc2NyaXB0Pg0KPC9oZWFkPjxib2R5PmhlbGxvPC9ib2R5PjwvaHRtbD4="
+    }
+  },
+  {
+    "id": "github-turbo-skip",
+    "type": "inject",
+    "host": "github.com",
+    "turbo": "repo-content-turbo-frame",
+    "script": [
+      "alpha"
+    ],
+    "expected": {
+      "tags": null,
+      "diagnostics": null,
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "status": 200,
+      "outputHeaders": {},
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+"
+    }
+  },
+  {
+    "id": "non-html-skip",
+    "type": "inject",
+    "contentType": "application/json",
+    "script": [
+      "alpha"
+    ],
+    "expected": {
+      "tags": null,
+      "diagnostics": "Not text/html",
+      "inputHeaders": [
+        [
+          "content-type",
+          "application/json"
+        ],
+        [
+          "content-length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "status": 200,
+      "outputHeaders": {
+        "ds-script-interceptor": "Not text/html"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+"
+    }
+  },
+  {
+    "id": "non200-still-injects",
+    "type": "inject",
+    "status": 404,
+    "script": [
+      "alpha"
+    ],
+    "expected": {
+      "tags": "\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/tampermonkey\"></script>\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/alpha\"></script>\r\n",
+      "diagnostics": "true",
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "status": 404,
+      "outputHeaders": {
+        "ds-script-interceptor": "true",
+        "content-type": "text/html; charset=utf-8"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy90YW1wZXJtb25rZXkiPjwvc2NyaXB0Pg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy9hbHBoYSI+PC9zY3JpcHQ+DQo8L2hlYWQ+PGJvZHk+aGVsbG88L2JvZHk+PC9odG1sPg=="
+    }
+  },
+  {
+    "id": "uppercase-head",
+    "type": "inject",
+    "text": "<HTML><HEAD></HEAD><BODY>text</BODY></HTML>",
+    "script": [
+      "alpha"
+    ],
+    "expected": {
+      "tags": "\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/tampermonkey\"></script>\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/alpha\"></script>\r\n",
+      "diagnostics": "true",
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "43"
+        ]
+      ],
+      "inputBase64": "PEhUTUw+PEhFQUQ+PC9IRUFEPjxCT0RZPnRleHQ8L0JPRFk+PC9IVE1MPg==",
+      "status": 200,
+      "outputHeaders": {
+        "ds-script-interceptor": "true",
+        "content-type": "text/html; charset=utf-8"
+      },
+      "decodedBase64": "PEhUTUw+PEhFQUQ+DQoJPHNjcmlwdCBjcm9zc29yaWdpbj0iYW5vbnltb3VzIiBkZWZlcj0iZGVmZXIiIHR5cGU9ImFwcGxpY2F0aW9uL2phdmFzY3JpcHQiIHNyYz0iL19fX19kc19zY3JpcHRfX19fL3RhbXBlcm1vbmtleSI+PC9zY3JpcHQ+DQoJPHNjcmlwdCBjcm9zc29yaWdpbj0iYW5vbnltb3VzIiBkZWZlcj0iZGVmZXIiIHR5cGU9ImFwcGxpY2F0aW9uL2phdmFzY3JpcHQiIHNyYz0iL19fX19kc19zY3JpcHRfX19fL2FscGhhIj48L3NjcmlwdD4NCjwvSEVBRD48Qk9EWT50ZXh0PC9CT0RZPjwvSFRNTD4="
+    }
+  },
+  {
+    "id": "gzip",
+    "type": "inject",
+    "encoding": "gzip",
+    "script": [
+      "alpha"
+    ],
+    "expected": {
+      "tags": "\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/tampermonkey\"></script>\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/alpha\"></script>\r\n",
+      "diagnostics": "true",
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "78"
+        ],
+        [
+          "content-encoding",
+          "gzip"
+        ]
+      ],
+      "inputBase64": "H4sIAAAAAAAACrPJKMnNsbPJSE1MsbMpySzJSbVLTkw7vFLhyY61H+bParDRhwja6EOUJOWnVNplpObk5Nvog9k2+mATAI9w6FdIAAAA",
+      "status": 200,
+      "outputHeaders": {
+        "ds-script-interceptor": "true",
+        "content-type": "text/html; charset=utf-8",
+        "content-encoding": "gzip"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy90YW1wZXJtb25rZXkiPjwvc2NyaXB0Pg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy9hbHBoYSI+PC9zY3JpcHQ+DQo8L2hlYWQ+PGJvZHk+aGVsbG88L2JvZHk+PC9odG1sPg=="
+    }
+  },
+  {
+    "id": "deflate",
+    "type": "inject",
+    "encoding": "deflate",
+    "script": [
+      "alpha"
+    ],
+    "expected": {
+      "tags": "\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/tampermonkey\"></script>\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/alpha\"></script>\r\n",
+      "diagnostics": "true",
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "66"
+        ],
+        [
+          "content-encoding",
+          "deflate"
+        ]
+      ],
+      "inputBase64": "eJyzySjJzbGzyUhNTLGzKcksyUm1S05MO7xS4cmOtR/mz2qw0YcI2uhDlCTlp1TaZaTm5OTb6IPZNvpgEwAudBx3",
+      "status": 200,
+      "outputHeaders": {
+        "ds-script-interceptor": "true",
+        "content-type": "text/html; charset=utf-8",
+        "content-encoding": "deflate"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy90YW1wZXJtb25rZXkiPjwvc2NyaXB0Pg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy9hbHBoYSI+PC9zY3JpcHQ+DQo8L2hlYWQ+PGJvZHk+aGVsbG88L2JvZHk+PC9odG1sPg=="
+    }
+  },
+  {
+    "id": "brotli-evidence",
+    "type": "inject",
+    "encoding": "br",
+    "script": [
+      "alpha"
+    ],
+    "expected": {
+      "tags": "\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/tampermonkey\"></script>\r\n\t<script crossorigin=\"anonymous\" defer=\"defer\" type=\"application/javascript\" src=\"/____ds_script____/alpha\"></script>\r\n",
+      "diagnostics": "true",
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "68"
+        ],
+        [
+          "content-encoding",
+          "br"
+        ]
+      ],
+      "inputBase64": "G0cAMKwO7NgVgFNt1OMVD2CDjJnBy89W3EbTTCVXYXTtw9Y2DBxy4HK7cd4CpmADziQIB3vyA5MegE8d3/wIWsiIEQM=",
+      "status": 200,
+      "outputHeaders": {
+        "ds-script-interceptor": "true",
+        "content-type": "text/html; charset=utf-8",
+        "content-encoding": "br"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy90YW1wZXJtb25rZXkiPjwvc2NyaXB0Pg0KCTxzY3JpcHQgY3Jvc3NvcmlnaW49ImFub255bW91cyIgZGVmZXI9ImRlZmVyIiB0eXBlPSJhcHBsaWNhdGlvbi9qYXZhc2NyaXB0IiBzcmM9Ii9fX19fZHNfc2NyaXB0X19fXy9hbHBoYSI+PC9zY3JpcHQ+DQo8L2hlYWQ+PGJvZHk+aGVsbG88L2JvZHk+PC9odG1sPg=="
+    }
+  },
+  {
+    "id": "catalog-error",
+    "type": "inject",
+    "failCatalog": true,
+    "script": [
+      "alpha"
+    ],
+    "expected": {
+      "tags": null,
+      "diagnostics": "error",
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "status": 200,
+      "outputHeaders": {
+        "ds-script-interceptor": "error"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+"
+    }
+  },
+  {
+    "id": "missing-bootstrap",
+    "type": "inject",
+    "noBootstrap": true,
+    "script": [
+      "alpha"
+    ],
+    "expected": {
+      "tags": null,
+      "diagnostics": "error",
+      "inputHeaders": [
+        [
+          "content-type",
+          "text/html; charset=utf-8"
+        ],
+        [
+          "content-length",
+          "72"
+        ]
+      ],
+      "inputBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+",
+      "status": 200,
+      "outputHeaders": {
+        "ds-script-interceptor": "error"
+      },
+      "decodedBase64": "PGh0bWw+PGhlYWQ+PHRpdGxlPmNhZsOpIOS4rfCfmoA8L3RpdGxlPjwvaGVhZD48Ym9keT5oZWxsbzwvYm9keT48L2h0bWw+"
+    }
+  },
+  {
+    "id": "route-asset",
+    "type": "route",
+    "path": "/____ds_script____/alpha",
+    "expected": {
+      "handled": true,
+      "status": 200,
+      "headers": {
+        "DS-Middleware": "ds_script",
+        "Content-Type": "application/javascript; charset=utf-8",
+        "Cache-Control": "public, max-age=86401, immutable",
+        "Last-Modified": "Mon, 02 Nov 2026 00:00:00 GMT",
+        "Expires": "Tue, 03 Nov 2026 00:00:00 GMT",
+        "Date": "Mon, 02 Nov 2026 00:00:00 GMT"
+      },
+      "body": "/* synthetic alpha */"
+    }
+  },
+  {
+    "id": "route-global-alias",
+    "type": "route",
+    "path": "/____ds_script____/global",
+    "expected": {
+      "handled": true,
+      "status": 200,
+      "headers": {
+        "DS-Middleware": "ds_script",
+        "Content-Type": "application/javascript; charset=utf-8",
+        "Cache-Control": "public, max-age=86401, immutable",
+        "Last-Modified": "Mon, 02 Nov 2026 00:00:00 GMT",
+        "Expires": "Tue, 03 Nov 2026 00:00:00 GMT",
+        "Date": "Mon, 02 Nov 2026 00:00:00 GMT"
+      },
+      "body": "/* synthetic bootstrap */"
+    }
+  },
+  {
+    "id": "route-missing",
+    "type": "route",
+    "path": "/____ds_script____/missing",
+    "expected": {
+      "handled": true,
+      "status": 404,
+      "headers": {
+        "Content-Type": "text/plain; charset=utf-8"
+      },
+      "body": "DevSidecar: script 'missing' not found"
+    }
+  },
+  {
+    "id": "route-other",
+    "type": "route",
+    "path": "/other",
+    "expected": {
+      "handled": false,
+      "status": null,
+      "headers": {},
+      "body": ""
+    }
+  },
+  {
+    "id": "userscript-wrapper",
+    "type": "compile",
+    "source": "// ==UserScript==\n// @name Synthetic\n// @version 1\n// @grant GM_getValue\n// @grant GM_setValue\n// ==/UserScript==\nwindow.synthetic = true;",
+    "key": "synthetic",
+    "expected": {
+      "script": "document.addEventListener(\"DOMContentLoaded\", () => {\nconst DS_init = (window.__ds_global__ || {})['DS_init']\nif (typeof DS_init === 'function') {\n\tconsole.log(\"ds_synthetic_1: do DS_init\")\n\tDS_init({\"name\":\"Synthetic\",\"version\":\"1\"});\n} else {\n\tconsole.log(\"ds_synthetic_1: has no DS_init\")\n}\r\n\nif (!((window.__ds_global__ || {}).GM_getValue || (() => true))(\"ds_enabled\", true)) {\n\tconsole.log(\"ds_synthetic_1: tampermonkey disabled\")\n\treturn\n}\r\n\r\nconst GM_getValue = (window.__ds_global__ || {})['GM_getValue'] || (() => {});\r\nconst GM_setValue = (window.__ds_global__ || {})['GM_setValue'] || (() => {});\r\n\r\nwindow.synthetic = true;\r\nconsole.log(\"ds_synthetic_1: completed\")\r\n})\r\nconsole.log(\"ds_synthetic_1: loaded\")"
+    }
+  },
+  {
+    "id": "userscript-window-load",
+    "type": "compile",
+    "source": "// ==UserScript==\n// @name Synthetic\n// @version 2\n// @run-at document-idle\n// @grant GM_getValue\n// @grant GM_setValue\n// ==/UserScript==\nwindow.synthetic = true;",
+    "key": "synthetic",
+    "expected": {
+      "script": "window.addEventListener(\"load\", () => {\nconst DS_init = (window.__ds_global__ || {})['DS_init']\nif (typeof DS_init === 'function') {\n\tconsole.log(\"ds_synthetic_2: do DS_init\")\n\tDS_init({\"name\":\"Synthetic\",\"version\":\"2\"});\n} else {\n\tconsole.log(\"ds_synthetic_2: has no DS_init\")\n}\r\n\nif (!((window.__ds_global__ || {}).GM_getValue || (() => true))(\"ds_enabled\", true)) {\n\tconsole.log(\"ds_synthetic_2: tampermonkey disabled\")\n\treturn\n}\r\n\r\nconst GM_getValue = (window.__ds_global__ || {})['GM_getValue'] || (() => {});\r\nconst GM_setValue = (window.__ds_global__ || {})['GM_setValue'] || (() => {});\r\n\r\nwindow.synthetic = true;\r\nconsole.log(\"ds_synthetic_2: completed\")\r\n})\r\nconsole.log(\"ds_synthetic_2: loaded\")"
+    }
+  }
+]

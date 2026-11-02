@@ -1,0 +1,176 @@
+{
+  "date": "2026-11-02",
+  "worktree": "C:\\Users\\HONOR\\.codex\\worktrees\\native-dns-orchestration\\dev-sidecar-lightning",
+  "base": "754ff423b59c743cf94e68b3417c1fde4a6f42b7",
+  "verification": {
+    "tests": 187,
+    "newTests": 54,
+    "frozenRegressions": 133,
+    "compilerHeapMb": 256,
+    "testHeapMb": 192,
+    "runner": "docs/native-proxy/run-native-ech-tests.ps1"
+  },
+  "safeExtension": {
+    "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/native/SocketDnsTransport.kt",
+    "beforeSha256": "232E58F91048E8DF67441D97E315F5DDD9C0D4D6C60C7CD20322735578B0660C",
+    "afterSha256": "5CD8F1327C408DB8CEEA6F1FB0D2E66D0E0672495DB15BC87DB5176C38AF6745"
+  },
+  "frozen": [
+    {
+      "path": "docs/native-proxy/dns-orchestration.md",
+      "sha256": "AA99BCDD061A0192DEDBB119E26B9832957609880C84A5BB186986B8457959FD"
+    },
+    {
+      "path": "docs/native-proxy/dns-transport.md",
+      "sha256": "8760C1E6F996E14133A65D02DB748FD5A86340A652D31B9FF55C5487E4E9CB8B"
+    },
+    {
+      "path": "docs/native-proxy/run-dns-orchestration-tests.ps1",
+      "sha256": "76180D74F16ADADC97113803B93F2A69E5CFE8D19483B0066D89FDDD210EE2E6"
+    },
+    {
+      "path": "docs/native-proxy/run-dns-transport-tests.ps1",
+      "sha256": "FD416A9FA351C84708FFAD14750828E8F9738CD358906DCBA8F54D61A564C011"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/native/NativeDnsModels.kt",
+      "sha256": "5EB2204CFFFE3375230387F90C72F0E93943646D456A22559469C9EE6D12A87D"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/native/NativeDnsResolver.kt",
+      "sha256": "23AF427DE13EB49CABABC2029CCBC4CCFCBEF8E10ACF3DEB4B9B918ED1765E18"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/native/NativeDnsWire.kt",
+      "sha256": "42C14055527B9C4B28E3E1AD9204CCEF3F3AD8D2964FBA37A154B70C10570D63"
+    },
+    {
+      "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/dns/native/NativeDnsResolverTest.kt",
+      "sha256": "33435A2D5AEFCC76B055F2396B8D6FCC87D44A457776DA0AE121C72703F8808F"
+    },
+    {
+      "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/dns/native/NativeDnsTestPackets.kt",
+      "sha256": "F54C9B23C591A4BAE0CE079D5EFA9F44CC4540894D73768769420C685BBA89B5"
+    },
+    {
+      "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/dns/native/NativeDnsTestServers.kt",
+      "sha256": "F805575FE5A8C5F788404B90CB60D3EE48E145237E5DED9FD55AF01228DF7969"
+    },
+    {
+      "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/dns/native/NativeDnsTestTls.kt",
+      "sha256": "9FD5EDDDA9B6DF7C53F31E293525D0BC548494B7678F7F7959119820F471145D"
+    },
+    {
+      "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/dns/native/NativeDnsWireTest.kt",
+      "sha256": "EE59EAA72C5ADD184345B0D3B3E6202D18C7C804A3DD5B7A081E525EFC7CFEC0"
+    },
+    {
+      "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/dns/native/SocketDnsTransportTest.kt",
+      "sha256": "A3100802CC78D586F8369DA476FEE9962EDF35DD4A2885AB35A03DCF3A333CE7"
+    }
+  ],
+  "prerequisites": [
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/DnsProviderConfig.kt",
+      "source": "C:\\Users\\HONOR\\.codex\\worktrees\\migration-wave3-review\\dev-sidecar-lightning\\netcore/src/main/kotlin/com/dsha/sidecar/net/dns\\DnsProviderConfig.kt",
+      "sha256": "64C944D589C7F70B213BA45DC131859584216DBF8F3E94A02F76D11E99A84F15"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/DnsProviderSelection.kt",
+      "source": "C:\\Users\\HONOR\\.codex\\worktrees\\migration-wave3-review\\dev-sidecar-lightning\\netcore/src/main/kotlin/com/dsha/sidecar/net/dns\\DnsProviderSelection.kt",
+      "sha256": "D129CF7CD7974F92FE56522FD4AF43951E251D501431F6E12F17A4EF02A19F84"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/DynamicChoice.kt",
+      "source": "D:\\File\\User\\code\\dev-sidecar-lightning\\netcore/src/main/kotlin/com/dsha/sidecar/net/dns\\DynamicChoice.kt",
+      "sha256": "AD8466A18961218E0CD2133FD42E3D0B9C5636C2310C072632A7A3565D1AF13F"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/EchConfigList.kt",
+      "source": "C:\\Users\\HONOR\\.codex\\worktrees\\migration-wave3-review\\dev-sidecar-lightning\\netcore/src/main/kotlin/com/dsha/sidecar/net/dns\\EchConfigList.kt",
+      "sha256": "8D400CB3067BF9A07E683FD5DE573482D821296EF56AC20F8246FAABCD5DAEB0"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/IpCandidatePolicy.kt",
+      "source": "C:\\Users\\HONOR\\.codex\\worktrees\\migration-wave3-review\\dev-sidecar-lightning\\netcore/src/main/kotlin/com/dsha/sidecar/net/dns\\IpCandidatePolicy.kt",
+      "sha256": "CC29F220BFECBEF7339FF0C85C4E9863BC28934144F12F415B3BB221EBCD51D9"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/Ipv6Availability.kt",
+      "source": "C:\\Users\\HONOR\\.codex\\worktrees\\migration-wave3-review\\dev-sidecar-lightning\\netcore/src/main/kotlin/com/dsha/sidecar/net/dns\\Ipv6Availability.kt",
+      "sha256": "972BD6DC96D161529EE77D416BE3DA18A6D0152CFF7134A5FED1CEE70A556B21"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/SvcbCodec.kt",
+      "source": "C:\\Users\\HONOR\\.codex\\worktrees\\migration-wave3-review\\dev-sidecar-lightning\\netcore/src/main/kotlin/com/dsha/sidecar/net/dns\\SvcbCodec.kt",
+      "sha256": "11689AB46C1866D64C1A69EDD4C9F409FBA2C51978DEE4FF27D86EBC4B7C8D12"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/SvcbModels.kt",
+      "source": "C:\\Users\\HONOR\\.codex\\worktrees\\migration-wave3-review\\dev-sidecar-lightning\\netcore/src/main/kotlin/com/dsha/sidecar/net/dns\\SvcbModels.kt",
+      "sha256": "FD6C876AD05706FE84C0BEE20BAA683BAD7BEF768BDF3A837E1581138422ACFF"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/proxy/http/Http1BodyCodec.kt",
+      "source": "C:\\Users\\HONOR\\.codex\\worktrees\\native-http-framing\\dev-sidecar-lightning\\netcore/src/main/kotlin/com/dsha/sidecar/net/proxy/http\\Http1BodyCodec.kt",
+      "sha256": "3A96B9449653FCBF779D9E4616B07C5EA5BFA396131DF5D2B6412577DCBE392E"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/proxy/http/Http1Codec.kt",
+      "source": "C:\\Users\\HONOR\\.codex\\worktrees\\native-http-framing\\dev-sidecar-lightning\\netcore/src/main/kotlin/com/dsha/sidecar/net/proxy/http\\Http1Codec.kt",
+      "sha256": "6AB4EDA2A7F9969C792B6816C329B29D59800DCFD5AEDB44A2014215429A5B1F"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/proxy/http/Http1Models.kt",
+      "source": "C:\\Users\\HONOR\\.codex\\worktrees\\native-http-framing\\dev-sidecar-lightning\\netcore/src/main/kotlin/com/dsha/sidecar/net/proxy/http\\Http1Models.kt",
+      "sha256": "9522F1EA7E77C6347FEF9561BE4DDF3CBAFEC92CB522EAB74CF374F87E856CC0"
+    },
+    {
+      "path": "netcore/src/test/resources/ech/ech-config.valid.json",
+      "source": "C:\\Users\\HONOR\\.codex\\worktrees\\migration-wave3-review\\dev-sidecar-lightning\\port\\tests\\fixtures\\wave3\\ech-config.valid.json",
+      "sha256": "D36C0B921F783EDECAC79BAD391F5DC10259D2FE50EB801647B2AB9C87D59DF9"
+    }
+  ],
+  "newFiles": [
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/native/HttpsRecordTransport.kt",
+      "sha256": "518229C9B189A03DF3FD2558AC6157DAA263AACD5817AEDCAB28D414BDA12EBD"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/native/NativeHttpsWire.kt",
+      "sha256": "6CB8527E990DCDC1EE2A4049B0F341A846626AF971EE34D7B28557CC2DD91DF9"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/native/NativeEchModels.kt",
+      "sha256": "9A807C89B6C79A48B951A354D15FB22180CA49B27EB6722B132EA092D01B880E"
+    },
+    {
+      "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/dns/native/NativeEchResolver.kt",
+      "sha256": "D5F474978B6A898533CE7EE946F6168693AADD8F95B4F75B05717354288D98FD"
+    },
+    {
+      "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/dns/native/NativeEchTestData.kt",
+      "sha256": "7E12EE89D3F275251DCA0B01370B9382DFD8D176B6EB3900A9969FDB3CE1CD33"
+    },
+    {
+      "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/dns/native/NativeHttpsWireTest.kt",
+      "sha256": "291DDAB0BD54BA8116A861956576CB7D7ADEEC9112055F3BB64249BDB76C09B5"
+    },
+    {
+      "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/dns/native/SocketHttpsTransportTest.kt",
+      "sha256": "69EC66692BF678E5F4259A22D501ED6895CF589418500B729F177DF037026009"
+    },
+    {
+      "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/dns/native/NativeEchResolverTest.kt",
+      "sha256": "BD60C1E1E50C29612622658CA1244054FFCB86775FA90B62D5CD3641163F316D"
+    },
+    {
+      "path": "docs/native-proxy/native-ech-resolution.md",
+      "sha256": "9756F6D63B58EC09A2C188D1ED681AD72DAFCEA8AE40393B35DF1CAFDA33E53A"
+    },
+    {
+      "path": "docs/native-proxy/run-native-ech-tests.ps1",
+      "sha256": "6269E2D869161A8F4383E397FD99198D3F30DC71DCA35E3711009D10F9D60EB5"
+    }
+  ]
+}

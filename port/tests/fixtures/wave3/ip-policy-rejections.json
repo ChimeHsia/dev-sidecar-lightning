@@ -1,0 +1,11 @@
+[
+  {"name":"scalar-string","input":{"operation":"preset","preset":"192.0.2.1"},"expected":"unsupported-preset"},
+  {"name":"scalar-boolean","input":{"operation":"preset","preset":false},"expected":"unsupported-preset"},
+  {"name":"scalar-number","input":{"operation":"preset","preset":0},"expected":"unsupported-preset"},
+  {"name":"array-null","input":{"operation":"preset","preset":["192.0.2.1",null]},"expected":"unsupported-preset"},
+  {"name":"array-object","input":{"operation":"preset","preset":[{}]},"expected":"unsupported-preset"},
+  {"name":"array-boolean","input":{"operation":"preset","preset":[false]},"expected":"unsupported-preset"},
+  {"name":"object-length-zero","input":{"operation":"preset","preset":{"length":0,"192.0.2.1":true}},"expected":"unsupported-preset"},
+  {"name":"object-length-null","input":{"operation":"preset","preset":{"length":null,"192.0.2.1":true}},"expected":"unsupported-preset"},
+  {"name":"object-array-like","input":{"operation":"preset","preset":{"0":"192.0.2.1","length":1}},"expected":"unsupported-preset"}
+]
