@@ -9,8 +9,8 @@ claimed capabilities that were absent.
 
 The unused scaffolding has been removed from compiled sources. Its exact
 diff and new source are preserved locally under ignored
-`port/.run/native-core-review/unfinished-retry-draft.patch` and
-`port/.run/native-core-review/NativeAttemptPolicy.kt.draft`.
+`port/.run/native-core-review/rescued-unfinished-retry-draft.patch` and
+`port/.run/native-core-review/rescued-NativeAttemptPolicy.kt.draft`.
 The runtime and cache compatibility guards reject retry/backup as before.
 NativeRuntime.kt and the ECH bridge were not edited.
 
