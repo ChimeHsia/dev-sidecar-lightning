@@ -14,14 +14,15 @@ production Node payload or device configuration.
 - Fail-closed Conscrypt ECH dialer, including an independent Go TLS peer.
 - Real UDP/TCP/DoT/DoH DNS transport and bounded resolver/candidate orchestration.
 - Typed HTTPS/SVCB DNS transport and bounded ECH configuration resolution.
-- NAT64 coordinator and pinned IPv6 DNS-over-HTTPS transport, not yet wired
-  into automatic ECH provider selection or verified against a real gateway.
+- NAT64 coordinator, pinned IPv6 DNS-over-HTTPS transport and an ECH
+  discovery adapter, not yet verified against a real gateway.
 - Rule selection and typed action plans, with 35 independent original-source cases.
 - Bounded request/local-response and response-header/entity action execution,
   including an independent 14-case response-transform oracle.
 - Standalone bounded cache, retry and backup scheduling APIs, not yet wired
   into the proxy engine.
-- Bounded JSON5-subset configuration parsing and atomic layered snapshots.
+- Bounded JSON5-subset parsing, atomic layered snapshots and a restricted
+  HTTPS configuration fetcher.
 - Standalone bounded HTML script injection and catalog APIs; Brotli injection
   and production browser/runtime wiring remain unsupported.
 - HTTP/CONNECT MITM engine, WebSocket handoff, Expect/early-response handling,
@@ -35,7 +36,7 @@ material is gathered.
 ## Aggregate result
 
 The frozen sources above compile together with cached Kotlin 2.0.21, JDK 21
-and BC 1.79. The direct runner completed **797 tests: 795 passed, 2 external
+and BC 1.79. The direct runner completed **840 tests: 838 passed, 2 external
 network checks skipped by assumption, zero failures**. Its machine-readable
 JUnit report counts assumption skips separately from passing tests.
 
