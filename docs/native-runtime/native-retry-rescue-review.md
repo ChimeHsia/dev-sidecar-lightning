@@ -88,7 +88,7 @@ python scripts/test-native-core.py --java-home 'D:\File\User\code\dev-sidecar-li
 
 ## Follow-up ownership step — November 2, 2026
 
-The `native-retry-followup` worktree now uses `NativeUpstreamAttempt` in the
+The runtime now uses `NativeUpstreamAttempt` in the
 actual engine's existing single-attempt forwarding path. It owns the buffered
 response reader, head-wait timer and raw-socket release callback through body
 transfer. Closing the owner cancels the head wait and releases the socket
@@ -114,11 +114,12 @@ The current aggregate reports 69 suites, 960 executed tests, 958 passed,
 The existing engine compatibility, runtime POST single-shot, committed-body
 failure, timeout and shutdown suites were included. The unchanged Conscrypt
 handshake-timeout test passed in this run; that does not resolve the earlier
-intermittent failure conclusively. Machine-readable output is local and ignored
-at `port/.run/native-core-review/junit-summary.json`.
+intermittent failure conclusively. Machine-readable output and ECH proof files
+were copied from the follow-up worktree and verified by SHA-256; they are local
+and ignored at `port/.run/retry-followup-preserved/`.
 
 The uncompiled empty-request status-retry sketch is retained locally at
-`port/.run/native-core-review/native-status-retry.kt.draft`. The earlier
+`port/.run/retry-followup-preserved/native-status-retry.kt.draft`. The earlier
 `rescued-*` files in the main checkout were read only.
 
 Still unclosed for the next independently verified step:
