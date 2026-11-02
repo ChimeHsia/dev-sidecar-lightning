@@ -25,6 +25,8 @@ production Node payload or device configuration.
   HTTPS configuration fetcher.
 - Standalone bounded HTML script injection and catalog APIs; Brotli injection
   and production browser/runtime wiring remain unsupported.
+- JVM runtime assembly connecting decoded configurations, rule/header-cache
+  execution, DNS and real HTTP/CONNECT MITM traffic.
 - HTTP/CONNECT MITM engine, WebSocket handoff, Expect/early-response handling,
   injected TLS dialer and explicit trusted request/response-head hooks.
 
@@ -36,7 +38,7 @@ material is gathered.
 ## Aggregate result
 
 The frozen sources above compile together with cached Kotlin 2.0.21, JDK 21
-and BC 1.79. The direct runner completed **840 tests: 838 passed, 2 external
+and BC 1.79. The direct runner completed **884 tests: 882 passed, 2 external
 network checks skipped by assumption, zero failures**. Its machine-readable
 JUnit report counts assumption skips separately from passing tests.
 
@@ -61,10 +63,12 @@ Conscrypt independent-peer suite, but not Android device acceptance.
 
 ## Pending integration
 
-Production configuration wiring, retry/cache wiring and the released ECH
-provider wiring remain separate integration steps. The gathered engine has no retries,
-HTTP cache or production configuration entry point yet. ECH configuration
-resolution does not perform an ECH handshake. A separate Conscrypt probe passed
+Android configuration/lifecycle wiring, retry/entity-cache wiring and automatic
+ECH dialer wiring remain separate integration steps. The JVM runtime includes
+source-compatible timestamp 304 and response cache headers; memory entity
+storage remains disabled. ECH configuration resolution and TLS acceptance have
+separate tests, not a combined runtime discovery-to-handshake proof.
+A separate Conscrypt probe passed
 accepted, rejected and wrong-certificate cases on Android 16 in debug and R8
 builds; those Android results are not part of this JVM aggregate.
 

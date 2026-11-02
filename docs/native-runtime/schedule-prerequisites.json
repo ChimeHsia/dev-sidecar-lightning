@@ -1,0 +1,77 @@
+[
+  {
+    "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/http/native/schedule/BackupSelector.kt",
+    "sha256": "3EE11A8E928A507CA348F94440E386EBAC09A92E03FC20B8D4E2E754358734A2",
+    "source": "C:/Users/HONOR/.codex/worktrees/native-rule-planner/dev-sidecar-lightning"
+  },
+  {
+    "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/http/native/schedule/CacheCompatibility.kt",
+    "sha256": "2A7C3CFFB4D34CB0B31616D3B924DDD22235BE20264A7B299276967F82E7480A",
+    "source": "C:/Users/HONOR/.codex/worktrees/native-rule-planner/dev-sidecar-lightning"
+  },
+  {
+    "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/http/native/schedule/MemoryResponseCache.kt",
+    "sha256": "AF2AABEDC01610737AFBC26842D0D00B9C822F27F78762FEA72B73B684B4B3D4",
+    "source": "C:/Users/HONOR/.codex/worktrees/native-rule-planner/dev-sidecar-lightning"
+  },
+  {
+    "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/http/native/schedule/RequestAttemptScheduler.kt",
+    "sha256": "DDD07DE372853017AF983A4723D1FB82E93E49836EB414193934D78878F01B60",
+    "source": "C:/Users/HONOR/.codex/worktrees/native-rule-planner/dev-sidecar-lightning"
+  },
+  {
+    "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/http/native/schedule/ScheduleModels.kt",
+    "sha256": "DED51AC3A9D1BF5DE25B7226E8C28E70C5FD2BDE598593AB0BDDC0B59DB7DE33",
+    "source": "C:/Users/HONOR/.codex/worktrees/native-rule-planner/dev-sidecar-lightning"
+  },
+  {
+    "path": "netcore/src/main/kotlin/com/dsha/sidecar/net/http/native/schedule/ScheduleSupport.kt",
+    "sha256": "2710DCAA6D0621881F237BFC905F864E776FE32DF68100253C13707505976800",
+    "source": "C:/Users/HONOR/.codex/worktrees/native-rule-planner/dev-sidecar-lightning"
+  },
+  {
+    "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/http/native/schedule/MemoryResponseCacheTest.kt",
+    "sha256": "F90D09C7726F0249661C3F29394EC52D812C03AA13EAD719FF4F0A9BE3BC5F9B",
+    "source": "C:/Users/HONOR/.codex/worktrees/native-rule-planner/dev-sidecar-lightning"
+  },
+  {
+    "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/http/native/schedule/RequestAttemptSchedulerTest.kt",
+    "sha256": "897F8D556FCA2345F4D1A4524AEBEE80575BC3BFF40F1200B684DB2E47BA80C2",
+    "source": "C:/Users/HONOR/.codex/worktrees/native-rule-planner/dev-sidecar-lightning"
+  },
+  {
+    "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/http/native/schedule/ScheduleOracleTest.kt",
+    "sha256": "5409A751F7DDEC514A8CB7948743307F790B5750034ACDC5062CE522B3628A79",
+    "source": "C:/Users/HONOR/.codex/worktrees/native-rule-planner/dev-sidecar-lightning"
+  },
+  {
+    "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/http/native/schedule/ScheduleTestSupport.kt",
+    "sha256": "BD2B056CCA56A4B2EAA891F0D6B4E8AC864AD5B7510B08FE59F6E9C63266898A",
+    "source": "C:/Users/HONOR/.codex/worktrees/native-rule-planner/dev-sidecar-lightning"
+  },
+  {
+    "path": "netcore/src/test/kotlin/com/dsha/sidecar/net/http/native/schedule/UpstreamScheduleOracle.kt",
+    "sha256": "6C46F6C41AAACE0E4E25B17919836B965D206259E02332728BC71CC5223CFF89",
+    "source": "C:/Users/HONOR/.codex/worktrees/native-rule-planner/dev-sidecar-lightning"
+  },
+  {
+    "path": "port/tests/fixtures/native-schedule/oracle.json",
+    "sha256": "08D02D37A311C64E6FA6B7660EBF623CEC2E12927D017B28298A3F1967077D5C",
+    "source": "C:/Users/HONOR/.codex/worktrees/native-rule-planner/dev-sidecar-lightning"
+  },
+  {
+    "path": "port/tests/fixtures/native-schedule/schedule-oracle.cjs",
+    "sha256": "4C0D5001083F29940425C419053158F0AD6EB199009AAB9ACDB3C39525AE2FF8",
+    "source": "C:/Users/HONOR/.codex/worktrees/native-rule-planner/dev-sidecar-lightning"
+  },
+  {
+    "path": "port/tests/fixtures/native-schedule/source-hashes.json",
+    "sha256": "B7C73D44856DFCD1A07632A9573EF7C16125F879E68B2BA72CAB4C8BD5AAAB26",
+    "source": "C:/Users/HONOR/.codex/worktrees/native-rule-planner/dev-sidecar-lightning"
+  },
+  {
+    "path": "docs/native-proxy/request-scheduling.md",
+    "sha256": "14EB365374BC8E8E70DE96DACA319A641DEC86525733574588493468D00D0C4D",
+    "source": "C:/Users/HONOR/.codex/worktrees/native-rule-planner/dev-sidecar-lightning"
+  }
+]
