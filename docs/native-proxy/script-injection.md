@@ -1,5 +1,11 @@
 # Controlled native script serving and HTML injection
 
+Follow-up (2026-11-02): the existing catalog/route service now has an explicit
+opt-in JVM runtime binding, documented in
+[local-script-routes.md](../native-runtime/local-script-routes.md). HTML
+injection remains a standalone component behind the runtime audit gate.
+The rest of this document describes the original component handoff.
+
 This phase adds only `com.dsha.sidecar.net.http.native.script`, its tests,
 separate synthetic fixtures, and this document. The accepted planner, action
 executor, scheduler, prerequisites, and their fixtures remain unchanged.

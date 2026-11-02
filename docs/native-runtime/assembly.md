@@ -1,5 +1,10 @@
 # JVM native runtime assembly
 
+The optional local script-route integration added on 2026-11-02 is described
+in [local-script-routes.md](local-script-routes.md). It does not enable HTML
+injection or other response-body actions; the original assembly limits below
+otherwise continue to apply.
+
 Managed worktree:
 `C:\Users\HONOR\.codex\worktrees\native-runtime-assembly\dev-sidecar-lightning`.
 Base: `754ff423b59c743cf94e68b3417c1fde4a6f42b7`.

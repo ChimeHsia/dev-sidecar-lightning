@@ -50,3 +50,15 @@ Disabled desktop plugins, P2P services and OS system-proxy installers should
 not be accidentally activated or ported merely because they exist upstream.
 The supported Android behavior must be documented and tested independently
 of package file counts.
+
+## Bounded local script-route increment
+
+The JVM runtime can explicitly inject a read-only catalog and exact allowed
+origins through `NativeRuntimeScriptRoutes`. With the effective script gate
+enabled, authorized GET/HEAD script routes use the real local-response path.
+See `../native-runtime/local-script-routes.md` for the contract and offline
+regressions. No assets or authorization are enabled by default.
+
+This closes only local script serving for supplied, reviewed data. Configured
+HTML/script injection and other body transformations still fail the runtime
+audit. Android/browser acceptance and Node removal gates remain open.
