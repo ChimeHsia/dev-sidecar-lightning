@@ -1,5 +1,11 @@
 # Runtime scheduling integration: supported closure and engine gaps
 
+November 2, 2026 rescue review: real TCP connect outcomes now feed the DNS
+selection ticket exactly once. A failed connect can change the candidate for
+the next exchange; the failed exchange still returns its single error response.
+TLS/HTTP failures are not TCP connect failures. Retry/backup remain rejected at
+configuration load. See `native-retry-rescue-review.md` for the reviewed scope.
+
 This follows the completed 83-test options/assembly milestone in the same
 isolated native-runtime-assembly worktree. No frozen engine, action executor,
 planner, DNS, certificate, crypto, or scheduler source has been edited.
@@ -102,8 +108,8 @@ The current engine owns private connect/upload/response control:
 - Request bodies are real one-shot reader state, potentially concurrent
   with upstream responses. A policy callback has neither a complete,
   bounded replay token nor delivery proof.
-- The existing DNS selection ticket is not a socket-outcome event. It
-  cannot drive honest backup failure feedback by itself.
+- The DNS selection ticket now receives actual TCP outcomes. It still cannot
+  substitute for the separate TLS/HTTP feedback needed by BackupSelector.
 
 Wrapping `NativeRequestDecision.Forward` in scheduler.execute would measure
 only a routing decision, not an actual network attempt. Returning a selected

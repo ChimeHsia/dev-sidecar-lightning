@@ -32,7 +32,7 @@ enum class NativeRuntimeSocketOutcome { CONNECTED, CONNECT_FAILED }
 
 /**
  * Synchronous bridge only on bounded engine workers. The native DNS transport remains asynchronous.
- * All hostname fallback is explicit failure until a bounded fallback/attempt observer is integrated.
+ * Hostname fallback remains explicit failure. Real TCP feedback affects later exchanges only.
  */
 class NativeRuntimeRouteResolver(
     private val dns: NativeDnsResolver,
@@ -88,8 +88,12 @@ class NativeRuntimeRouteResolver(
             // Guarded literal parsing never sends the hostname through JVM system DNS.
             val address = InetAddress.getByName(literal)
             selections.incrementAndGet()
-            return NativeRuntimeRouteSelection(NativeProxyRoute(InetSocketAddress(address, port), tls = tls),
+            lateinit var selection: NativeRuntimeRouteSelection
+            selection = NativeRuntimeRouteSelection(NativeProxyRoute(InetSocketAddress(address, port), tls = tls,
+                socketOutcome = { outcome -> feedback(selection, if (outcome == NativeSocketOutcome.CONNECTED)
+                    NativeRuntimeSocketOutcome.CONNECTED else NativeRuntimeSocketOutcome.CONNECT_FAILED) }),
                 result, identity)
+            return selection
         } catch (_: TimeoutException) {
             throw SocketTimeoutException("Runtime DNS deadline")
         } catch (failure: ExecutionException) {
@@ -105,7 +109,7 @@ class NativeRuntimeRouteResolver(
         }
     }
 
-    /** For a future engine observer ONLY, after a real TCP outcome. The current engine never calls it. */
+    /** Engine connect outcomes and explicit callers share the same single-use DNS selection ticket. */
     fun feedback(selection: NativeRuntimeRouteSelection, outcome: NativeRuntimeSocketOutcome): Boolean {
         require(selection.owner === identity) { "Selection belongs to another runtime" }
         if (closed.get() || !selection.reported.compareAndSet(false, true)) return false

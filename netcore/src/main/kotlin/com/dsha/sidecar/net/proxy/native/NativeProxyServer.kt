@@ -191,7 +191,15 @@ class NativeProxyServer(
             try {
                 register(socket)
                 beforeConnect(socket)
-                socket.connect(route.destination, options.connectTimeoutMillis)
+                try {
+                    socket.connect(route.destination, options.connectTimeoutMillis)
+                } catch (failure: IOException) {
+                    if (state == NativeProxyState.LISTENING) {
+                        runCatching { route.socketOutcome(NativeSocketOutcome.CONNECT_FAILED) }
+                    }
+                    throw failure
+                }
+                runCatching { route.socketOutcome(NativeSocketOutcome.CONNECTED) }
                 socket.soTimeout = options.readTimeoutMillis
                 socket.tcpNoDelay = true
                 return socket

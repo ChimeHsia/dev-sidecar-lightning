@@ -10,6 +10,7 @@ import javax.net.ssl.SSLContext
 
 enum class ConnectPolicy { MITM, TUNNEL, BLOCK }
 enum class UpstreamTrustMode { STRICT, CHAIN_ONLY, UNVERIFIED }
+enum class NativeSocketOutcome { CONNECTED, CONNECT_FAILED }
 
 data class NativeTlsPolicy(
     val verifyHost: String,
@@ -37,6 +38,7 @@ data class NativeProxyRoute(
     val destination: InetSocketAddress,
     val connectPolicy: ConnectPolicy = ConnectPolicy.MITM,
     val tls: NativeTlsPolicy? = null,
+    val socketOutcome: (NativeSocketOutcome) -> Unit = {},
 ) {
     init {
         require(!destination.isUnresolved && destination.port in 1..65535)

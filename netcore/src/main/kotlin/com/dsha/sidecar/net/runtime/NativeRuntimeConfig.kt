@@ -48,7 +48,7 @@ class NativeRuntimeConfig private constructor(
                 }
             }
             val diagnostics = mutableListOf(
-                "One TCP destination per exchange; automatic socket feedback/failover is not yet wired.",
+                "Actual TCP feedback affects future DNS selections; same-exchange retry/backup failover is disabled.",
                 "Cache rules use source-compatible 304/header operations only; memory entity storage is disabled.",
                 "Response entities stream unchanged; body processors, retry and backup are not scheduled.",
                 "Upstream trust is STRICT regardless of legacy planner compatibility trust reasons.",

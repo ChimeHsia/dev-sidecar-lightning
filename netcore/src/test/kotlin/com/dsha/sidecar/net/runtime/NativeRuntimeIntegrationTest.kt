@@ -172,7 +172,7 @@ class NativeRuntimeIntegrationTest {
         return Reply(response.head, bytes.toString("UTF-8"))
     }
 
-    @Test fun actualUdpDnsSelectsHttpOriginAndNoConnectionSuccessIsInvented() {
+    @Test fun actualUdpDnsSelectsHttpOriginAndReportsRealTcpSuccess() {
         DnsPeer().use { dns ->
             Origin().use { origin ->
                 runtime(decoded(dns)).use { runtime ->
@@ -186,7 +186,7 @@ class NativeRuntimeIntegrationTest {
                     assertEquals(listOf("origin.test"), dns.questions)
                     assertEquals(1, origin.requests.size)
                     assertEquals(1L, runtime.routes.state().selections)
-                    assertEquals(0L, runtime.routes.state().feedbackReports)
+                    assertEquals(1L, runtime.routes.state().feedbackReports)
                     assertEquals(0, runtime.routes.state().pending)
                 }
             }
@@ -535,20 +535,25 @@ class NativeRuntimeIntegrationTest {
         }
     }
 
-    @Test fun dnsCandidateSelectionIsNotReportedAsSocketSuccessOrAutomaticFailover() {
+    @Test fun realConnectFailureAdvancesNextExchangeWithoutRetryingCurrentRequest() {
         DnsPeer(addresses = listOf(byteArrayOf(127, 0, 0, 2), byteArrayOf(127, 0, 0, 1))).use { dns ->
             Origin().use { origin ->
                 runtime(decoded(dns)).use { runtime ->
                     runtime.start()
-                    repeat(2) {
-                        socket(runtime).use { socket ->
-                            send(socket, get("/", "candidate.test:${origin.port}"))
-                            assertEquals(502, reply(socket).head.status)
-                        }
+                    socket(runtime).use { socket ->
+                        send(socket, get("/", "candidate.test:${origin.port}"))
+                        assertEquals(502, reply(socket).head.status)
                     }
                     assertEquals(0, origin.accepted.get())
+                    assertEquals(1L, runtime.routes.state().selections)
+                    assertEquals(1L, runtime.routes.state().feedbackReports)
+                    socket(runtime).use { socket ->
+                        send(socket, get("/next", "candidate.test:${origin.port}"))
+                        assertEquals("/next", reply(socket).body)
+                    }
+                    assertEquals(1, origin.accepted.get())
                     assertEquals(2L, runtime.routes.state().selections)
-                    assertEquals(0L, runtime.routes.state().feedbackReports)
+                    assertEquals(2L, runtime.routes.state().feedbackReports)
                 }
             }
         }
@@ -573,7 +578,7 @@ class NativeRuntimeIntegrationTest {
                         assertEquals("/next-candidate", reply(socket).body)
                     }
                     assertEquals(1, origin.requests.size)
-                    assertEquals(1L, runtime.routes.state().feedbackReports)
+                    assertEquals(2L, runtime.routes.state().feedbackReports)
                 }
             }
         }
