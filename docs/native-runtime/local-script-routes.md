@@ -68,7 +68,7 @@ official pinned Conscrypt 2.8.0 JAR, then built the independent Go peers with
 external-network checks skipped by assumption, zero failures**. This adds
 six runtime integration tests to the 942-test base. JUnit execution took
 39.632 seconds; compilation is additional. The machine-readable local report
-is `port/.run/native-core-review/junit-summary.json` (ignored build output).
+is `port/.run/native-core-review/script-routes-junit-summary.json` (ignored build output).
 `git diff --check` also passed. No dependencies were downloaded or added.
 
 ## Gates still open
