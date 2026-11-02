@@ -20,6 +20,24 @@ class Http1CodecTest {
         Http1HeadCodec.readResponse(input(text), method, limits)!!
 
     @Test
+    fun unbufferedConnectLeavesCoalescedTlsBytesInOriginalStream() {
+        val hello = byteArrayOf(22, 3, 1, 0, 3, 1, 2, 3)
+        val stream = ByteArrayInputStream(bytes(
+            "GET /before HTTP/1.1\r\nHost: example.test\r\n\r\n" +
+                "CONNECT example.test:443 HTTP/1.1\r\nHost: example.test:443\r\n\r\n",
+        ) + hello)
+        val reader = Http1Reader(stream, bufferInput = false)
+        assertEquals("GET", reader.readRequest()!!.head.method)
+        reader.transferBody(ByteArrayOutputStream())
+        assertEquals("CONNECT", reader.readRequest()!!.head.method)
+        reader.transferBody(ByteArrayOutputStream())
+        assertEquals(hello.size, stream.available())
+        assertSame(stream, reader.handoff())
+        assertArrayEquals(hello, stream.readBytes())
+        assertThrows(IllegalStateException::class.java) { reader.readRequest() }
+    }
+
+    @Test
     fun pipelineConsumesExactBodiesAndPreservesHeaderOrder() {
         val reader = Http1Reader(input(
             "POST http://example.test?x=1 HTTP/1.1\r\nHost: example.test\r\n" +
