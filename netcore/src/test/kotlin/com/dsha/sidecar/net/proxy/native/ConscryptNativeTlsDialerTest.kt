@@ -121,6 +121,21 @@ class ConscryptNativeTlsDialerTest {
         failureThroughProxy("stall", null, timeout = 200)
 
     @Test
+    fun echDialerPreservesTypedTimeoutCause() {
+        HttpPeer("stall").use { peer ->
+            val dialer = ConscryptNativeTlsDialer(
+                NativeEchConfigResolver { NativeEchSelection.Required(peer.config) },
+                NativeEchTrustSupplier { peer.trust },
+            )
+            val failure = assertThrows(java.net.SocketTimeoutException::class.java) {
+                dialer.connect(peer.raw(), NativeTlsPolicy("verify.example", "inner.example"), 500)
+            }
+            assertEquals(EchFailure.TIMEOUT, (failure.cause as EchConnectionException).failure)
+            assertEquals(0, peer.result().bytes)
+        }
+    }
+
+    @Test
     fun defaultSystemRootsCannotTrustPeerEphemeralCa() {
         HttpPeer("accepted").use { peer ->
             val dialer = ConscryptNativeTlsDialer(NativeEchConfigResolver { NativeEchSelection.Required(peer.config) })

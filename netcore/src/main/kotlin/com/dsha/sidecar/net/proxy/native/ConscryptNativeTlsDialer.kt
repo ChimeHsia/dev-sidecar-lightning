@@ -1,10 +1,13 @@
 package com.dsha.sidecar.net.proxy.native
 
 import com.dsha.sidecar.net.proxy.ech.ConscryptEchConnector
+import com.dsha.sidecar.net.proxy.ech.EchConnectionException
+import com.dsha.sidecar.net.proxy.ech.EchFailure
 import com.dsha.sidecar.net.proxy.ech.EchPeerTrust
 import com.dsha.sidecar.net.proxy.ech.TypedEchConfigList
 import java.io.IOException
 import java.net.Socket
+import java.net.SocketTimeoutException
 import javax.net.ssl.SSLSocket
 
 /** The port is the connected upstream TCP port, not an inferred HTTPS default. */
@@ -79,6 +82,9 @@ class ConscryptNativeTlsDialer(
             }
         } catch (failure: Exception) {
             runCatching { raw.close() }
+            if (failure is EchConnectionException && failure.failure == EchFailure.TIMEOUT) {
+                throw SocketTimeoutException("ECH handshake deadline").apply { initCause(failure) }
+            }
             throw failure
         }
     }
