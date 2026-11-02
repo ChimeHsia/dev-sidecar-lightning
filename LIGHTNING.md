@@ -110,6 +110,13 @@ JAVA_HOME=../.jdk/jdk-21.0.2 ./gradlew assembleLightningPlusRelease
 
 ## 已知问题
 
+### 2026-11-01 离线启动与 TLS 修复
+
+- payload 8 等待实际服务器监听后才发出精确 READY 协议；失败退出并复位 Android 等待状态，旧启动回调不能标记新启动成功。
+- 负载生成器为上游统一 `Connection: close` 的 TLS 策略，并让连接计时覆盖 TLS 握手。更换上游布局时补丁会明确失败。
+- 代码与本地端口/TLS 回归已验证。2026-11-02 又完成 payload 8 的启动、端口冲突与同进程恢复、Python close 请求和页面真机检查，见 [新验收记录](docs/DEVICE-RESULTS-2026-11-02.md)；仍有 GitHub 重试及长期场景限制。
+- 主工作区现有 zip 未覆盖。构建前必须重新生成/同步负载，不能只修改版本标记后打包旧 assets。
+
 ### 2026-11-01 HTTP 入口与页面暂停修复
 
 - `google.com`、`google.com.hk` 及各自的 `www` HTTP 网页入口，在代理内直接返回

@@ -185,12 +185,13 @@ try {
         'payload-extracted' = '\u89e3\u538b '
         'node-started' = 'node \u5df2\u542f\u52a8'
         'ready-marker-only' = '\u5c31\u7eea'
+        'core-ready' = '^\[android\] READY 127\.0\.0\.1:31181$'
         'proxy-applied' = 'WebView \u4ee3\u7406\u5df2\u751f\u6548'
         'proxy-cleared' = '\u5df2\u6e05\u7a7a\u65e7\u4ee3\u7406'
         'proxy-unsupported' = '\u4e0d\u652f\u6301 PROXY_OVERRIDE'
         'port-conflict' = 'EADDRINUSE'
         'mitmproxy-startup-error' = 'mitmproxy \u542f\u52a8\u5931\u8d25'
-        'startup-error' = 'startup \u5931\u8d25|\u6838\u5fc3\u542f\u52a8\u5931\u8d25|\u7f3a\u5c11 node'
+        'startup-error' = '^\[android\] FAILED|startup \u5931\u8d25|\u6838\u5fc3\u542f\u52a8\u5931\u8d25|\u7f3a\u5c11 node'
         'node-exited' = 'node \u5df2\u9000\u51fa'
     }
     $events = @()

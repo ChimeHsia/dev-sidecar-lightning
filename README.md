@@ -56,7 +56,8 @@ JAVA_HOME=../.jdk/jdk-21.0.2 ./gradlew assembleLightningPlusRelease
 
 已有 payload 时，重新编译 Kotlin 后可用
 `python port/kotlin_payload.py app/src/main/assets/nodejs-project.zip` 更新脚本和编译产物，
-再运行同步脚本。域名单结果匹配、配置合并/清理、NAT64 地址转换现由同一份 Kotlin 源码编译成 JS 后在 Node 内执行；
+再运行同步脚本。域名单/多结果匹配、路径匹配、配置合并/清理、候选选择、
+请求纯字段变换和 NAT64 转换现由同一份 Kotlin 源码编译成 JS 后在 Node 内执行；
 MITM/TLS 仍由原版核心承担。细节及验证见 `KOTLIN-MIGRATION.md`。
 
 ## 为什么和最初设想不一样
@@ -86,6 +87,9 @@ Node 测试验证当前 Android 核心入口的启动契约；Netcore 测试保�
 规则、DNS、HTTP 和 TLS 行为；Browser 运行 Lightning 现有 JVM 测试。
 它们不能替代真机上的 WebView、证书和代理验收。
 真机检查步骤、证据采集命令和迁移顺序见 [回归指南](docs/REGRESSION.md)。
+
+第二波纯模块使用 `.\scripts\test-migration-wave2.ps1 -Offline` 验证；
+接入范围、运行时适配测试和保留的上游职责见 [第二波迁移记录](docs/MIGRATION-WAVE2.md)。
 
 ## 已知问题
 

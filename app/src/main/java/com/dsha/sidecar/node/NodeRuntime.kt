@@ -34,6 +34,7 @@ class NodeRuntime(private val context: Context) {
     var onReady: (() -> Unit)? = null
 
     fun start() {
+        ready = false
         Thread({ launch() }, "node-boot").start()
     }
 
@@ -70,7 +71,9 @@ class NodeRuntime(private val context: Context) {
                 lines.forEach { line ->
                     Log.i(TAG, line)
                     lastLine = line
-                    if (!ready && line.contains("就绪")) {
+                    if (line.startsWith("[android] FAILED")) {
+                        ready = false
+                    } else if (!ready && line == "[android] READY 127.0.0.1:31181") {
                         ready = true
                         val cb = onReady
                         if (cb != null) Handler(Looper.getMainLooper()).post(cb)
@@ -79,9 +82,11 @@ class NodeRuntime(private val context: Context) {
             }
             val code = process.waitFor()
             running = false
+            ready = false
             Log.w(TAG, "node 退出，code=$code")
         } catch (e: Throwable) {
             running = false
+            ready = false
             Log.e(TAG, "node 启动失败", e)
         }
     }
@@ -113,7 +118,7 @@ class NodeRuntime(private val context: Context) {
     }
 
     private fun unzipAsset(name: String, dest: File) {
-        val marker = File(dest, ".${name}.v4.done")
+        val marker = File(dest, ".${name}.v5.done")
         if (marker.exists()) return
 
         val start = System.currentTimeMillis()
@@ -153,6 +158,7 @@ class NodeRuntime(private val context: Context) {
             private set
 
         fun stop() {
+            ready = false
             processRef?.destroy()
             processRef = null
         }

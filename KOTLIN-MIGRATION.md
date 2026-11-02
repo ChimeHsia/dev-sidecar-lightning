@@ -70,7 +70,7 @@ WebView -> ProxyController -> 127.0.0.1:31181
 | --- | --- | --- |
 | `dns/IpAddress.kt` | 严格 IPv4/IPv6 字面量解析及全零地址识别，不触发 DNS | `HostResolver.isIpLiteral` 委派给新校验；尚未把零 IP 排除策略接入完整候选收集/测速 |
 | `dns/Nat64Address.kt` | 显式 `/96` 前缀与 IPv4 的纯地址转换 | 已替换 Node NAT64 内部函数及其导出，真实 DNS `_lookup` 与 DoH bootstrap 调用同一 Kotlin 转换；无默认网关；拒绝非法/全零前缀及非 `/96` |
-| `rules/HostnameMatcher.kt` | 单结果 `matchHostname`：精确优先、根域快捷匹配、前导点别名、通配符/正则顺序、null/false 行为 | 已替换 Node 单结果匹配入口，初始化时编译、查询时直接返回原 JS 值引用；`matchHostnameAll` 与路径匹配保留上游实现；尚未替换 JVM `RuleEngine` |
+| `rules/HostnameMatcher.kt` | 单结果 `matchHostname`：精确优先、根域快捷匹配、前导点别名、通配符/正则顺序、null/false 行为 | 已替换 Node 单结果匹配入口，初始化时编译、查询时直接返回原 JS 值引用；多结果与路径匹配现由第二波适配器接入；尚未替换 JVM `RuleEngine` |
 | `config/ConfigMerge.kt` | JSON 对象树递归合并、数组整体替换、最终清理 null/`"[delete]"`、结果深拷贝 | 已替换 Node `doMerge`/`deleteNullItems`，包括初始配置加载和后续调用；适配层保持根和嵌套对象引用及数组删除空位；JVM API 默认仍压实数组。`doDiff`、配置源加载及其键顺序预置保留上游 |
 
 地址校验有意比上游宽松的辅助函数严格。尤其不再把“包含冒号”直接当作有效 IP。域名匹配使用 Kotlin Map，不复刻上游普通 JS 对象对 `constructor`、`__proto__` 等继承属性的误命中。各工具的具体输入契约以 KDoc 和测试为准。
@@ -106,13 +106,17 @@ DSHA_KOTLIN_HELPERS="$PWD/netcore-js/build/dist/js/productionLibrary/dev-sidecar
   node --test port/tests/kotlin-helpers.test.js
 ```
 
-完整核心集成测试需将更新后的 `nodejs-project.zip` 解压至 `port/.run/runtime/`，或以 `DSHA_TEST_PROJECT` 指定解压路径，然后执行 `node --test port/tests/runtime-integration.test.js`。它使用真实核心与 Kotlin 编译产物，验证默认配置合并、保留的多结果匹配，以及 NAT64 `_lookup` 内部确实调用 Kotlin；仅将真实 DNS 查询替换为固定 A 记录。
+完整核心集成测试需将更新后的 `nodejs-project.zip` 解压至 `port/.run/runtime/`，或以 `DSHA_TEST_PROJECT` 指定解压路径，然后执行 `node --test port/tests/runtime-integration.test.js port/tests/proxy-transport.test.js`。它使用真实核心与 Kotlin 编译产物，验证默认配置合并、多结果与路径匹配、候选缓存及请求变换实际调用 Kotlin，以及 NAT64 `_lookup` 内部派发和本地 TLS；NAT64 测试将真实 DNS 查询替换为固定 A 记录。
 
 新增测试覆盖：地址合法/非法边界、IPv6 压缩与嵌入 IPv4、全零地址、NAT64 转换及拒绝条件、域名匹配优先级和别名、配置覆盖/删除/数组/不可变输入。旧 DNS、隧道和本地 TLS 回归也需一起运行。
 
 本轮实际结果：JVM 共 71 项，69 通过、2 项外网冒烟跳过；真实 Kotlin 编译产物参与的 Node 适配测试 19 项通过；完整核心集成测试 4 项通过；payload 工具测试 3 项通过。Lightning `assembleLightningPlusRelease --offline` 成功，并核对 APK 内嵌 zip 与更新后的 payload 一致，包含 Kotlin 模块、适配脚本与 NAT64 闭包替换。尚未做本次 APK 的真机安装或网页访问验收。
 
 ## 后续按可测试性拆分
+
+第二波的域名多结果合并、路径规则、动态候选选择和请求纯字段变换已完成独立 Kotlin
+实现及离线对照，并已通过 Node 运行时适配接入负载 9。交付范围、测试与接入限制见
+[第二波迁移记录](docs/MIGRATION-WAVE2.md)。下表保留后续扩展方向，不代表这些整条能力已替换。
 
 以下是拆分顺序，不代表业务重要性排名：
 

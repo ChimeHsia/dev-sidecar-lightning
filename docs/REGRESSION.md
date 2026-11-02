@@ -1,23 +1,26 @@
 # Lightning + sidecar 真机回归基线
 
-主产物是 `lightning-browser/` 的 **LightningPlus release / arm64-v8a**，包名 `com.dsha.browser`，链路为 WebView → `127.0.0.1:31181` → 内嵌 Node/dev-sidecar。根目录 `app/`、`netcore/` 是早期壳和纯 Kotlin 参考实现；其测试通过不能证明当前 Node payload、Lightning 代理或页面正常。
+主产物是 `lightning-browser/` 的 **LightningPlus release / arm64-v8a**，包名 `com.dsha.browser`，链路为 WebView → `127.0.0.1:31181` → 内嵌 Node/dev-sidecar。根目录 `app/`、JVM `netcore/` 是早期壳和纯 Kotlin 参考实现；其中部分纯逻辑也由 `netcore-js/` 编译给 Node 使用。JVM 测试通过不能证明当前 Node payload、Lightning 代理或页面正常。
 
-本文依据当前 `DshaAccel.kt`、`BrowserApp.kt`、清单和 `port/node/main.js` 制定检查步骤。当前已运行本地测试和真机只读采集，尚未重新执行下列页面与生命周期用例；`README.md` / `LIGHTNING.md` 记录的历史成功不等于当前 APK 已复测。
+本文依据当前 `DshaAccel.kt`、`BrowserApp.kt`、清单和 `port/node/main.js` 制定检查步骤。已运行合并后本地测试和 Kotlin 负载的部分真机用例；覆盖范围及失败样本见 [真机记录](DEVICE-RESULTS-2026-11-01.md)。历史成功和部分用例通过不能替代完整验收。
 
 ## 状态与判定
 
 | 范围 | 实际状态（2026-11-01） | 待补证据 |
 |---|---|---|
 | 历史真机 | 原文记录荣耀 PPG-AN00 / Android 16：GitHub Trending 完整渲染、核心收到 207 个请求；README 记录 Google HK 返回 200 | 对当前 commit、APK、payload 重跑；HTTP 200 本身不证明 Google 页面完整渲染 |
-| Node 本地测试 | 17/17 通过 | 假核心契约测试不证明真机监听 |
-| Browser 上游 JVM 测试 | 最终重跑 58/58 通过；测试用 `PreferenceDataStoreRule` 使用 OkioStorage 真实序列化 | 单元测试不代替真机 WebView 验证 |
-| Netcore | Gradle 45 项：43 通过，2 项有意跳过的 live 测试；包含 17 个新增用例 | live 未验证；不能代替主产物验证 |
+| Node 本地测试 | 合并后入口 17、导航 10、真实 Kotlin/JS 适配 19、隔离真实核心 4 项均通过；Python 工具 3 项通过 | 本地核心集成不证明真机监听或页面正常 |
+| Browser JVM 测试 | 合并后完整 70/70 通过；Windows 内存不足后以临时低内存参数重跑成功 | 单元测试不代替真机 WebView 验证 |
+| Netcore | 合并后 Gradle 88 项：86 通过，2 项有意跳过的 live 测试；Kotlin/JS production library 构建成功 | live 未验证；不能代替主产物验证 |
 | 只读采集器 | 荣耀 PPG-AN00 / Android 16 真机采集成功；当前用户 0 安装 browser 102 与旧 sidecar 1，未列出 EinkBro；快照未观察到 31181 监听 | `ApplicationVerdict=not-assessed`；此次没有启动浏览器，不能据此判断主链路是否工作 |
-| 下列设备用例 | 全部待测 | 每项独立填写结果与证据 |
+| Kotlin 负载设备检查 | 升级解压、冷启、页面、导航与隐身访问已有成功证据；端口冲突时误报就绪，部分请求超时 | 稳定性、自动恢复与未执行场景仍需验收，详见真机记录 |
+| payload 8 修复验收（2026-11-02） | 冲突时无 READY、失败退出，释放后同主进程导航恢复；Python close/keep-alive、页面与冷启/隐身通过 | GitHub 仍有重试，长期/压力/设备重启未测；[新记录](DEVICE-RESULTS-2026-11-02.md) |
+
+合并后测试对应 `754ff42`，命令、内存重试、隔离负载哈希和未验证范围见 [测试记录](TEST-RESULTS-2026-11-01.md)。主工作区现有 assets 仍为旧负载，本次只更新了隔离测试副本。
 
 用例结果只写：**通过 / 失败 / 受阻 / 待测**。采集成功只表示读到了证据，不是应用通过。页面用例通过至少要求：对应时段的实际监听、归属可核对的核心请求证据、人工可见页面内容；缺项写受阻或待测，不拿进程存在、代理回调、就绪日志、HTTP 状态码替代。
 
-**就绪标记不是健康检查。** 当前 `port/node/main.js` 在 `DevSidecar.api.startup` resolve 后打印“就绪”，但被替换的 `cp.fork` 内异步 `server.start(...).catch(...)` 可能已记录 `mitmproxy 启动失败`。即使有就绪日志，也要检查该错误、`startup 失败`、`EADDRINUSE`、Node 退出，并核对监听和请求/页面。被其它包占住的 31181 也不是本包核心启动成功。
+**就绪标记不能代替完整健康检查。** payload 7 的入口仅等待核心初始化，曾在绑定失败时误报就绪。payload 8 已改为等待实际监听并使用精确的 `[android] READY ...` / `[android] FAILED` 协议；[离线修复](OFFLINE-FIXES-2026-11-01.md) 和 [定向真机验收](DEVICE-RESULTS-2026-11-02.md) 已验证该场景。仍需核对监听归属、请求和页面；被其它包占住的 31181 不是本包启动成功。
 
 ## 准备与证据
 
@@ -43,7 +46,7 @@
 
 ## 手工设备用例（按顺序）
 
-以下是人工执行步骤，采集器不执行它们。每项先写初始状态，末尾填写结果；当前均为 **待测**。
+以下是完整设备验收步骤，采集器不执行它们。每项先写初始状态，末尾填写结果；本轮仅覆盖真机记录明确列出的子场景，其余仍为 **待测**。
 
 | 编号 | 操作 | 判定与关键证据 |
 |---|---|---|
@@ -58,10 +61,10 @@
 
 当前生命周期边界（代码检查所得，待真机确认）：
 
-- `started` 在 prepare 前已置位；启动异常/缺二进制/Node 退出不复位、不自动重启，`coreReady` 也不会在退出时清除。移除竞争包后同进程重试不可靠，需完整冷启验证。
-- `stop()` 只销毁保存的子进程、清空引用，不重置上述标志，也没有现有生命周期调用点；`BrowserApp.onTerminate()` / Activity 销毁没有核心清理逻辑。不能宣称已有可靠退出、子进程回收或后台保活机制。
+- payload 7 曾不复位 `started/coreReady`；当前源码已在异常、失败和退出时复位，普通进程下一次网络导航可重新启动。旧回调按启动代次隔离；payload 8 已验证端口冲突后同主进程导航恢复，其他失败类型仍需各自验证。
+- `stop()` 现在复位状态并禁止自动重启，但尚未增加生命周期调用点；`BrowserApp.onTerminate()` / Activity 销毁没有核心清理逻辑。不能宣称已有完整退出或后台保活机制。
 - 代理是进程级设置，隐身依赖主进程的核心；Android 9 以下当前 `BrowserApp` 不识别隐身进程，可能重复启动。Android 16 的历史结果不能外推到所有支持版本。
-- payload 解压依赖版本 `2` 的标记文件，替换 zip 必须递增版本；仅重开不会检验新内容。CA 文件会复制，禁止为验证去导出密钥。代理不支持、日志缺失与端口监听成功均需各自记录。
+- payload 解压依赖版本标记，`754ff42` 的版本为 `6`，Kotlin 真机包为 `7`，离线修复源码为 `8`；替换 zip 必须核对并递增版本，仅重开不会检验新内容。CA 文件会复制，禁止为验证去导出密钥。代理不支持、日志缺失与端口监听成功均需各自记录。
 
 每次执行复制一行记录，报告中设备只用别名：
 
