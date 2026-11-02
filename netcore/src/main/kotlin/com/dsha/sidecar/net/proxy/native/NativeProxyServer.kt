@@ -501,6 +501,19 @@ class NativeProxyServer(
                     upload?.throwClientFailure()
                     abandonUpload = upload?.bodyComplete?.get() == false
                     if (abandonUpload) upload?.cancel()
+                    val entity = NativeResponseEntityReader(responses, response.framing, options.limits.maxBodyBytes)
+                    val prepared = exchangePolicy.onResponseEntity(checked, response.head, entity)
+                    if (prepared != null) {
+                        val head = preparedResponse(request.head, response.head, prepared, entity.complete)
+                        if (timedOut.get()) throw SocketTimeoutException("Exchange deadline")
+                        committed = true
+                        Http1HeadCodec.writeResponse(clientOutput, head, transformed.method, options.limits)
+                        clientOutput.write(prepared.body)
+                        clientOutput.flush()
+                        if (!abandonUpload) upload?.await(options.stopTimeoutMillis)
+                        return false
+                    }
+                    if (entity.consumed) throw NativeUpstreamFailure("Consumed response cannot stream unchanged")
                 }
                 val decode = request.head.version == "HTTP/1.0" && response.framing == Http1BodyFraming.Chunked
                 val close = !persistent || abandonUpload || decode ||
@@ -594,7 +607,7 @@ class NativeProxyServer(
         val head = exchangePolicy.onResponseHead(request, response.head)
         val protected = if (response.head.status == 101) listOf("Content-Length", "Transfer-Encoding",
             "Upgrade", "Sec-WebSocket-Accept", "Sec-WebSocket-Protocol", "Sec-WebSocket-Extensions")
-            else listOf("Content-Length", "Transfer-Encoding")
+            else listOf("Content-Length", "Transfer-Encoding", "Content-Encoding")
         if (head.status != response.head.status || head.version != response.head.version ||
             Http1Framing.response(head, request.head.method, options.limits) != response.framing ||
             protected.any { head.headers.values(it) != response.head.headers.values(it) }
@@ -604,6 +617,26 @@ class NativeProxyServer(
         response.copy(head = head)
     } catch (failure: Exception) {
         throw NativeUpstreamFailure("Invalid response policy head", failure)
+    }
+
+    private fun preparedResponse(
+        request: Http1RequestHead,
+        upstream: Http1ResponseHead,
+        prepared: NativePreparedResponse,
+        complete: Boolean,
+    ): Http1ResponseHead {
+        val supplied = prepared.head
+        if (!complete || request.method == "HEAD" || upstream.status in listOf(204, 205, 304) ||
+            supplied.status != upstream.status || supplied.version != upstream.version ||
+            prepared.body.size > options.limits.maxBodyBytes ||
+            supplied.headers.values("Content-Length") != listOf(prepared.body.size.toString()) ||
+            supplied.headers.values("Transfer-Encoding").isNotEmpty() ||
+            supplied.headers.values("Trailer").isNotEmpty()
+        ) throw NativeUpstreamFailure("Invalid prepared response")
+        val head = supplied.copy(version = request.version, headers = Http1Headers(
+            hopHeaders(supplied.headers, client = false).fields + Http1Header("Connection", " close")))
+        Http1HeadCodec.writeResponse(DISCARD, head, request.method, options.limits)
+        return head
     }
 
     private fun localResponse(

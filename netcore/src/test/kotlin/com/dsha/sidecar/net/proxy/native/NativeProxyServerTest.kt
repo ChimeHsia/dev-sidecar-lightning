@@ -867,6 +867,113 @@ class NativeProxyServerTest {
         }
     }
 
+    @Test fun preparedEntityUsesOneFramedMessageBeforeDownstreamCommit() {
+        for (bodyWire in listOf(
+            "Content-Length: 3\r\n\r\nabc",
+            "Transfer-Encoding: chunked\r\n\r\n1\r\na\r\n2\r\nbc\r\n0\r\n\r\n",
+            "Connection: close\r\n\r\nabc",
+        )) {
+            val calls = AtomicInteger()
+            Origin { _, output ->
+                output.write(("HTTP/1.1 103 Early Hints\r\n\r\nHTTP/1.1 200 OK\r\n" + bodyWire).toByteArray())
+            }.use { origin ->
+                val policy = object : NativeExchangePolicy {
+                    override fun onResponseEntity(
+                        request: NativeProxyRequest, head: Http1ResponseHead, entity: NativeResponseEntity,
+                    ): NativePreparedResponse {
+                        calls.incrementAndGet()
+                        assertEquals("abc", entity.read(3).toString(Charsets.US_ASCII))
+                        return NativePreparedResponse(head.copy(headers = Http1Headers(listOf(
+                            Http1Header("Content-Length", " 4"),
+                        ))), "done".toByteArray())
+                    }
+                }
+                server(NativeProxyRoute(origin.address), policy = policy).use { proxy ->
+                    client(proxy).use { socket ->
+                        send(socket, get("/", "plain.test"))
+                        val reader = Http1Reader(socket.getInputStream())
+                        assertEquals(103, reply(reader).status)
+                        val response = reply(reader)
+                        assertEquals(200, response.status)
+                        assertEquals("done", response.body)
+                        assertEquals(listOf("4"), response.headers.values("Content-Length"))
+                        assertEquals(listOf("close"), response.headers.values("Connection"))
+                        assertTrue(response.headers.values("Transfer-Encoding").isEmpty())
+                        assertNull(reader.readResponse("GET"))
+                    }
+                }
+            }
+            assertEquals(1, calls.get())
+        }
+    }
+
+    @Test fun entityContractViolationsProduceOnlyOneUncommittedError() {
+        for (violation in listOf("unread", "fallback", "twice", "length", "status", "transfer", "quota")) {
+            Origin { _, output -> fixed(output, "abc") }.use { origin ->
+                val policy = object : NativeExchangePolicy {
+                    override fun onResponseEntity(
+                        request: NativeProxyRequest, head: Http1ResponseHead, entity: NativeResponseEntity,
+                    ): NativePreparedResponse? {
+                        if (violation != "unread") entity.read(3)
+                        if (violation == "fallback") return null
+                        if (violation == "twice") entity.read(3)
+                        val fields = listOf(Http1Header("Content-Length", if (violation == "length") " 5" else " 4")) +
+                            if (violation == "transfer") listOf(Http1Header("Transfer-Encoding", " chunked")) else emptyList()
+                        return NativePreparedResponse(head.copy(status = if (violation == "status") 201 else 200,
+                            headers = Http1Headers(fields)), "done".toByteArray())
+                    }
+                }
+                val options = NativeProxyOptions(limits = Http1Limits(maxBodyBytes = if (violation == "quota") 3 else 100))
+                server(NativeProxyRoute(origin.address), options, policy = policy).use { proxy ->
+                    client(proxy).use { socket ->
+                        send(socket, get("/", "plain.test", close = true))
+                        val wire = socket.getInputStream().readBytes().toString(Charsets.ISO_8859_1)
+                        assertTrue(violation, wire.startsWith("HTTP/1.1 502 "))
+                        assertEquals(violation, 1, Regex("HTTP/1.1").findAll(wire).count())
+                        assertFalse(wire.contains("done"))
+                    }
+                }
+                assertEquals(1, origin.accepted.get())
+            }
+        }
+    }
+
+    @Test fun entityPreparationRejectsTruncationTrailersAndQuotaBeforeAnyFinalHead() {
+        for (bodyWire in listOf(
+            "Content-Length: 4\r\n\r\nabc",
+            "Content-Length: 3\r\n\r\nabc",
+            "Transfer-Encoding: chunked\r\n\r\n3\r\nabc\r\n0\r\n\r\n",
+            "Connection: close\r\n\r\nabc",
+            "Transfer-Encoding: chunked\r\n\r\n2\r\nabXX0\r\n\r\n",
+            "Transfer-Encoding: chunked\r\n\r\n2\r\nab\r\n0\r\nDigest: stale\r\n\r\n",
+        )) {
+            Origin { _, output -> output.write(("HTTP/1.1 200 OK\r\n" + bodyWire).toByteArray()) }.use { origin ->
+                val policy = object : NativeExchangePolicy {
+                    override fun onResponseEntity(
+                        request: NativeProxyRequest, head: Http1ResponseHead, entity: NativeResponseEntity,
+                    ): NativePreparedResponse {
+                        try {
+                            entity.read(if (bodyWire.startsWith("Content-Length: 4")) 4 else 2)
+                            throw AssertionError("Malformed or over-quota entity accepted")
+                        } catch (_: IOException) {
+                            return NativePreparedResponse(head.copy(headers = Http1Headers(listOf(
+                                Http1Header("Content-Length", " 0"),
+                            ))), byteArrayOf())
+                        }
+                    }
+                }
+                server(NativeProxyRoute(origin.address), policy = policy).use { proxy ->
+                    client(proxy).use { socket ->
+                        send(socket, get("/", "plain.test", close = true))
+                        val wire = socket.getInputStream().readBytes().toString(Charsets.ISO_8859_1)
+                        assertTrue(bodyWire, wire.startsWith("HTTP/1.1 502 "))
+                        assertEquals(1, Regex("HTTP/1.1").findAll(wire).count())
+                    }
+                }
+            }
+        }
+    }
+
     companion object {
         private val LOOPBACK = InetAddress.getByName("127.0.0.1")
         private val unlimited = Http1Limits(maxBodyBytes = Long.MAX_VALUE)

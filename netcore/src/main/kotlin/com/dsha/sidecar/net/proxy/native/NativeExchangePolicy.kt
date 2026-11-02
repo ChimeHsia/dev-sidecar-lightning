@@ -14,6 +14,13 @@ interface NativeExchangePolicy {
     /** Applied to upstream heads before hop sanitizing; body framing and protocol identity are retained. */
     fun onResponseHead(request: NativeProxyRequest, head: Http1ResponseHead): Http1ResponseHead = head
 
+    /** Final response only, before commit. Null requires an unread entity and preserves streaming. */
+    fun onResponseEntity(
+        request: NativeProxyRequest,
+        head: Http1ResponseHead,
+        entity: NativeResponseEntity,
+    ): NativePreparedResponse? = null
+
     companion object {
         val Passthrough: NativeExchangePolicy = object : NativeExchangePolicy {}
     }
