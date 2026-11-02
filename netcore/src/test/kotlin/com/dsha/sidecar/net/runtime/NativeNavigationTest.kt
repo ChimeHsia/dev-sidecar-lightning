@@ -7,12 +7,15 @@ import com.dsha.sidecar.net.proxy.http.Http1Header
 import com.dsha.sidecar.net.proxy.http.Http1Headers
 import com.dsha.sidecar.net.proxy.http.Http1Reader
 import com.dsha.sidecar.net.proxy.http.Http1RequestHead
+import com.dsha.sidecar.net.proxy.http.Http1ResponseHead
 import com.dsha.sidecar.net.proxy.http.Http1Target
 import com.dsha.sidecar.net.proxy.native.NativeAuthority
 import com.dsha.sidecar.net.proxy.native.NativeExchangePolicy
 import com.dsha.sidecar.net.proxy.native.NativeProxyRequest
 import com.dsha.sidecar.net.proxy.native.NativeProxyServer
+import com.dsha.sidecar.net.proxy.native.NativePreparedResponse
 import com.dsha.sidecar.net.proxy.native.NativeRequestDecision
+import com.dsha.sidecar.net.proxy.native.NativeResponseEntity
 import com.dsha.sidecar.net.proxy.native.RouteResolver
 import com.dsha.sidecar.net.proxy.tls.EphemeralTestCa
 import java.io.ByteArrayOutputStream
@@ -153,6 +156,24 @@ class NativeNavigationTest {
         assertFalse(forwarded)
         assertTrue(policy.onRequest(request(method = "POST")) is NativeRequestDecision.Forward)
         assertTrue(forwarded)
+    }
+
+    @Test
+    fun policyDelegatesResponseEntityToDownstream() {
+        var called = false
+        val downstream = object : NativeExchangePolicy {
+            override fun onResponseEntity(
+                request: NativeProxyRequest, head: Http1ResponseHead, entity: NativeResponseEntity,
+            ): NativePreparedResponse {
+                called = true
+                return NativePreparedResponse(head, entity.read(3))
+            }
+        }
+        val head = Http1ResponseHead("HTTP/1.1", 200, "OK", Http1Headers(emptyList()))
+        val result = NativeNavigationPolicy(downstream) { rules() }
+            .onResponseEntity(request(host = "example.test"), head, NativeResponseEntity { "abc".toByteArray() })
+        assertTrue(called)
+        assertEquals("abc", result!!.body.toString(Charsets.US_ASCII))
     }
 
     @Test

@@ -953,9 +953,14 @@ class NativeProxyServerTest {
                         request: NativeProxyRequest, head: Http1ResponseHead, entity: NativeResponseEntity,
                     ): NativePreparedResponse {
                         try {
-                            entity.read(if (bodyWire.startsWith("Content-Length: 4")) 4 else 2)
+                            val limit = if (bodyWire.contains("Digest: stale")) 16
+                                else if (bodyWire.startsWith("Content-Length: 4")) 4 else 2
+                            entity.read(limit)
                             throw AssertionError("Malformed or over-quota entity accepted")
-                        } catch (_: IOException) {
+                        } catch (failure: IOException) {
+                            if (bodyWire.contains("Digest: stale")) {
+                                assertTrue(failure.message.orEmpty().contains("trailers"))
+                            }
                             return NativePreparedResponse(head.copy(headers = Http1Headers(listOf(
                                 Http1Header("Content-Length", " 0"),
                             ))), byteArrayOf())
