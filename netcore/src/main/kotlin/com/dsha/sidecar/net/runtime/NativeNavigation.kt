@@ -14,6 +14,8 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.net.URI
+import java.nio.file.Files
+import java.nio.file.StandardOpenOption
 import java.util.Collections
 import java.util.Locale
 
@@ -129,7 +131,9 @@ class NativeNavigationRuleStore(defaults: String, private val file: File? = null
         file?.let { configFile ->
             runCatching {
                 configFile.parentFile?.mkdirs()
-                if (configFile.createNewFile()) configFile.writeText(defaults, Charsets.UTF_8)
+                Files.newOutputStream(configFile.toPath(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE).use {
+                    it.write(defaults.toByteArray(Charsets.UTF_8))
+                }
             }
         }
     }
