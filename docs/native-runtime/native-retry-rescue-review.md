@@ -122,6 +122,11 @@ The uncompiled empty-request status-retry sketch is retained locally at
 `port/.run/retry-followup-preserved/native-status-retry.kt.draft`. The earlier
 `rescued-*` files in the main checkout were read only.
 
+After the ownership change was integrated into main, the same locked native
+suite executed 961 tests: 959 passed, 2 external-network assumptions skipped,
+and zero failed. Its local ignored report is
+`port/.run/retry-followup-preserved/main-after-ownership-junit-summary.json`.
+
 Still unclosed for the next independently verified step:
 
 - Connect an explicit bounded same-route status retry loop for completely
