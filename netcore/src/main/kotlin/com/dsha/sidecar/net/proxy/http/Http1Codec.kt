@@ -204,8 +204,12 @@ object Http1Framing {
 }
 
 /** One reader owns one input stream; all buffered bytes remain in this reader until handoff. */
-class Http1Reader(input: InputStream, private val limits: Http1Limits = Http1Limits()) {
-    private val input: InputStream = BufferedInputStream(input, limits.bufferBytes)
+class Http1Reader(
+    input: InputStream,
+    private val limits: Http1Limits = Http1Limits(),
+    bufferInput: Boolean = true,
+) {
+    private val input: InputStream = if (bufferInput) BufferedInputStream(input, limits.bufferBytes) else input
     private var pending: Http1BodyFraming? = null
     private var unavailable = false
 

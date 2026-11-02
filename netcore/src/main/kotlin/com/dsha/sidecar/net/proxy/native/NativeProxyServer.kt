@@ -244,7 +244,7 @@ class NativeProxyServer(
 
     private fun serve(scope: SocketScope) {
         var downstream: Socket = scope.downstream
-        var reader = Http1Reader(downstream.getInputStream(), options.limits)
+        var reader = Http1Reader(downstream.getInputStream(), options.limits, bufferInput = false)
         var bound: NativeAuthority? = null
         var count = 0
         while (state == NativeProxyState.LISTENING && count < options.maxRequestsPerConnection) {
@@ -299,13 +299,14 @@ class NativeProxyServer(
                         ConnectPolicy.MITM -> {
                             val cache = certificates ?: throw IOException("MITM certificate cache required")
                             val leaf = cache.get(validated.authority.host)
-                            // This overload retains all pre-read ClientHello bytes from Http1Reader.
+                            reader.handoff()
                             output.write(CONNECT_OK)
                             output.flush()
                             try {
                                 Deadline(scope, options.handshakeTimeoutMillis).use {
                                     val secure = leaf.sslContext.socketFactory.createSocket(
-                                        scope.downstream, reader.handoff(), true,
+                                        scope.downstream, scope.downstream.inetAddress.hostAddress,
+                                        scope.downstream.port, true,
                                     ) as SSLSocket
                                     scope.downstreamTls = secure
                                     secure.useClientMode = false
