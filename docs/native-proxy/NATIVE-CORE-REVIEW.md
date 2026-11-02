@@ -11,6 +11,7 @@ production Node payload or device configuration.
 - Native HTTP/1 heads, framing, streaming bodies and buffered handoff.
 - Native CA/leaf issuance, bounded certificate cache and downstream TLS contexts.
 - Native HPKE/TLS cryptographic primitives and independent known-answer fixtures.
+- Fail-closed Conscrypt ECH dialer, including an independent Go TLS peer.
 - Real UDP/TCP/DoT/DoH DNS transport and bounded resolver/candidate orchestration.
 - Typed HTTPS/SVCB DNS transport and bounded ECH configuration resolution.
 - NAT64 coordinator and pinned IPv6 DNS-over-HTTPS transport, not yet wired
@@ -34,12 +35,13 @@ material is gathered.
 ## Aggregate result
 
 The frozen sources above compile together with cached Kotlin 2.0.21, JDK 21
-and BC 1.79. The direct runner completed **741 tests: 739 passed, 2 external
+and BC 1.79. The direct runner completed **797 tests: 795 passed, 2 external
 network checks skipped by assumption, zero failures**. Its machine-readable
 JUnit report counts assumption skips separately from passing tests.
 
 ```powershell
-python scripts/test-native-core.py --java-home '<JDK-21>'
+python scripts/test-native-core.py --java-home '<JDK-21>' `
+  --conscrypt-jar '<conscrypt-openjdk-uber-2.8.0.jar>' --go-exe '<go executable>'
 ```
 
 Compilation has a 512 MiB Java heap cap and tests have a 256 MiB cap. The
@@ -53,17 +55,17 @@ iteration failure; the cleanup loop and a deterministic regression test were
 fixed before the successful aggregate run.
 
 This count includes existing reference-proxy tests and pure prerequisites;
-it is not a count of fully migrated browsing features. It does not include
-the separate Conscrypt independent-peer suite or Android device acceptance.
+it is not a count of fully migrated browsing features. It includes the
+Conscrypt independent-peer suite, but not Android device acceptance.
 
 ## Pending integration
 
 Production configuration wiring, retry/cache wiring and the released ECH
-provider remain separate integration steps. The gathered engine has no retries,
+provider wiring remain separate integration steps. The gathered engine has no retries,
 HTTP cache or production configuration entry point yet. ECH configuration
 resolution does not perform an ECH handshake. A separate Conscrypt probe passed
 accepted, rejected and wrong-certificate cases on Android 16 in debug and R8
-builds; neither those results nor its provider is part of this aggregate.
+builds; those Android results are not part of this JVM aggregate.
 
 JDK tests do not establish Android API/provider compatibility. Actual browser
 integration must preserve the supported rule and network capabilities before
