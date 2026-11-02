@@ -74,7 +74,12 @@ Local, ignored evidence:
 - `port/.run/android-followup/test.init.gradle` (bounded heaps and local SDK JAR)
 - `port/.run/android-followup/BrowserProcessIdentityTest.xml`
 
-Only the targeted suite was executed, not the full browser regression suite.
+After integration into the main checkout, the full offline
+`:app:testLightningPlusDebugUnitTest` suite also passed: 211 tests in 34
+classes, with no failures, errors or skips. The run used the same local
+Robolectric API 36 image, bounded test heaps, one Gradle worker and the
+shared build mutex.
+
 Android 7/8 device behavior, separate real processes, WebView behavior,
 ABI/provider packaging, native ECH acceptance, and complete runtime lifecycle
 remain outside this host-only verification. No APK was assembled or installed,
