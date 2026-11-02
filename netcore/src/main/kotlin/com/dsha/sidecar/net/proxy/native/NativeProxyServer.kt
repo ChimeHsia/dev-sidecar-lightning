@@ -357,6 +357,7 @@ class NativeProxyServer(
         var committed = false
         var upload: NativeUpload? = null
         var responseWait: NativeResponseWait? = null
+        var upstreamAttempt: NativeUpstreamAttempt? = null
         var abandonUpload = false
         val upstreamRaw = AtomicReference<Socket?>()
         val writingClient = AtomicBoolean()
@@ -461,14 +462,11 @@ class NativeProxyServer(
                 downstream.transferBody(DISCARD)
             }
             val responses = Http1Reader(upstream.getInputStream(), options.limits)
+            val attempt = NativeUpstreamAttempt(responses, wait) { scope.drop(raw) }
+            upstreamAttempt = attempt
             var informational = 0
             while (true) {
-                wait.beginHead()
-                val upstreamResponse = try {
-                    responses.readResponse(transformed.method) ?: throw IOException("Missing response")
-                } finally {
-                    wait.finishHead()
-                }
+                val upstreamResponse = attempt.readHead(transformed.method)
                 val response = policyResponse(checked, upstreamResponse)
                 if (timedOut.get()) throw SocketTimeoutException("Response head deadline")
                 upload?.throwClientFailure()
@@ -542,9 +540,13 @@ class NativeProxyServer(
             }
             return false
         } finally {
-            responseWait?.close()
             upload?.cancel()
-            upstreamRaw.get()?.let(scope::drop)
+            if (upstreamAttempt != null) {
+                upstreamAttempt.close()
+            } else {
+                responseWait?.close()
+                upstreamRaw.get()?.let(scope::drop)
+            }
             if (upload != null) {
                 if (!upload.bodyComplete.get() || abandonUpload) {
                     finishEarlyResponse(scope, clientSocket, upload)

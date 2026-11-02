@@ -85,3 +85,56 @@ Both runs used:
 ```powershell
 python scripts/test-native-core.py --java-home 'D:\File\User\code\dev-sidecar-lightning\.jdk\jdk-21.0.2' --conscrypt-jar 'C:\Users\HONOR\.codex\worktrees\native-core-ech-v2\dev-sidecar-lightning\.tools\conscrypt\conscrypt-openjdk-uber-2.8.0.jar' --go-exe 'C:\Users\HONOR\.codex\worktrees\native-ech-conscrypt\dev-sidecar-lightning\.tools\go\go\bin\go.exe'
 ```
+
+## Follow-up ownership step — November 2, 2026
+
+The `native-retry-followup` worktree now uses `NativeUpstreamAttempt` in the
+actual engine's existing single-attempt forwarding path. It owns the buffered
+response reader, head-wait timer and raw-socket release callback through body
+transfer. Closing the owner cancels the head wait and releases the socket
+once, without draining an unselected body. Failures before ownership transfer
+retain the engine's existing fallback cleanup.
+
+This is a prerequisite refactor, not a runtime retry implementation. No retry
+field was added to `Forward`, no second connection is scheduled, and neither
+runtime configuration nor cache compatibility gates were relaxed. Response
+policy invocation order, upload handling, POST single-shot behavior and the
+existing whole-exchange deadline remain as before.
+
+Two new loopback tests in `NativeUpstreamAttemptTest` verify that the selected
+body remains available through the retained reader, repeated close invokes
+release once, reads after close fail, and a discarded 500 with an absent
+million-byte body closes without waiting for that body.
+
+The command above completed in this worktree under JDK 21.0.2, holding
+`Local\DshaNativeRescueBuild` for compilation and execution. The lock was
+acquired with repeated `WaitOne(1000)` and released in `finally`.
+The current aggregate reports 69 suites, 960 executed tests, 958 passed,
+2 external-network assumptions skipped, zero failures and zero ignored tests.
+The existing engine compatibility, runtime POST single-shot, committed-body
+failure, timeout and shutdown suites were included. The unchanged Conscrypt
+handshake-timeout test passed in this run; that does not resolve the earlier
+intermittent failure conclusively. Machine-readable output is local and ignored
+at `port/.run/native-core-review/junit-summary.json`.
+
+The uncompiled empty-request status-retry sketch is retained locally at
+`port/.run/native-core-review/native-status-retry.kt.draft`. The earlier
+`rescued-*` files in the main checkout were read only.
+
+Still unclosed for the next independently verified step:
+
+- Connect an explicit bounded same-route status retry loop for completely
+  validated empty GET/HEAD, including first-500/then-200 engine tests.
+- Select the owned final head before invoking response processors. Discarded
+  heads must never reach those processors.
+- Prohibit retries after any attempted downstream head write, including
+  informational or partial heads. Exercise deadline races, interruption,
+  stop/cancellation, and timer/socket cleanup across multiple attempts.
+- Preserve single-shot POST, chunked or nonempty uploads, Expect, early
+  responses and WebSocket behavior with retry configured at the engine boundary.
+- Keep general runtime retry/backup gates closed until their declared scope
+  is independently verified. Body capture/admission/accounting, backup target
+  recomposition, independent TLS verification and final outcome feedback remain
+  outside this ownership-only step.
+
+No device, Node payload, certificate material or ECH bridge was changed.
