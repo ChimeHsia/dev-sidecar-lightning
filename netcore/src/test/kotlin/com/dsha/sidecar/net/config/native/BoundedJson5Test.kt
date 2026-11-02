@@ -6,6 +6,17 @@ import org.junit.Test
 class BoundedJson5Test {
     private val parser = BoundedJson5()
 
+    @Test fun strictModeRejectsJson5Extensions() {
+        val strict = BoundedJson5(strictJson = true)
+        assertEquals(listOf(1.0, true, null), strict.parseObject("""{"values":[1,true,null]}""")["values"])
+        for (source in listOf(
+            "{value:1}", "{'value':1}", """{"value":+1}""", """{"value":0x1}""",
+            """{"value":.5}""", """{"value":1.}""", """{"value":1,}""",
+            """{"value":[1,]}""", """{/*comment*/"value":1}""", """{"value":"\x41"}""",
+            "\ufeff{\"value\":1}",
+        )) rejected { strict.parseObject(source) }
+    }
+
     @Test fun commentsQuotesNumbersAndTrailingCommasAreActuallyDecoded() {
         val result = parser.parseObject("""/*start*/{
             unquoted:'value', "number":+0x2a, fractional:.5, trailing:5.,

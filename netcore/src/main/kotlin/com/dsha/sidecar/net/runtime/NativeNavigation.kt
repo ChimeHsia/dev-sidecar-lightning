@@ -122,7 +122,7 @@ class NativeNavigationRules private constructor(private val rules: Map<String, S
 }
 
 class NativeNavigationRuleStore(defaults: String, private val file: File? = null) {
-    private val parser = BoundedJson5(ConfigLimits(maxDocumentBytes = 65_536))
+    private val parser = BoundedJson5(ConfigLimits(maxDocumentBytes = 65_536), strictJson = true)
     private var current = NativeNavigationRules.compile(parser.parseObject(defaults))
 
     init {

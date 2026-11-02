@@ -33,7 +33,7 @@ internal fun reject(code: ConfigError): Nothing = throw ConfigRejected(code)
  * decimal/hex numbers. Duplicate/dangerous keys, non-finite numbers, unpaired
  * surrogates and non-ASCII unquoted names fail explicitly. No expression evaluation.
  */
-class BoundedJson5(private val limits: ConfigLimits = ConfigLimits()) {
+class BoundedJson5(private val limits: ConfigLimits = ConfigLimits(), private val strictJson: Boolean = false) {
     fun parseObject(text: String): Map<String, Any?> {
         if (text.length > limits.maxDocumentBytes) reject(ConfigError.LIMIT)
         if (text.toByteArray(Charsets.UTF_8).size > limits.maxDocumentBytes) reject(ConfigError.LIMIT)
@@ -76,7 +76,8 @@ class BoundedJson5(private val limits: ConfigLimits = ConfigLimits()) {
             return when (peek()) {
                 '{' -> objectValue(depth)
                 '[' -> arrayValue(depth)
-                '\'', '"' -> string()
+                '"' -> string()
+                '\'' -> if (strictJson) fail() else string()
                 else -> scalar()
             }
         }
@@ -88,7 +89,12 @@ class BoundedJson5(private val limits: ConfigLimits = ConfigLimits()) {
             if (take('}')) return result
             while (true) {
                 if (++keys > limits.maxKeys) fail(ConfigError.LIMIT)
-                val name = if (peek() == '\'' || peek() == '"') string() else identifier()
+                val name = when {
+                    peek() == '"' -> string()
+                    !strictJson && peek() == '\'' -> string()
+                    !strictJson -> identifier()
+                    else -> fail()
+                }
                 if (name in result || name in setOf("__proto__", "prototype", "constructor")) {
                     fail(ConfigError.UNSUPPORTED)
                 }
@@ -99,7 +105,7 @@ class BoundedJson5(private val limits: ConfigLimits = ConfigLimits()) {
                 if (take('}')) return jsKeyOrder(result)
                 if (!take(',')) fail()
                 skip()
-                if (take('}')) return jsKeyOrder(result)
+                if (!strictJson && take('}')) return jsKeyOrder(result)
             }
         }
 
@@ -114,7 +120,7 @@ class BoundedJson5(private val limits: ConfigLimits = ConfigLimits()) {
                 if (take(']')) return result
                 if (!take(',')) fail()
                 skip()
-                if (take(']')) return result
+                if (!strictJson && take(']')) return result
             }
         }
 
@@ -176,7 +182,9 @@ class BoundedJson5(private val limits: ConfigLimits = ConfigLimits()) {
                     result.append(char)
                 } else {
                     if (position >= text.length) fail()
-                    when (val escaped = text[position++]) {
+                    val escaped = text[position++]
+                    if (strictJson && escaped !in "\"\\/bfnrtu") fail()
+                    when (escaped) {
                         '\n', '\u2028', '\u2029' -> Unit
                         '\r' -> take('\n')
                         'b' -> result.append('\b')
@@ -213,12 +221,12 @@ class BoundedJson5(private val limits: ConfigLimits = ConfigLimits()) {
                 "null" -> null
                 "Infinity", "+Infinity", "-Infinity", "NaN", "+NaN", "-NaN" -> fail(ConfigError.UNSUPPORTED)
                 else -> {
-                    val number = if (HEX.matches(token)) {
+                    val number = if (!strictJson && HEX.matches(token)) {
                         val negative = token.startsWith('-')
                         val digits = token.removePrefix("+").removePrefix("-").substring(2)
                         java.math.BigInteger(digits, 16).toDouble() * if (negative) -1.0 else 1.0
                     } else {
-                        if (!DECIMAL.matches(token)) fail()
+                        if (!(if (strictJson) JSON_NUMBER else DECIMAL).matches(token)) fail()
                         token.toDoubleOrNull() ?: fail()
                     }
                     if (!number.isFinite()) fail(ConfigError.UNSUPPORTED)
@@ -229,12 +237,12 @@ class BoundedJson5(private val limits: ConfigLimits = ConfigLimits()) {
 
         private fun skip() {
             while (position < text.length) {
-                if (whitespace(peek())) {
+                if (if (strictJson) peek() in " \t\r\n" else whitespace(peek())) {
                     position++
-                } else if (text.startsWith("//", position)) {
+                } else if (!strictJson && text.startsWith("//", position)) {
                     position += 2
                     while (position < text.length && peek() !in "\n\r\u2028\u2029") position++
-                } else if (text.startsWith("/*", position)) {
+                } else if (!strictJson && text.startsWith("/*", position)) {
                     val end = text.indexOf("*/", position + 2)
                     if (end < 0) fail()
                     position = end + 2
@@ -245,6 +253,7 @@ class BoundedJson5(private val limits: ConfigLimits = ConfigLimits()) {
 
     private companion object {
         val DECIMAL = Regex("[+-]?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?")
+        val JSON_NUMBER = Regex("-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?")
         val HEX = Regex("[+-]?0[xX][0-9a-fA-F]+")
     }
 }
