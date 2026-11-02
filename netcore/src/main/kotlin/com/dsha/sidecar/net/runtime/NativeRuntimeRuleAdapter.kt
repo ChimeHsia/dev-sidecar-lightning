@@ -28,6 +28,7 @@ class NativeRuntimeRuleAdapter(
     private val clock: Clock = Clock.systemUTC(),
     private val upstreamTrustContext: SSLContext? = null,
     private val echRequirement: NativeRuntimeEchRequirement? = null,
+    private val scriptRoutes: NativeRuntimeScriptRoutes? = null,
 ) : NativeExchangePolicy {
     private data class Exchange(val request: RuleRequest, val plan: RequestPlan)
     private val exchange = ThreadLocal<Exchange>()
@@ -49,9 +50,8 @@ class NativeRuntimeRuleAdapter(
         }
         val input = RuleRequest(request.authority.host, path, request.head.method, headers,
             if (request.secure) "https" else "http", request.authority.port)
+        scriptRoutes?.serve(request, input, config.responseHeadersEnabled, clock.millis())?.let { return it }
         val planned = config.planner.plan(input)
-        // Global script.enabled is supported ONLY as the actual header-processing gate.
-        // All concrete script/asset/body issues remain blocking and were audited at config load.
         val supported = planned.copy(issues = planned.issues.filterNot { it.kind == IssueKind.GLOBAL_SCRIPT_MIDDLEWARE })
             .requireSupported()
         val prepared = cache.request(supported, input)

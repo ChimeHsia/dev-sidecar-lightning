@@ -37,6 +37,7 @@ class NativeRuntime(
     clock: Clock = Clock.systemUTC(),
     dnsTrustContext: SSLContext? = null,
     navigationRules: (() -> NativeNavigationRules)? = null,
+    scriptRoutes: NativeRuntimeScriptRoutes? = null,
 ) : Closeable {
     init {
         if (config.requiresEchAdapter && echRequirement == null) {
@@ -50,6 +51,7 @@ class NativeRuntime(
         require(config.listenPort == null || options.proxy.port == 0 || options.proxy.port == config.listenPort) {
             "Conflicting server.port and runtime proxy port"
         }
+        scriptRoutes?.requireBodyLimit(options.proxy.limits.maxBodyBytes)
     }
 
     private val transport = SocketDnsTransport(endpointResolver,
@@ -67,7 +69,7 @@ class NativeRuntime(
     val routes = NativeRuntimeRouteResolver(resolver, options.dnsTimeoutMillis)
     private val certificates = LeafCertificateCache(authority, maxSize = options.certificateCacheSize)
     val proxyOptions: NativeProxyOptions = options.proxy.copy(port = config.listenPort ?: options.proxy.port)
-    private val rules = NativeRuntimeRuleAdapter(config, routes, clock, upstreamTrustContext, echRequirement)
+    private val rules = NativeRuntimeRuleAdapter(config, routes, clock, upstreamTrustContext, echRequirement, scriptRoutes)
     private val engine = NativeProxyServer(routes, certificates, proxyOptions, tlsConnector = tlsDialer,
         exchangePolicy = if (navigationRules == null) rules else NativeNavigationPolicy(rules, navigationRules))
     private val lifecycle = Any()
@@ -116,7 +118,9 @@ class NativeRuntime(
             echRequirement: NativeRuntimeEchRequirement? = null,
             dnsTrustContext: SSLContext? = null,
             navigationRules: (() -> NativeNavigationRules)? = null,
+            scriptRoutes: NativeRuntimeScriptRoutes? = null,
         ): NativeRuntime = NativeRuntime(NativeRuntimeConfig.decode(config), authority, options, tlsDialer,
-            upstreamTrustContext, echRequirement, dnsTrustContext = dnsTrustContext, navigationRules = navigationRules)
+            upstreamTrustContext, echRequirement, dnsTrustContext = dnsTrustContext,
+            navigationRules = navigationRules, scriptRoutes = scriptRoutes)
     }
 }

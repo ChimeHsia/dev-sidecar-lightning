@@ -75,7 +75,7 @@ class NativeRuntimeConfig private constructor(
                 number.toInt()
             }
             val headerGate = PlannerJson.truthy(script["enabled"])
-            if (headerGate) diagnostics.add("setting.script.enabled enables header-only response processing; script assets remain unsupported.")
+            if (headerGate) diagnostics.add("setting.script.enabled enables header-only response processing and explicitly injected local script routes; HTML injection remains unsupported.")
             for ((host, paths) in objectAt(server, "intercepts")) {
                 for ((path, raw) in PlannerJson.obj(paths)) {
                     if (path == "matched") continue

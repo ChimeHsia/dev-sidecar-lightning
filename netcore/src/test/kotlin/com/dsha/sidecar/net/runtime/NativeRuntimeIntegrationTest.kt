@@ -9,6 +9,8 @@ import com.dsha.sidecar.net.config.ConfigMerge
 import com.dsha.sidecar.net.config.native.ConfigDocuments
 import com.dsha.sidecar.net.config.native.ConfigUpdate
 import com.dsha.sidecar.net.config.native.NativeConfigRepository
+import com.dsha.sidecar.net.http.native.script.CatalogSource
+import com.dsha.sidecar.net.http.native.script.ScriptLimits
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
 import java.io.DataInputStream
@@ -143,10 +145,11 @@ class NativeRuntimeIntegrationTest {
         dnsTimeoutMillis: Int = 1_000,
         trust: SSLContext? = null,
         dialer: NativeTlsDialer = NativeTlsConnector(),
+        scriptRoutes: NativeRuntimeScriptRoutes? = null,
     ): NativeRuntime = NativeRuntime.fromDecoded(config, clientCa.authority(),
         NativeRuntimeOptions(proxy = proxyOptions, dnsTimeoutMillis = dnsTimeoutMillis,
             dnsTransport = SocketDnsLimits(queryTimeoutMillis = 2_000)),
-        tlsDialer = dialer, upstreamTrustContext = trust)
+        tlsDialer = dialer, upstreamTrustContext = trust, scriptRoutes = scriptRoutes)
 
     private fun socket(runtime: NativeRuntime): Socket = Socket().apply {
         connect(runtime.localAddress)
@@ -1167,6 +1170,166 @@ class NativeRuntimeIntegrationTest {
                     assertFalse(runtime.cacheState().memoryStorageEnabled)
                 }
             }
+        }
+    }
+
+    @Test fun authorizedScriptRoutesServeRealProxyRequestsWithoutOriginTraffic() {
+        DnsPeer().use { dns ->
+            Origin().use { origin ->
+                val routes = NativeRuntimeScriptRoutes(
+                    mapOf("alpha" to CatalogSource("window.localScript = 1;")),
+                    setOf("http://origin.test:${origin.port}"),
+                    mapOf("/____ds_script_proxy____/approved" to "alpha"),
+                )
+                runtime(decoded(dns, gate = true), scriptRoutes = routes).use { runtime ->
+                    runtime.start()
+                    val host = "origin.test:${origin.port}"
+                    fun request(method: String, path: String): Reply = socket(runtime).use { socket ->
+                        send(socket, "$method $path HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n")
+                        reply(socket, method)
+                    }
+                    val get = request("GET", "/____ds_script____/alpha")
+                    assertEquals(200, get.head.status)
+                    assertEquals("window.localScript = 1;", get.body)
+                    assertEquals(listOf(get.body.toByteArray().size.toString()), get.head.headers.values("Content-Length"))
+                    assertEquals(listOf("nosniff"), get.head.headers.values("X-Content-Type-Options"))
+                    val head = request("HEAD", "/____ds_script____/alpha")
+                    assertEquals(200, head.head.status)
+                    assertEquals("", head.body)
+                    assertEquals(get.head.headers.values("Content-Length"), head.head.headers.values("Content-Length"))
+                    assertEquals("window.localScript = 1;", request("GET", "/____ds_script_proxy____/approved").body)
+                    assertEquals(404, request("GET", "/____ds_script____/missing").head.status)
+                    assertEquals(405, request("POST", "/____ds_script____/alpha").head.status)
+                    assertEquals(502, request("GET", "/____ds_script____/alpha?x=1").head.status)
+                    assertTrue(origin.requests.isEmpty())
+                    assertTrue(dns.questions.isEmpty())
+                    assertEquals("/normal", request("GET", "/normal").body)
+                    assertEquals(1, origin.requests.size)
+                }
+            }
+        }
+    }
+
+    @Test fun disabledAndUnauthorizedScriptRoutesRemainOrdinaryOriginRequests() {
+        DnsPeer().use { dns ->
+            Origin().use { origin ->
+                val path = "/____ds_script____/alpha"
+                for ((enabled, host, allowedOrigin) in listOf(
+                    Triple(false, "origin.test", "http://origin.test:${origin.port}"),
+                    Triple(true, "other.test", "http://origin.test:${origin.port}"),
+                    Triple(true, "origin.test", "http://origin.test"),
+                    Triple(true, "origin.test", "https://origin.test:${origin.port}"),
+                )) {
+                    val routes = NativeRuntimeScriptRoutes(
+                        mapOf("alpha" to CatalogSource("not served")), setOf(allowedOrigin),
+                    )
+                    runtime(decoded(dns, gate = enabled), scriptRoutes = routes).use { runtime ->
+                        runtime.start()
+                        socket(runtime).use { socket ->
+                            send(socket, get(path, "$host:${origin.port}"))
+                            assertEquals(path, reply(socket).body)
+                        }
+                    }
+                }
+                assertEquals(4, origin.requests.size)
+            }
+        }
+    }
+
+    @Test fun authorizedScriptRoutesWorkInsideVerifiedConnectMitm() {
+        DnsPeer().use { dns ->
+            val routes = NativeRuntimeScriptRoutes(
+                mapOf("tampermonkey" to CatalogSource("window.bootstrap = true;")),
+                setOf("https://browser.test"),
+            )
+            runtime(decoded(dns, gate = true), scriptRoutes = routes).use { runtime ->
+                runtime.start()
+                secure(runtime).use { socket ->
+                    send(socket, get("/____ds_script____/global", "browser.test"))
+                    val response = reply(socket)
+                    assertEquals(200, response.head.status)
+                    assertEquals("window.bootstrap = true;", response.body)
+                    assertEquals(listOf("ds_script"), response.head.headers.values("DS-Middleware"))
+                }
+                assertEquals(1L, runtime.routes.state().selections)
+                assertEquals(listOf("browser.test"), dns.questions)
+            }
+        }
+    }
+
+    @Test fun absentCatalogNeverInterceptsAndInjectedCatalogDoesNotEnableBodyActions() {
+        DnsPeer().use { dns ->
+            Origin().use { origin ->
+                runtime(decoded(dns, gate = true)).use { runtime ->
+                    runtime.start()
+                    socket(runtime).use { socket ->
+                        send(socket, get("/____ds_script____/alpha", "origin.test:${origin.port}"))
+                        assertEquals("/____ds_script____/alpha", reply(socket).body)
+                    }
+                }
+                assertEquals(1, origin.requests.size)
+            }
+            val routes = NativeRuntimeScriptRoutes(
+                mapOf("alpha" to CatalogSource("window.localScript = 1;")),
+                setOf("https://browser.test"),
+            )
+            val queriesBefore = dns.questions.size
+            for (rule in listOf(
+                mapOf("script" to listOf("alpha")),
+                mapOf("tampermonkeyScript" to "alpha"),
+                mapOf("responseReplace" to mapOf("body" to "changed")),
+            )) {
+                assertThrows(NativeRuntimeConfigurationException::class.java) {
+                    runtime(decoded(dns, mapOf("browser.test" to mapOf(".*" to rule)), gate = true),
+                        scriptRoutes = routes)
+                }
+            }
+            assertEquals(queriesBefore, dns.questions.size)
+        }
+    }
+
+    @Test fun scriptRouteByteCapAndHeadMetadataSurviveRealFraming() {
+        val content = "é".repeat(32_768)
+        val sources = mutableMapOf("limit" to CatalogSource(content))
+        val routes = NativeRuntimeScriptRoutes(sources, setOf("http://browser.test"))
+        sources["limit"] = CatalogSource("mutated")
+        runtime(emptyMap<String, Any?>() + ("server" to mapOf(
+            "setting" to mapOf("script" to mapOf("enabled" to true)),
+        )), scriptRoutes = routes).use { runtime ->
+            runtime.start()
+            for (method in listOf("GET", "HEAD")) socket(runtime).use { socket ->
+                send(socket, "$method /____ds_script____/limit HTTP/1.1\r\nHost: browser.test\r\nConnection: close\r\n\r\n")
+                val response = reply(socket, method)
+                assertEquals(200, response.head.status)
+                assertEquals(listOf("65536"), response.head.headers.values("Content-Length"))
+                assertEquals(if (method == "GET") content else "", response.body)
+            }
+            assertEquals(0L, runtime.routes.state().selections)
+        }
+        assertThrows(com.dsha.sidecar.net.http.native.script.ScriptInjectionException::class.java) {
+            NativeRuntimeScriptRoutes(mapOf("limit" to CatalogSource(content + "x")), setOf("http://browser.test"))
+        }
+    }
+
+    @Test fun scriptRouteConstructionRejectsAmbiguousOriginsAndIncompatibleQuotas() {
+        val sources = mapOf("alpha" to CatalogSource("x"))
+        for (origin in listOf("", "https://user@host.test", "https://host.test/path",
+            "https://host.test?x=1", "https://host.test#fragment", "https://host.test:",
+            "https://host.test:0", "file://host.test")) {
+            assertThrows(IllegalArgumentException::class.java) {
+                NativeRuntimeScriptRoutes(sources, setOf(origin))
+            }
+        }
+        assertThrows(IllegalArgumentException::class.java) { NativeRuntimeScriptRoutes(sources, emptySet()) }
+        assertThrows(IllegalArgumentException::class.java) {
+            NativeRuntimeScriptRoutes(sources, setOf("https://host.test"), limits = ScriptLimits())
+        }
+        val routes = NativeRuntimeScriptRoutes(sources, setOf("https://host.test"),
+            limits = ScriptLimits(maximumAssetBytes = 128))
+        assertThrows(IllegalArgumentException::class.java) {
+            NativeRuntime.fromDecoded(emptyMap(), clientCa.authority(),
+                NativeRuntimeOptions(proxy = NativeProxyOptions(limits = Http1Limits(maxBodyBytes = 64))),
+                scriptRoutes = routes)
         }
     }
 
