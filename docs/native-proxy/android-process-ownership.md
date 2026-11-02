@@ -1,8 +1,7 @@
 # Android process ownership followup
 
 This change fixes one browser lifecycle gate, without activating `NativeRuntime`
-or changing the core implementation. It is scoped to the
-`native-android-followup/dev-sidecar-lightning` checkout.
+or changing the core implementation.
 
 ## Audit
 
@@ -73,7 +72,7 @@ Local, ignored evidence:
 
 - `port/.run/android-followup/targeted.log`
 - `port/.run/android-followup/test.init.gradle` (bounded heaps and local SDK JAR)
-- `lightning-browser/app/build/test-results/testLightningPlusDebugUnitTest/TEST-acr.browser.lightning.BrowserProcessIdentityTest.xml`
+- `port/.run/android-followup/BrowserProcessIdentityTest.xml`
 
 Only the targeted suite was executed, not the full browser regression suite.
 Android 7/8 device behavior, separate real processes, WebView behavior,
