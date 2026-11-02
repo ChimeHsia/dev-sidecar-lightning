@@ -12,6 +12,7 @@ import com.dsha.sidecar.net.proxy.native.NativeProxyRequest
 import com.dsha.sidecar.net.proxy.native.NativeProxyServer
 import com.dsha.sidecar.net.proxy.native.NativeRequestDecision
 import com.dsha.sidecar.net.proxy.native.RouteResolver
+import com.dsha.sidecar.net.proxy.tls.EphemeralTestCa
 import java.io.File
 import java.net.Socket
 import java.util.concurrent.atomic.AtomicInteger
@@ -167,6 +168,38 @@ class NativeNavigationTest {
                 assertEquals(listOf("https://www.google.com.hk/search?q=a%2Fb"), response.head.headers.values("Location"))
                 assertEquals(0, resolutions.get())
             }
+        }
+    }
+
+    @Test
+    fun runtimeReloadsNavigationWithoutStartingDnsQueries() {
+        val file = temporaryFolder.newFile("navigation.json")
+        file.writeText(defaults)
+        val store = NativeNavigationRuleStore(defaults, file)
+        val config = mapOf("server" to mapOf(
+            "dns" to mapOf("providers" to mapOf("fixture" to mapOf(
+                "type" to "udp", "server" to "127.0.0.1", "port" to 9, "family" to 4,
+            ))),
+            "setting" to mapOf("script" to mapOf("enabled" to false)),
+        ))
+        NativeRuntime.fromDecoded(
+            config, EphemeralTestCa.create().authority(), navigationRules = store::getRules,
+        ).use { runtime ->
+            val address = runtime.start()
+            for (destination in listOf("https://www.google.com.hk", "https://destination.test")) {
+                file.writeText(defaults.replace("https://www.google.com.hk", destination))
+                Socket(address.address, address.port).use { socket ->
+                    socket.soTimeout = 5_000
+                    socket.getOutputStream().write(
+                        "GET /search?q=%2F HTTP/1.1\r\nHost: google.cn\r\nAccept: text/html\r\n\r\n"
+                            .toByteArray(Charsets.ISO_8859_1),
+                    )
+                    val response = Http1Reader(socket.getInputStream()).readResponse("GET")!!
+                    assertEquals(307, response.head.status)
+                    assertEquals(listOf("$destination/search?q=%2F"), response.head.headers.values("Location"))
+                }
+            }
+            assertEquals(0L, runtime.routes.state().selections)
         }
     }
 }

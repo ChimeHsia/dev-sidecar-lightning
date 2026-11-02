@@ -36,6 +36,7 @@ class NativeRuntime(
     endpointResolver: NativeDnsEndpointResolver = NativeDnsEndpointResolver.SYSTEM,
     clock: Clock = Clock.systemUTC(),
     dnsTrustContext: SSLContext? = null,
+    navigationRules: (() -> NativeNavigationRules)? = null,
 ) : Closeable {
     init {
         if (config.requiresEchAdapter && echRequirement == null) {
@@ -68,7 +69,7 @@ class NativeRuntime(
     val proxyOptions: NativeProxyOptions = options.proxy.copy(port = config.listenPort ?: options.proxy.port)
     private val rules = NativeRuntimeRuleAdapter(config, routes, clock, upstreamTrustContext, echRequirement)
     private val engine = NativeProxyServer(routes, certificates, proxyOptions, tlsConnector = tlsDialer,
-        exchangePolicy = rules)
+        exchangePolicy = if (navigationRules == null) rules else NativeNavigationPolicy(rules, navigationRules))
     private val lifecycle = Any()
     @Volatile private var phase = NativeRuntimeState.NEW
     val state: NativeRuntimeState get() = if (phase == NativeRuntimeState.LISTENING &&
@@ -114,7 +115,8 @@ class NativeRuntime(
             upstreamTrustContext: SSLContext? = null,
             echRequirement: NativeRuntimeEchRequirement? = null,
             dnsTrustContext: SSLContext? = null,
+            navigationRules: (() -> NativeNavigationRules)? = null,
         ): NativeRuntime = NativeRuntime(NativeRuntimeConfig.decode(config), authority, options, tlsDialer,
-            upstreamTrustContext, echRequirement, dnsTrustContext = dnsTrustContext)
+            upstreamTrustContext, echRequirement, dnsTrustContext = dnsTrustContext, navigationRules = navigationRules)
     }
 }
