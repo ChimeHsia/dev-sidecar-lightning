@@ -64,11 +64,7 @@ class BrowserApp : Application() {
             )
         }
 
-        val isIncognito = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            getProcessName() == "$packageName:incognito"
-        } else {
-            false
-        }
+        val isIncognito = BrowserProcessIdentity.current(this) == BrowserProcess.INCOGNITO
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && isIncognito) {
             File(dataDir, "app_webview_incognito").deleteRecursively()
