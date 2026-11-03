@@ -103,7 +103,7 @@ Node 测试验证当前 Android 核心入口的启动契约；Netcore 测试保�
 
 ## 环境注意
 
-- **`gradle.properties` 里的 `org.gradle.java.home` 是全仓库唯一写死的绝对路径**，移动/重命名工作区后必须同步改。
+- 构建使用标准 OpenJDK 21，通过 `JAVA_HOME`、IDE 的 Gradle JDK 或命令行 `-Dorg.gradle.java.home=<JDK 路径>` 指定；仓库不固定本机 JDK 目录。PowerShell 测试脚本通过 `-JavaHome` 或 `-Java` 显式指定 JDK 目录或 Java 可执行文件。
 - 本机 git 走 dev-sidecar 的 HTTPS 代理（`127.0.0.1:31182`），且需要
   `git config --global http.schannelCheckRevoke false`——MITM 证书没法查吊销，schannel 会直接拒绝握手。
 - 仓库地址：<https://github.com/ChimeHsia/dev-sidecar-lightning>（private）
