@@ -75,7 +75,7 @@ class HostnameAllMatcher(entries: Map<String, Any?>) {
         }
         patterns = expressions.mapNotNull { (expression, config) ->
             try {
-                Pattern(Regex(expression), config, namedGroups(expression))
+                Pattern(Regex(expression), config, namedRegexGroups(expression))
             } catch (_: IllegalArgumentException) {
                 null
             }
@@ -216,35 +216,6 @@ class HostnameAllMatcher(entries: Map<String, Any?>) {
         return indices.sortedBy { it.toLong() } + others
     }
 
-    private fun namedGroups(expression: String): Map<String, Int> {
-        val result = linkedMapOf<String, Int>()
-        var escaped = false
-        var characterClass = false
-        var group = 0
-        for (index in expression.indices) {
-            val char = expression[index]
-            when {
-                escaped -> escaped = false
-                char == '\\' -> escaped = true
-                char == '[' -> characterClass = true
-                char == ']' -> characterClass = false
-                char == '(' && !characterClass -> {
-                    if (expression.getOrNull(index + 1) != '?') {
-                        group++
-                    } else if (expression.getOrNull(index + 2) == '<' &&
-                        expression.getOrNull(index + 3) != '=' &&
-                        expression.getOrNull(index + 3) != '!'
-                    ) {
-                        group++
-                        val end = expression.indexOf('>', index + 3)
-                        if (end >= 0) result[expression.substring(index + 3, end)] = group
-                    }
-                }
-            }
-        }
-        return result
-    }
-
     companion object {
         const val MAX_ENTRIES = 1024
         const val MAX_PATTERN_LENGTH = 4096
@@ -252,4 +223,67 @@ class HostnameAllMatcher(entries: Map<String, Any?>) {
         const val MAX_DEPTH = 64
         const val MAX_JSON_NODES = 100000
     }
+}
+
+internal fun namedRegexGroups(expression: String): Map<String, Int> {
+    val result = linkedMapOf<String, Int>()
+    val commentModes = mutableListOf<Boolean>()
+    var comments = false
+    var quoted = false
+    var classDepth = 0
+    var group = 0
+    var index = 0
+    while (index < expression.length) {
+        val char = expression[index]
+        when {
+            char == '\\' -> {
+                val next = expression.getOrNull(index + 1)
+                if (next == 'Q' && !quoted) quoted = true
+                else if (next == 'E' && quoted) quoted = false
+                index += 2
+                continue
+            }
+            quoted -> Unit
+            comments && char == '#' -> {
+                while (index < expression.length && expression[index] != '\n' && expression[index] != '\r') index++
+                continue
+            }
+            char == '[' -> classDepth++
+            char == ']' && classDepth > 0 -> classDepth--
+            classDepth == 0 && char == ')' -> {
+                if (commentModes.isNotEmpty()) comments = commentModes.removeAt(commentModes.lastIndex)
+            }
+            classDepth == 0 && char == '(' -> {
+                val next = expression.getOrNull(index + 1)
+                if (next == '?') {
+                    var flagEnd = index + 2
+                    while (expression.getOrNull(flagEnd) in listOf('i', 'd', 'm', 's', 'u', 'x', 'U', '-')) flagEnd++
+                    if (flagEnd > index + 2 && expression.getOrNull(flagEnd) in listOf(')', ':')) {
+                        var enabled = true
+                        var updated = comments
+                        for (flag in expression.substring(index + 2, flagEnd)) {
+                            if (flag == '-') enabled = false
+                            else if (flag == 'x') updated = enabled
+                        }
+                        if (expression[flagEnd] == ':') commentModes.add(comments)
+                        comments = updated
+                        index = flagEnd + 1
+                        continue
+                    }
+                    if (expression.getOrNull(index + 2) == '<' &&
+                        expression.getOrNull(index + 3) != '=' && expression.getOrNull(index + 3) != '!'
+                    ) {
+                        group++
+                        val end = expression.indexOf('>', index + 3)
+                        if (end >= 0) result[expression.substring(index + 3, end)] = group
+                    }
+                } else {
+                    group++
+                }
+                commentModes.add(comments)
+            }
+        }
+        index++
+    }
+    return result
 }
