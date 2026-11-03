@@ -1,26 +1,23 @@
 # Android packaging checkpoint
 
-The main branch contains the CONNECT handoff compatibility fix (`a4b21b3`).
-The native JVM aggregate after that fix executed 966 tests: 964 passed,
-two external-network assumptions skipped, and none failed. This includes the
-coalesced CONNECT and ClientHello regression.
+The standalone `android-native-check` build compiles the full netcore source,
+packages the pinned Conscrypt Android 2.8.0 arm64 library, and desugars Java
+time and NIO APIs. The build, instrumentation APK, APK content verification
+and Android lint passed on November 4, 2026. The two lint errors for API 26
+named-regex group access were fixed; Android's stricter regex syntax also
+required escaping a closing brace in the rule target replacement pattern.
 
-An independent Android build in the `native-android-packaging` worktree
-compiled all netcore production sources and assembled an arm64 debug APK on
-November 2, 2026. Its standalone build is committed there as `0ba39ad`, but
-is not integrated into main. The APK contains the pinned Conscrypt Android
-2.8.0 JNI library, BC, native core and desugared time/NIO classes.
+The native JVM aggregate after these fixes executed 968 tests: 966 passed,
+two external-network assumptions skipped, and none failed.
 
-This is not yet a finished test harness. Its declared instrumentation runner
-has not been implemented, and its auxiliary build and APK inspection scripts
-are uncommitted drafts. Android lint also reported two API 26 named-regex
-group access errors against the declared minimum API 24. Do not treat the
-successful build as proof of API 24/25 compatibility or browser integration.
-The current worktree is the app's primary checkout and cannot be archived
-with the managed worktree tool.
+On one PPG-AN00 device running Android API 36 and arm64-v8a, the standalone
+instrumentation checked Conscrypt availability, named capture replacement,
+runtime start and stop, a local synthetic HTTP response, and a trusted
+CONNECT/MITM handshake and response using an in-memory test CA. The two
+dedicated test packages were absent before installation and removed from the
+owner user after the test. The browser and its data were not modified.
 
-The ignored `port/.run/android-packaging-checkpoint/` directory in the main
-checkout preserves hash-verified copies of the draft scripts and the local
-JVM, APK and lint reports. The independent ECH device proof is recorded in
-`android-ech-device-followup.md`; it did not exercise this full-core APK.
-The product continues to use Node.
+This evidence does not establish runtime compatibility on API 24 or 25, nor
+does it cover browser integration, real upstream traffic, ECH/NAT64 runtime
+integration, or product acceptance. The independent ECH device probe is
+documented in `android-ech-device-followup.md`. The product still starts Node.
