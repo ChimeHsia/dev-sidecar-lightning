@@ -1,5 +1,5 @@
 param(
-    [string]$Java = 'D:\File\User\code\dev-sidecar-lightning\.jdk\jdk-21.0.2\bin\java.exe',
+    [Parameter(Mandatory = $true)][string]$Java,
     [string]$Cache = "$env:USERPROFILE\.gradle\caches\modules-2\files-2.1"
 )
 $ErrorActionPreference = 'Stop'
