@@ -1,7 +1,7 @@
 param(
-    [string]$Java = 'D:\File\User\code\dev-sidecar-lightning\.jdk\jdk-21.0.2\bin\java.exe',
-    [string]$NativeCore = 'C:\Users\HONOR\.codex\worktrees\native-core-review\dev-sidecar-lightning',
-    [string]$NativeRuntime = 'C:\Users\HONOR\.codex\worktrees\native-runtime-assembly\dev-sidecar-lightning'
+    [Parameter(Mandatory = $true)][string]$Java,
+    [Parameter(Mandatory = $true)][string]$NativeCore,
+    [Parameter(Mandatory = $true)][string]$NativeRuntime
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path

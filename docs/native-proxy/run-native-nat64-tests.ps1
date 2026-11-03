@@ -1,6 +1,6 @@
 param(
-    [string]$JavaHome = 'D:\File\User\code\dev-sidecar-lightning\.jdk\jdk-21.0.2',
-    [string]$DependencyCache = 'C:\Users\HONOR\.gradle\caches\modules-2\files-2.1'
+    [Parameter(Mandatory = $true)][string]$JavaHome,
+    [string]$DependencyCache = "$(if ($env:GRADLE_USER_HOME) { $env:GRADLE_USER_HOME } else { Join-Path $env:USERPROFILE '.gradle' })/caches/modules-2/files-2.1"
 )
 
 $ErrorActionPreference = 'Stop'

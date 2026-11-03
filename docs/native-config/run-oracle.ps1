@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)][string]$UpstreamCore,
-    [string]$Java = 'D:\File\User\code\dev-sidecar-lightning\.jdk\jdk-21.0.2\bin\java.exe',
+    [Parameter(Mandatory = $true)][string]$Java,
     [switch]$Regenerate
 )
 $ErrorActionPreference = 'Stop'

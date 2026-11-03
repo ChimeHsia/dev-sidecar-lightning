@@ -1,6 +1,6 @@
 param(
-    [string]$JavaHome = 'D:\File\User\code\dev-sidecar-lightning\.jdk\jdk-21.0.2',
-    [string]$GoExe = 'C:\Users\HONOR\.codex\worktrees\native-ech-conscrypt\dev-sidecar-lightning\.tools\go\go\bin\go.exe',
+    [Parameter(Mandatory = $true)][string]$JavaHome,
+    [Parameter(Mandatory = $true)][string]$GoExe,
     [string]$CacheRoot = "$env:USERPROFILE\.gradle\caches\modules-2\files-2.1"
 )
 $ErrorActionPreference = 'Stop'
