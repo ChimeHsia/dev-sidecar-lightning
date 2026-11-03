@@ -143,6 +143,35 @@ class RulePlannerTest {
         }
     }
 
+    @Test fun `named captures use indexed groups with optional groups and lookbehind`() {
+        val pattern = "(unrelated)(?:x)(?<first>a)(?<=a)(?<optional>b)?(?<last>c)"
+        assertEquals(
+            mapOf("first" to "a", "last" to "c"),
+            PlannerJson.namedCaptures("unrelatedxac", pattern),
+        )
+        assertEquals(
+            "https://mirror.test/a//c",
+            RuleTargets.build(
+                RuleRequest("example.test", "/unrelatedxac", scheme = "http"),
+                "/unrelatedxac",
+                "https://mirror.test/\$<first>/\$<optional>/\$<last>",
+                mapOf("replace" to "/$pattern"),
+                SelectedImplementation("proxy", 0, "", 0.0, emptyList(), null, null, null),
+            ),
+        )
+    }
+
+    @Test fun `named group indexes ignore quoted groups and comments`() {
+        assertEquals(
+            mapOf("first" to "a", "last" to "c"),
+            PlannerJson.namedCaptures("()ac", "(?x)\\Q()\\E # (ignored)\n(?<first>a)(?<last>c)"),
+        )
+        assertEquals(
+            mapOf("first" to "a", "last" to "c"),
+            PlannerJson.namedCaptures("ac", "(?x:# (ignored)\n(?<first>a))(?<last>c)"),
+        )
+    }
+
     @Test fun `JSON validation rejects cycles nonfinite values and excessive request size`() {
         val cycle = mutableMapOf<String, Any?>()
         cycle["self"] = cycle

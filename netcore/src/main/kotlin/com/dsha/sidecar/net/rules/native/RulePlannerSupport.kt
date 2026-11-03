@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 package com.dsha.sidecar.net.rules.native
 
+import com.dsha.sidecar.net.rules.namedRegexGroups
 import java.net.URI
 import java.util.Collections
 import java.util.Locale
@@ -100,11 +101,11 @@ internal object PlannerJson {
     }
 
     fun namedCaptures(path: String, pattern: String): Map<String, String?>? {
-        val names = Regex("\\(\\?<([A-Za-z][A-Za-z0-9]*)>").findAll(pattern).map { it.groupValues[1] }.toList()
+        val names = namedRegexGroups(pattern)
         if (names.isEmpty()) return null
         val expression = if (pattern.firstOrNull() in listOf('*', '?', '+')) ".$pattern" else pattern
         val matched = Regex(expression).find(path) ?: return null
-        return names.associateWith { matched.groups[it]?.value }.filterValues { it != null }
+        return names.mapValues { (_, index) -> matched.groups[index]?.value }.filterValues { it != null }
     }
 }
 
@@ -121,7 +122,7 @@ internal object RuleTargets {
                 val expression = config["replace"] as? String
                     ?: throw IllegalArgumentException("replace must be a regex string")
                 val match = Regex(expression).find(path)
-                if (match == null) path else path.replaceRange(match.range, jsReplacement(target, path, match))
+                if (match == null) path else path.replaceRange(match.range, jsReplacement(target, path, match, expression))
             }
             target.startsWith("http:") || target.startsWith("https:") -> target
             else -> {
@@ -142,7 +143,7 @@ internal object RuleTargets {
             }
             named?.forEach { (key, value) -> result = result.replaceFirst("\${$key}", value ?: "") }
         }
-        result = result.replace(Regex("\\$\\{[^}]+}"), "")
+        result = result.replace(Regex("\\$\\{[^}]+\\}"), "")
         return if (result.startsWith("http:") || result.startsWith("https:")) result else "${request.scheme}://$result"
     }
 
@@ -167,8 +168,9 @@ internal object RuleTargets {
         throw IllegalArgumentException("URL is outside the supported URI syntax", failure)
     }
 
-    private fun jsReplacement(replacement: String, input: String, match: MatchResult): String {
+    private fun jsReplacement(replacement: String, input: String, match: MatchResult, expression: String): String {
         val out = StringBuilder()
+        val namedGroups = namedRegexGroups(expression)
         var i = 0
         while (i < replacement.length) {
             if (replacement[i] != '$' || i + 1 == replacement.length) {
@@ -194,7 +196,7 @@ internal object RuleTargets {
                     val end = replacement.indexOf('>', i + 2)
                     if (end < 0) { out.append('$'); i++ } else {
                         val name = replacement.substring(i + 2, end)
-                        out.append(runCatching { match.groups[name]?.value }.getOrNull() ?: "")
+                        out.append(namedGroups[name]?.let { match.groups[it]?.value } ?: "")
                         i = end + 1
                     }
                 }
