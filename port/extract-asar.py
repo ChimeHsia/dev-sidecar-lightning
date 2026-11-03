@@ -3,7 +3,7 @@
 从 dev-sidecar 的 app.asar 解包出可运行目录（含 app.asar.unpacked 的补充文件）。
 
 用法：
-    python port/extract-asar.py "D:/App/Net/dev-sidecar/resources" "D:/tmp/sidecar-port/app"
+    python port/extract-asar.py "<dev-sidecar-resources>" "<output-directory>"
 
 为什么需要：dev-sidecar 的核心 JS 在 asar 里，asar 只是个拼接档，
 解包后就能用普通 Node 直接跑，无需 Electron。

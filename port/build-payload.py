@@ -9,7 +9,7 @@
 
 用法：
     # 先运行 Gradle :netcore-js:jsNodeProductionLibraryDistribution
-    python port/build-payload.py --resources "D:/App/Net/dev-sidecar/resources"
+    python port/build-payload.py --resources "<dev-sidecar-resources>"
 
 产物（均已写入 .gitignore，体积约 170MB）：
     app/src/main/assets/nodejs-project.zip   main.js + core/
@@ -193,7 +193,7 @@ def build(args):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('--resources', default='D:/App/Net/dev-sidecar/resources',
+    ap.add_argument('--resources', required=True,
                     help='dev-sidecar 安装目录下的 resources')
     ap.add_argument('--app', default=os.path.join(ROOT, 'app'))
     build(ap.parse_args())
