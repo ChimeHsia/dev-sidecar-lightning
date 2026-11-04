@@ -1,0 +1,490 @@
+[
+  {
+    "id": "conditional-fresh",
+    "type": "cache",
+    "config": {
+      "cacheDays": 1
+    },
+    "headers": {
+      "if-modified-since": "1793577599000"
+    },
+    "expected": {
+      "maxAge": 86400,
+      "conditionalStatus": 304,
+      "headers": {
+        "cache-control": "public, max-age=86401, immutable",
+        "last-modified": "Mon, 02 Nov 2026 00:00:00 GMT",
+        "expires": "Tue, 03 Nov 2026 00:00:00 GMT",
+        "ds-cache-response-interceptor": "86400"
+      }
+    }
+  },
+  {
+    "id": "conditional-exact-boundary",
+    "type": "cache",
+    "config": {
+      "cacheSeconds": 2
+    },
+    "headers": {
+      "if-modified-since": "1793577598000"
+    },
+    "expected": {
+      "maxAge": 2,
+      "conditionalStatus": 304,
+      "headers": {
+        "cache-control": "public, max-age=3, immutable",
+        "last-modified": "Mon, 02 Nov 2026 00:00:00 GMT",
+        "expires": "Mon, 02 Nov 2026 00:00:02 GMT",
+        "ds-cache-response-interceptor": "2"
+      }
+    }
+  },
+  {
+    "id": "conditional-expired",
+    "type": "cache",
+    "config": {
+      "cacheSeconds": 1
+    },
+    "headers": {
+      "if-modified-since": "1793577598000"
+    },
+    "expected": {
+      "maxAge": 1,
+      "conditionalStatus": null,
+      "headers": {
+        "cache-control": "public, max-age=2, immutable",
+        "last-modified": "Mon, 02 Nov 2026 00:00:00 GMT",
+        "expires": "Mon, 02 Nov 2026 00:00:01 GMT",
+        "ds-cache-response-interceptor": "1"
+      }
+    }
+  },
+  {
+    "id": "conditional-no-cache",
+    "type": "cache",
+    "config": {
+      "cacheDays": 1
+    },
+    "headers": {
+      "if-modified-since": "1793577600000",
+      "cache-control": "no-cache"
+    },
+    "expected": {
+      "maxAge": 86400,
+      "conditionalStatus": null,
+      "headers": {
+        "cache-control": "public, max-age=86401, immutable",
+        "last-modified": "Mon, 02 Nov 2026 00:00:00 GMT",
+        "expires": "Tue, 03 Nov 2026 00:00:00 GMT",
+        "ds-cache-response-interceptor": "86400"
+      }
+    }
+  },
+  {
+    "id": "conditional-invalid",
+    "type": "cache",
+    "config": {
+      "cacheDays": 1
+    },
+    "headers": {
+      "if-modified-since": "not a date"
+    },
+    "expected": {
+      "maxAge": 86400,
+      "conditionalStatus": null,
+      "headers": {
+        "cache-control": "public, max-age=86401, immutable",
+        "last-modified": "Mon, 02 Nov 2026 00:00:00 GMT",
+        "expires": "Tue, 03 Nov 2026 00:00:00 GMT",
+        "ds-cache-response-interceptor": "86400"
+      }
+    }
+  },
+  {
+    "id": "cache-response-default",
+    "type": "cache",
+    "config": {
+      "cacheDays": 1
+    },
+    "expected": {
+      "maxAge": 86400,
+      "conditionalStatus": null,
+      "headers": {
+        "cache-control": "public, max-age=86401, immutable",
+        "last-modified": "Mon, 02 Nov 2026 00:00:00 GMT",
+        "expires": "Tue, 03 Nov 2026 00:00:00 GMT",
+        "ds-cache-response-interceptor": "86400"
+      }
+    }
+  },
+  {
+    "id": "cache-response-longer-upstream",
+    "type": "cache",
+    "config": {
+      "cacheSeconds": 5
+    },
+    "responseHeaders": {
+      "Cache-Control": "public, max-age=60"
+    },
+    "expected": {
+      "maxAge": 5,
+      "conditionalStatus": null,
+      "headers": {
+        "cache-control": "public, max-age=61, immutable",
+        "last-modified": "Mon, 02 Nov 2026 00:00:00 GMT",
+        "expires": "Mon, 02 Nov 2026 00:01:00 GMT",
+        "ds-cache-response-interceptor": "60"
+      }
+    }
+  },
+  {
+    "id": "cache-response-immutable-skip",
+    "type": "cache",
+    "config": {
+      "cacheSeconds": 5
+    },
+    "responseHeaders": {
+      "Cache-Control": "public, max-age=60, immutable"
+    },
+    "expected": {
+      "maxAge": 5,
+      "conditionalStatus": null,
+      "headers": {
+        "cache-control": "public, max-age=60, immutable",
+        "ds-cache-response-interceptor": "skip: 60 > 5"
+      }
+    }
+  },
+  {
+    "id": "cache-response-private",
+    "type": "cache",
+    "config": {
+      "cacheSeconds": 10,
+      "cacheControlType": "private",
+      "cacheImmutable": false
+    },
+    "expected": {
+      "maxAge": 10,
+      "conditionalStatus": null,
+      "headers": {
+        "cache-control": "private, max-age=11",
+        "last-modified": "Mon, 02 Nov 2026 00:00:00 GMT",
+        "expires": "Mon, 02 Nov 2026 00:00:10 GMT",
+        "ds-cache-response-interceptor": "10"
+      }
+    }
+  },
+  {
+    "id": "cache-response-status-exclude",
+    "type": "cache",
+    "config": {
+      "cacheDays": 1,
+      "cacheExcludeStatusCodeList": {
+        "200": true
+      }
+    },
+    "expected": {
+      "maxAge": 86400,
+      "conditionalStatus": null,
+      "headers": {}
+    }
+  },
+  {
+    "id": "cache-response-non-get",
+    "type": "cache",
+    "config": {
+      "cacheDays": 1
+    },
+    "method": "POST",
+    "expected": {
+      "maxAge": 86400,
+      "conditionalStatus": null,
+      "headers": {}
+    }
+  },
+  {
+    "id": "choice-first-failure",
+    "type": "choice",
+    "candidates": [
+      "a.test",
+      "b.test",
+      "c.test"
+    ],
+    "failures": [
+      true
+    ],
+    "expected": [
+      {
+        "candidate": "a.test",
+        "value": "b.test",
+        "remaining": [
+          "c.test"
+        ],
+        "counts": {
+          "a.test": {
+            "value": "a.test",
+            "total": 0,
+            "error": 0,
+            "keepErrorCount": 0,
+            "successRate": 0.8333333333333334
+          },
+          "b.test": {
+            "value": "b.test",
+            "total": 2,
+            "error": 0,
+            "keepErrorCount": 0,
+            "successRate": 0.5
+          },
+          "c.test": {
+            "value": "c.test",
+            "total": 1,
+            "error": 0,
+            "keepErrorCount": 0,
+            "successRate": 0.5
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "choice-exhaust-rank",
+    "type": "choice",
+    "candidates": [
+      "a.test",
+      "b.test"
+    ],
+    "failures": [
+      true,
+      true,
+      false
+    ],
+    "expected": [
+      {
+        "candidate": "a.test",
+        "value": "b.test",
+        "remaining": [],
+        "counts": {
+          "a.test": {
+            "value": "a.test",
+            "total": 0,
+            "error": 0,
+            "keepErrorCount": 0,
+            "successRate": 0.8
+          },
+          "b.test": {
+            "value": "b.test",
+            "total": 1,
+            "error": 0,
+            "keepErrorCount": 0,
+            "successRate": 0.5
+          }
+        }
+      },
+      {
+        "candidate": "b.test",
+        "value": null,
+        "remaining": [],
+        "counts": {
+          "a.test": {
+            "value": "a.test",
+            "total": 0,
+            "error": 0,
+            "keepErrorCount": 0,
+            "successRate": 0.8
+          },
+          "b.test": {
+            "value": "b.test",
+            "total": 0,
+            "error": 0,
+            "keepErrorCount": 0,
+            "successRate": 0.6666666666666667
+          }
+        }
+      },
+      {
+        "candidate": "a.test",
+        "value": "a.test",
+        "remaining": [
+          "b.test"
+        ],
+        "counts": {
+          "a.test": {
+            "value": "a.test",
+            "total": 2,
+            "error": 0,
+            "keepErrorCount": 0,
+            "successRate": 1
+          },
+          "b.test": {
+            "value": "b.test",
+            "total": 0,
+            "error": 0,
+            "keepErrorCount": 0,
+            "successRate": 0.6666666666666667
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "choice-duplicates",
+    "type": "choice",
+    "candidates": [
+      "a.test",
+      "a.test",
+      "b.test"
+    ],
+    "failures": [
+      true,
+      true
+    ],
+    "expected": [
+      {
+        "candidate": "a.test",
+        "value": "a.test",
+        "remaining": [
+          "b.test"
+        ],
+        "counts": {
+          "a.test": {
+            "value": "a.test",
+            "total": 0,
+            "error": 0,
+            "keepErrorCount": 0,
+            "successRate": 0.8333333333333334
+          },
+          "b.test": {
+            "value": "b.test",
+            "total": 2,
+            "error": 0,
+            "keepErrorCount": 0,
+            "successRate": 0.5
+          }
+        }
+      },
+      {
+        "candidate": "a.test",
+        "value": "b.test",
+        "remaining": [],
+        "counts": {
+          "a.test": {
+            "value": "a.test",
+            "total": 0,
+            "error": 0,
+            "keepErrorCount": 0,
+            "successRate": 0.5
+          },
+          "b.test": {
+            "value": "b.test",
+            "total": 2,
+            "error": 0,
+            "keepErrorCount": 0,
+            "successRate": 0.5
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "retry-statuses",
+    "type": "retry",
+    "retry": {
+      "times": 2,
+      "statuses": [
+        500,
+        503
+      ]
+    },
+    "attempts": [
+      500,
+      503,
+      200
+    ],
+    "expected": {
+      "calls": 3,
+      "released": 2,
+      "status": 200,
+      "eligible": true
+    }
+  },
+  {
+    "id": "retry-budget",
+    "type": "retry",
+    "retry": 2,
+    "attempts": [
+      500,
+      500,
+      500,
+      200
+    ],
+    "expected": {
+      "calls": 3,
+      "released": 2,
+      "status": 500,
+      "eligible": true
+    }
+  },
+  {
+    "id": "retry-error-status-shared",
+    "type": "retry",
+    "retry": 2,
+    "attempts": [
+      "error",
+      500,
+      200
+    ],
+    "expected": {
+      "calls": 3,
+      "released": 1,
+      "status": 200,
+      "eligible": true
+    }
+  },
+  {
+    "id": "retry-implicit-error",
+    "type": "retry",
+    "attempts": [
+      "error",
+      200
+    ],
+    "expected": {
+      "calls": 2,
+      "released": 0,
+      "status": 200,
+      "eligible": true
+    }
+  },
+  {
+    "id": "retry-no-status-default",
+    "type": "retry",
+    "attempts": [
+      500,
+      200
+    ],
+    "expected": {
+      "calls": 1,
+      "released": 0,
+      "status": 500,
+      "eligible": true
+    }
+  },
+  {
+    "id": "retry-method-filter",
+    "type": "retry",
+    "method": "POST",
+    "headers": {
+      "content-length": "0"
+    },
+    "retry": 2,
+    "attempts": [
+      500,
+      200
+    ],
+    "expected": {
+      "calls": 1,
+      "released": 0,
+      "status": 500,
+      "eligible": false
+    }
+  }
+]

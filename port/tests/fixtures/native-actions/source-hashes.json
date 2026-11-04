@@ -1,0 +1,8 @@
+{
+  "lib/interceptor/impl/res/responseReplace.js": "3b5a7dc465049e19980a955d88c391c269ee0cd65fb85b4d910a94aa5788d10c",
+  "lib/interceptor/impl/req/cacheRequest.js": "fd7e10662322ed281cd03f174eb5d5aefeeca7579dbca200b1f85da3042f1bbd",
+  "lib/interceptor/impl/res/AfterOPTIONSHeaders.js": "d455246bffa630ea7e34f86e71bb58de0a9d5f82c0c372ee2f9961e47ac4ae72",
+  "lib/proxy/middleware/InsertScriptMiddleware.js": "bfd3aa4bcdeda4982e588568effb6ca45a5c765308879a3b6646d6dc16ba9761",
+  "lib/interceptor/impl/res/script.js": "0c38b1327ec5e3bcb27331b203ca6443d1c64a81ec4ac54dcd1791b1c70c7d03",
+  "lib/proxy/mitmproxy/createRequestHandler.js": "64d7c082f796311ffae7a3f84b51a7f3c902134ecc88094266bc1178e1f6b690"
+}

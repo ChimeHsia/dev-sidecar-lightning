@@ -1,0 +1,32 @@
+[
+  {
+    "origin": "original",
+    "source": "D:\\File\\User\\code\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\rules\\HostnameAllMatcher.kt",
+    "destination": "netcore/src/main/kotlin/com/dsha/sidecar/net/rules/HostnameAllMatcher.kt",
+    "sha256": "701dce301cf548941653f8714544f43190a585786e727dc149513511dfcfe4cf"
+  },
+  {
+    "origin": "original",
+    "source": "D:\\File\\User\\code\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\rules\\PathRuleMatcher.kt",
+    "destination": "netcore/src/main/kotlin/com/dsha/sidecar/net/rules/PathRuleMatcher.kt",
+    "sha256": "b6cb1f8bff8f16968544ae0dd91a9e47d1cbb7fa19047a61f597c6695b39481f"
+  },
+  {
+    "origin": "migration-wave3-review",
+    "source": "C:\\Users\\HONOR\\.codex\\worktrees\\migration-wave3-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\http\\HeaderTransforms.kt",
+    "destination": "netcore/src/main/kotlin/com/dsha/sidecar/net/http/HeaderTransforms.kt",
+    "sha256": "5fe297c104f7ccf60ddd568bb22e8c56077f077d36d886c65e767022bc3ba51b"
+  },
+  {
+    "origin": "migration-wave3-review",
+    "source": "C:\\Users\\HONOR\\.codex\\worktrees\\migration-wave3-review\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\http\\RequestRetryPolicy.kt",
+    "destination": "netcore/src/main/kotlin/com/dsha/sidecar/net/http/RequestRetryPolicy.kt",
+    "sha256": "32116f960133d41e4b22a1a478e59aac29132604f2fd16576ab726c3552ef4d4"
+  },
+  {
+    "origin": "original-and-base",
+    "source": "D:\\File\\User\\code\\dev-sidecar-lightning\\netcore\\src\\main\\kotlin\\com\\dsha\\sidecar\\net\\config\\ConfigMerge.kt",
+    "destination": "netcore/src/main/kotlin/com/dsha/sidecar/net/config/ConfigMerge.kt",
+    "sha256": "bdef55fc34ef90cea0c9c9a4982e7223efef969741c16680ac059b6626eae534"
+  }
+]

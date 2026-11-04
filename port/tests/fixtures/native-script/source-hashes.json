@@ -1,0 +1,7 @@
+{
+  "lib/interceptor/impl/res/script.js": "0c38b1327ec5e3bcb27331b203ca6443d1c64a81ec4ac54dcd1791b1c70c7d03",
+  "lib/proxy/middleware/InsertScriptMiddleware.js": "bfd3aa4bcdeda4982e588568effb6ca45a5c765308879a3b6646d6dc16ba9761",
+  "lib/monkey/index.js": "f1c095db89f036b2b49d1e95ebb5a19f62b8bf11991cace39893cf4e2cc39e73",
+  "lib/proxy/mitmproxy/createRequestHandler.js": "64d7c082f796311ffae7a3f84b51a7f3c902134ecc88094266bc1178e1f6b690",
+  "options.js": "411a38af92019b15e829446f22d23ba9221e56f44253fa9e660fa95d7b63b356"
+}
