@@ -17,6 +17,7 @@ kotlin {
 }
 
 dependencies {
+    implementation("org.bouncycastle:bcprov-jdk18on:1.79")
     testImplementation(kotlin("test"))
     testImplementation("junit:junit:4.13.2")
 }
