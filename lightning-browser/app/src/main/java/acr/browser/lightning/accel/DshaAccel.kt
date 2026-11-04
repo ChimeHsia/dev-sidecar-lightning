@@ -32,7 +32,7 @@ object DshaAccel {
     private const val PORT = 31181
     private const val MARKER_READY = "就绪"
     /** 负载版本：改了 assets 里的 zip 就 +1，保证升级后会重新解压。 */
-    private const val PAYLOAD_VERSION = "6"
+    private const val PAYLOAD_VERSION = "8-ui-ba03219"
 
     @Volatile
     private var started = false
