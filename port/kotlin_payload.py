@@ -13,18 +13,19 @@ NAT64 = "core/node_modules/@blue-frontier/mitmproxy/src/lib/dns/nat64.js"
 REQUEST_HANDLER = "core/node_modules/@blue-frontier/mitmproxy/src/lib/proxy/mitmproxy/createRequestHandler.js"
 REQUEST_OPTIONS = "core/node_modules/@blue-frontier/mitmproxy/src/lib/proxy/common/util.js"
 UPGRADE_HANDLER = "core/node_modules/@blue-frontier/mitmproxy/src/lib/proxy/mitmproxy/createUpgradeHandler.js"
-PATCH_TARGETS = {NAT64, REQUEST_HANDLER, REQUEST_OPTIONS, UPGRADE_HANDLER}
+DNS_LOOKUP = "core/node_modules/@blue-frontier/mitmproxy/src/lib/proxy/mitmproxy/dnsLookup.js"
+PATCH_TARGETS = {NAT64, REQUEST_HANDLER, REQUEST_OPTIONS, UPGRADE_HANDLER, DNS_LOOKUP}
 START = "function toNat64Address (prefix, ipv4) {"
 END = "\n}\n"
 
-def replace_once(source, old, new):
+def replace_once(source, old, new, count=1):
     if new in source:
-        if source.count(new) != 1 or old in source.replace(new, "", 1):
+        if source.count(new) != count or old in source.replace(new, "", count):
             raise ValueError("Unsupported upstream proxy implementation: ambiguous patch")
         return source
-    if source.count(old) != 1:
+    if source.count(old) != count:
         raise ValueError("Unsupported upstream proxy implementation: patch target changed")
-    return source.replace(old, new, 1)
+    return source.replace(old, new, count)
 
 
 def patch_transport(name, source):
@@ -99,7 +100,11 @@ def patch_core_file(name, source):
     source = patch_transport(name, source)
     if name == REQUEST_OPTIONS:
         source = patch_request_runtime(source)
-    return patch_request_validation(name, source)
+    source = patch_request_validation(name, source)
+    patches = json.loads((ROOT / "port/node/transport-recovery-patches.json").read_text(encoding="utf-8"))
+    for patch in patches.get(name, []):
+        source = replace_once(source, patch["old"], patch["new"], patch.get("count", 1))
+    return source
 
 
 def helper_entries(library=LIBRARY):
