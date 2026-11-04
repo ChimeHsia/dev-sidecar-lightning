@@ -1,0 +1,15 @@
+Independent peer: Go 1.27.3 crypto/tls; client: official Conscrypt 2.8.0 JVM
+deadline echAccepted=false serverName= applicationBytes=0 tampered=false failure=null
+required-unusable-config echAccepted=false serverName= applicationBytes=0 tampered=false failure=null
+setter-alone echAccepted=false serverName=inner.example applicationBytes=5 tampered=false failure=null
+expired echAccepted=true serverName=inner.example applicationBytes=0 tampered=false failure=PEER_AUTHENTICATION
+separate-verify-host echAccepted=true serverName=inner.example applicationBytes=5 tampered=false failure=null
+untrusted-root echAccepted=true serverName=inner.example applicationBytes=0 tampered=false failure=null
+record-tamper echAccepted=true serverName=inner.example applicationBytes=0 tampered=true failure=HANDSHAKE
+wrong-separate-verify-host echAccepted=true serverName=inner.example applicationBytes=0 tampered=false failure=null
+reject echAccepted=false serverName=cover.example applicationBytes=0 tampered=false failure=ECH_REJECTED
+cancel echAccepted=false serverName= applicationBytes=0 tampered=false failure=null
+wrong-host echAccepted=true serverName=inner.example applicationBytes=0 tampered=false failure=PEER_AUTHENTICATION
+noech echAccepted=false serverName=cover.example applicationBytes=0 tampered=false failure=ECH_REJECTED
+pinned-required-accepted echAccepted=true serverName=inner.example applicationBytes=5 tampered=false failure=null
+tamper echAccepted=false serverName=cover.example applicationBytes=0 tampered=true failure=HANDSHAKE

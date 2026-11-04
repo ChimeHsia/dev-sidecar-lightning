@@ -17,6 +17,8 @@ kotlin {
 }
 
 dependencies {
+    compileOnly("org.conscrypt:conscrypt-openjdk-uber:2.8.0")
+    testImplementation("org.conscrypt:conscrypt-openjdk-uber:2.8.0")
     testImplementation(kotlin("test"))
     testImplementation("junit:junit:4.13.2")
 }
