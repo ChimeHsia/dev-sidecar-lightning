@@ -1,0 +1,122 @@
+{
+  "baselineMain": "ae39b8f3b2602bf2782c2453a5819fa392f9ff3f",
+  "workspaces": [
+    {
+      "workspace": "native-android-packaging",
+      "originalHead": "9b8c7e1895a6c13c8447142d2909af59a617f829",
+      "originalBranch": null,
+      "changedFiles": 4,
+      "alreadyIdenticalFiles": 0,
+      "snapshotCommit": "31b1690e73ede12fd8ab196a4b90de11b130fe44",
+      "snapshotRef": "codex/archive-consolidation-20261104/native-android-packaging"
+    },
+    {
+      "workspace": "native-core-ech-v2",
+      "originalHead": "61e7643484fbfcc3b09ac6518590c2edd80d86fb",
+      "originalBranch": "refs/heads/codex/native-core-ech-v2",
+      "changedFiles": 0,
+      "alreadyIdenticalFiles": 0,
+      "snapshotCommit": null,
+      "snapshotRef": null
+    },
+    {
+      "workspace": "native-core-review",
+      "originalHead": "256817bc236d227b3ae7ec083157497cc3f920c4",
+      "originalBranch": null,
+      "changedFiles": 6,
+      "alreadyIdenticalFiles": 0,
+      "snapshotCommit": "d6a6286d4b13eaf78aca89695228bdbe36191bab",
+      "snapshotRef": "codex/archive-consolidation-20261104/native-core-review"
+    },
+    {
+      "workspace": "native-dns-orchestration",
+      "originalHead": "190aa7494fddc7cb4e89290bdc0853e0f1da57d2",
+      "originalBranch": "refs/heads/codex/native-nat64-ech-discovery",
+      "changedFiles": 47,
+      "alreadyIdenticalFiles": 41,
+      "snapshotCommit": "1817b6562a401bb1209261370b7e7afe2af51606",
+      "snapshotRef": "codex/archive-consolidation-20261104/native-dns-orchestration"
+    },
+    {
+      "workspace": "native-ech-android",
+      "originalHead": "befef499589d20cb1fd6aa7fe293d009524b7240",
+      "originalBranch": null,
+      "changedFiles": 55,
+      "alreadyIdenticalFiles": 20,
+      "snapshotCommit": "68f9136f7b7f47f7c3a2d0604d115cf15b513e2e",
+      "snapshotRef": "codex/archive-consolidation-20261104/native-ech-android"
+    },
+    {
+      "workspace": "native-ech-conscrypt",
+      "originalHead": "754ff423b59c743cf94e68b3417c1fde4a6f42b7",
+      "originalBranch": null,
+      "changedFiles": 13,
+      "alreadyIdenticalFiles": 6,
+      "snapshotCommit": "7acfc25e35df341731b826dce817c5e50e5edd7f",
+      "snapshotRef": "codex/archive-consolidation-20261104/native-ech-conscrypt"
+    },
+    {
+      "workspace": "native-ech-hpke",
+      "originalHead": "754ff423b59c743cf94e68b3417c1fde4a6f42b7",
+      "originalBranch": null,
+      "changedFiles": 12,
+      "alreadyIdenticalFiles": 11,
+      "snapshotCommit": "1a94874c2bfe79fb76a3242c71fd32fb113a3f35",
+      "snapshotRef": "codex/archive-consolidation-20261104/native-ech-hpke"
+    },
+    {
+      "workspace": "native-proxy-engine",
+      "originalHead": "754ff423b59c743cf94e68b3417c1fde4a6f42b7",
+      "originalBranch": null,
+      "changedFiles": 18,
+      "alreadyIdenticalFiles": 12,
+      "snapshotCommit": "378fa8a9fb01d9c8d0c88bd950ea6614d55fa9ed",
+      "snapshotRef": "codex/archive-consolidation-20261104/native-proxy-engine"
+    },
+    {
+      "workspace": "native-rule-planner",
+      "originalHead": "754ff423b59c743cf94e68b3417c1fde4a6f42b7",
+      "originalBranch": null,
+      "changedFiles": 55,
+      "alreadyIdenticalFiles": 48,
+      "snapshotCommit": "d8b4d3b81943281243a63410b0f597e3f57ca377",
+      "snapshotRef": "codex/archive-consolidation-20261104/native-rule-planner"
+    },
+    {
+      "workspace": "native-runtime-assembly",
+      "originalHead": "3828abe505242c74a32d569118ccfa792533cde9",
+      "originalBranch": "refs/heads/codex/native-runtime-assembly",
+      "changedFiles": 0,
+      "alreadyIdenticalFiles": 0,
+      "snapshotCommit": null,
+      "snapshotRef": null
+    },
+    {
+      "workspace": "runtime-wave2-review",
+      "originalHead": "754ff423b59c743cf94e68b3417c1fde4a6f42b7",
+      "originalBranch": null,
+      "changedFiles": 47,
+      "alreadyIdenticalFiles": 45,
+      "snapshotCommit": "33edc52c1e79896e786b514d80a01a574e6eb403",
+      "snapshotRef": "codex/archive-consolidation-20261104/runtime-wave2-review"
+    },
+    {
+      "workspace": "ui-ba03219-device",
+      "originalHead": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+      "originalBranch": null,
+      "changedFiles": 1,
+      "alreadyIdenticalFiles": 0,
+      "snapshotCommit": "e4e44c0726df26a00cb848068f068556f2342d5b",
+      "snapshotRef": "codex/archive-consolidation-20261104/ui-ba03219-device"
+    },
+    {
+      "workspace": "swift-beaming-shell",
+      "originalHead": "ba03219be4c83268cdb1b0b9038ef544b5fe627b",
+      "originalBranch": "refs/heads/worktree-swift-beaming-shell",
+      "changedFiles": 7,
+      "alreadyIdenticalFiles": 0,
+      "snapshotCommit": null,
+      "snapshotRef": null
+    }
+  ]
+}

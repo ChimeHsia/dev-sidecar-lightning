@@ -25,9 +25,23 @@ REQUEST_SOURCE = "\n".join(patch["old"] for patch in REQUEST_PATCHES)
 VALIDATION_PATCHES = json.loads(
     (payload.ROOT / "port/node/request-validation-patches.json").read_text(encoding="utf-8")
 )
+RECOVERY_PATCHES = json.loads(
+    (payload.ROOT / "port/node/transport-recovery-patches.json").read_text(encoding="utf-8")
+)
+RECOVERY_SOURCES = {
+    name: "\n".join(patch["old"] * patch.get("count", 1) for patch in patches)
+    for name, patches in RECOVERY_PATCHES.items()
+}
 
 
 class KotlinPayloadTest(unittest.TestCase):
+    def test_repeated_transport_patch_requires_the_exact_expected_count(self):
+        patched = payload.patch_core_file(payload.DNS_LOOKUP, RECOVERY_SOURCES[payload.DNS_LOOKUP])
+        self.assertEqual(patched, payload.patch_core_file(payload.DNS_LOOKUP, patched))
+        for source in ["", "if (res) {" * 4, "if (res) {" * 6, patched + "if (res) {"]:
+            with self.assertRaises(ValueError):
+                payload.patch_core_file(payload.DNS_LOOKUP, source)
+
     def test_request_validation_is_patched_in_both_real_handlers_and_is_strict(self):
         for name, patches in VALIDATION_PATCHES.items():
             source = "\n".join(patch["old"] for patch in patches)
@@ -98,8 +112,10 @@ class KotlinPayloadTest(unittest.TestCase):
                 result.writestr(payload.REQUEST_OPTIONS, OPTIONS_SOURCE + REQUEST_SOURCE)
                 result.writestr(
                     payload.REQUEST_HANDLER,
-                    HANDLER_SOURCE + "\n".join(p["old"] for p in VALIDATION_PATCHES[payload.REQUEST_HANDLER]),
+                    HANDLER_SOURCE + "\n".join(p["old"] for p in VALIDATION_PATCHES[payload.REQUEST_HANDLER])
+                    + "\n" + RECOVERY_SOURCES[payload.REQUEST_HANDLER],
                 )
+                result.writestr(payload.DNS_LOOKUP, RECOVERY_SOURCES[payload.DNS_LOOKUP])
                 result.writestr(
                     payload.UPGRADE_HANDLER,
                     "\n".join(p["old"] for p in VALIDATION_PATCHES[payload.UPGRADE_HANDLER]),
@@ -130,6 +146,8 @@ class KotlinPayloadTest(unittest.TestCase):
                 self.assertIn(b"require('./proxy-runtime').start(CORE, config)", result.read("main.js"))
                 self.assertIn(b"waitForListening", result.read("proxy-runtime.js"))
                 self.assertIn(b"sock.secureConnecting", result.read(payload.REQUEST_HANDLER))
+                self.assertIn(b"error.requestMayHaveBeenSent", result.read(payload.REQUEST_HANDLER))
+                self.assertIn(b"!res.headersSent", result.read(payload.DNS_LOOKUP))
                 self.assertIn(b"kotlinRequestRuntimeVersion = 1", result.read(payload.REQUEST_OPTIONS))
                 for name in [payload.REQUEST_HANDLER, payload.UPGRADE_HANDLER]:
                     self.assertIn(b"DSHA_INVALID_REQUEST", result.read(name))

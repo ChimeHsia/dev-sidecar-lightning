@@ -1,0 +1,92 @@
+{
+  "core/node_modules/@blue-frontier/mitmproxy/src/lib/proxy/mitmproxy/dnsLookup.js": [
+    {
+      "old": "if (res) {",
+      "new": "if (res && !res.headersSent && !res.writableEnded && !res.destroyed) {",
+      "count": 5
+    }
+  ],
+  "core/node_modules/@blue-frontier/mitmproxy/src/lib/proxy/mitmproxy/createRequestHandler.js": [
+    {
+      "old": "    let proxyReq\n",
+      "new": "    let proxyReq\n    let cancelled = false\n    const retryMethod = (req.method || 'GET').toUpperCase()\n    const idempotent = ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE', 'TRACE'].includes(retryMethod)\n"
+    },
+    {
+      "old": "    res.on('close', markResponded)",
+      "new": "    res.once('close', () => {\n      markResponded()\n      if (!res.writableFinished) {\n        cancelled = true\n        if (proxyReq) proxyReq.destroy()\n      }\n    })"
+    },
+    {
+      "old": "      log.error(`请求无响应，强制返回 504: ${url}`)",
+      "new": "      markResponded()\n      if (res.headersSent) return\n      cancelled = true\n      if (proxyReq) proxyReq.destroy()\n      log.error(`请求无响应，强制返回 504: ${url}`)"
+    },
+    {
+      "old": "        function onFree () {\n          url =",
+      "new": "        function onFree () {\n          if (cancelled || res.destroyed || res.writableEnded) {\n            reject(new Error('Client response closed'))\n            return\n          }\n          url ="
+    },
+    {
+      "old": "          const isDnsIntercept = {}\n",
+      "new": "          const isDnsIntercept = {}\n          let failureCounted = false\n          const countFailure = reason => {\n            if (failureCounted || cancelled) return\n            failureCounted = true\n            countSlow(isDnsIntercept, reason)\n          }\n"
+    },
+    {
+      "old": "if (isDnsIntercept && isDnsIntercept.tester && isDnsIntercept.ip) {",
+      "new": "if (!cancelled && !failureCounted && isDnsIntercept && isDnsIntercept.tester && isDnsIntercept.ip) {",
+      "count": 2
+    },
+    {
+      "old": "              countSlow(isDnsIntercept, `连接超时, cost: ${cost} ms`)",
+      "new": "              countFailure(`连接超时, cost: ${cost} ms`)"
+    },
+    {
+      "old": "            countSlow(isDnsIntercept, `代理请求超时, cost: ${cost} ms`)",
+      "new": "            countFailure(`代理请求超时, cost: ${cost} ms`)"
+    },
+    {
+      "old": "            countSlow(isDnsIntercept, `代理请求错误: ${e.message}`)",
+      "new": "            countFailure(`代理请求错误: ${e.message}`)"
+    },
+    {
+      "old": "              countSlow(isDnsIntercept, `代理请求被取消，且请求太慢, cost: ${cost} ms > ${MAX_SLOW_TIME} ms`)",
+      "new": "              countFailure(`代理请求被取消，且请求太慢, cost: ${cost} ms > ${MAX_SLOW_TIME} ms`)"
+    },
+    {
+      "old": "          let responseStarted = false",
+      "new": "          let responseStarted = false\n          let transportReady = false"
+    },
+    {
+      "old": "                clearConnectTimer()\n                updateDsDnsFromSocket()",
+      "new": "                clearConnectTimer()\n                transportReady = true\n                updateDsDnsFromSocket()"
+    },
+    {
+      "old": "              // keep-alive 复用 socket\n              clearConnectTimer()",
+      "new": "              // keep-alive 复用 socket\n              transportReady = true\n              clearConnectTimer()"
+    },
+    {
+      "old": "            proxyReq.end()\n            proxyReq.destroy()\n            const error = new Error(errorMsg)\n            error.code = 'ETIMEOUT'\n            error.status = 408\n            error.retryable = true\n            reject(error)",
+      "new": "            const error = new Error(errorMsg)\n            error.requestMayHaveBeenSent = transportReady\n            error.code = 'ETIMEOUT'\n            error.status = 408\n            error.retryable = true\n            proxyReq.destroy(error)\n            reject(error)"
+    },
+    {
+      "old": "            e.retryable = true",
+      "new": "            e.requestMayHaveBeenSent = transportReady\n            e.retryable = true"
+    },
+    {
+      "old": "          req.on('aborted', () => {\n            const cost",
+      "new": "          req.on('aborted', () => {\n            cancelled = true\n            const cost"
+    },
+    {
+      "old": "          const bodySafe = context.retryBody != null",
+      "new": "          if (cancelled || res.destroyed || res.writableEnded) return\n          const bodySafe = context.retryBody != null || (\n            !BODY_METHODS.has(retryMethod) && !req.headers['transfer-encoding'] && !req.headers.expect\n            && (!req.headers['content-length'] || Number(req.headers['content-length']) === 0)\n          )"
+    },
+    {
+      "old": "          const canAutoRetry = e && e.retryable",
+      "new": "          const canAutoRetry = e && e.retryable && bodySafe && (idempotent || e.requestMayHaveBeenSent === false)"
+    },
+    {
+      "old": "        if (context.retryConfig && retryCount < context.retryConfig.times && context.retryConfig.statuses.includes(proxyRes.statusCode)) {",
+      "new": "        if (!cancelled && !res.destroyed && idempotent && context.retryBody != null && context.retryConfig && retryCount < context.retryConfig.times && context.retryConfig.statuses.includes(proxyRes.statusCode)) {"
+    },
+    {
+      "old": "        res.writeHead(proxyRes.statusCode)",
+      "new": "        res.writeHead(proxyRes.statusCode)\n        markResponded()"
+    }
+  ]
+}

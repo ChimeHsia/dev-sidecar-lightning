@@ -32,7 +32,7 @@ object DshaAccel {
     private const val MARKER_READY = "[android] READY 127.0.0.1:$PORT"
     private const val MARKER_FAILED = "[android] FAILED"
     /** 负载版本：改了 assets 里的 zip 就 +1，保证升级后会重新解压。 */
-    private const val PAYLOAD_VERSION = "10"
+    private const val PAYLOAD_VERSION = "11"
 
     @Volatile
     private var started = false

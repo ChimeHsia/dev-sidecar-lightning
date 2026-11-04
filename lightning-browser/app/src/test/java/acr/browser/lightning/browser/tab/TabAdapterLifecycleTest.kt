@@ -629,7 +629,7 @@ class TabAdapterLifecycleTest {
     private inner class Fixture(private val scope: TestScope, poolSize: Int = 8) {
         private val application = RuntimeEnvironment.getApplication() as TestApplication
         private val activity = Robolectric.buildActivity(FragmentActivity::class.java)
-            .setup().get().apply { setTheme(R.style.Theme_LightTheme) }
+            .setup().get().apply { setTheme(R.style.Theme_Browser_Light) }
         private val dispatchers = FakeCoroutineDispatchers(scope.testScheduler)
         private val appScope = AppCoroutineScope(scope.backgroundScope)
         private val logger = object : Logger {

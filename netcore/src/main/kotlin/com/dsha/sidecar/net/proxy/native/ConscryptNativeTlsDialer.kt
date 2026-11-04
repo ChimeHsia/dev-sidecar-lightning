@@ -43,7 +43,7 @@ class NativeEchDialException(val failure: NativeEchDialFailure, cause: Throwable
 
 /**
  * Composite dialer with strict ECH. No ECH error is retried through the ordinary TLS branch.
- * Frozen engine policy/API and the accepted Conscrypt connector are left unchanged.
+ * The route's required-ECH policy also applies when the resolver selects ordinary TLS.
  */
 class ConscryptNativeTlsDialer(
     private val configResolver: NativeEchConfigResolver,
@@ -61,7 +61,12 @@ class ConscryptNativeTlsDialer(
                 throw NativeEchDialException(NativeEchDialFailure.CONFIG_RESOLUTION, failure)
             }
             return when (selection) {
-                NativeEchSelection.NotRequired -> ordinary.connect(raw, policy, handshakeTimeoutMillis)
+                NativeEchSelection.NotRequired -> {
+                    if (policy.echRequired) {
+                        throw NativeEchDialException(NativeEchDialFailure.REQUIRED_CONFIG_UNAVAILABLE)
+                    }
+                    ordinary.connect(raw, policy, handshakeTimeoutMillis)
+                }
                 NativeEchSelection.RequiredButUnavailable ->
                     throw NativeEchDialException(NativeEchDialFailure.REQUIRED_CONFIG_UNAVAILABLE)
                 is NativeEchSelection.Required -> {

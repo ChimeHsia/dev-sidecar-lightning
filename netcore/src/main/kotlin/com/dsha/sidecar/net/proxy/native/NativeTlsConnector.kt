@@ -36,6 +36,10 @@ class NativeTlsConnector : NativeTlsDialer {
 
     /** Caller owns the connected raw socket, its deadlines, and closing on failure. */
     override fun connect(raw: Socket, policy: NativeTlsPolicy, handshakeTimeoutMillis: Int): SSLSocket {
+        if (policy.echRequired) {
+            raw.close()
+            throw SSLHandshakeException("Required ECH is unavailable in the ordinary TLS connector")
+        }
         val context = if (policy.trustMode == UpstreamTrustMode.UNVERIFIED) unverifiedContext
             else policy.trustContext ?: platformContext
         val socket = context.socketFactory.createSocket(

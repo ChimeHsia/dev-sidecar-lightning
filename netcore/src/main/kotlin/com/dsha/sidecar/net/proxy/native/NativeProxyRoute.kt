@@ -19,6 +19,8 @@ data class NativeTlsPolicy(
     /** A caller-owned trust context. Never reinitialized by the connector. */
     val trustContext: SSLContext? = null,
     val protocols: List<String> = listOf("TLSv1.3", "TLSv1.2"),
+    /** Ordinary TLS is forbidden when the selected runtime route requires ECH. */
+    val echRequired: Boolean = false,
 ) {
     init {
         CertificateHost.parse(verifyHost)

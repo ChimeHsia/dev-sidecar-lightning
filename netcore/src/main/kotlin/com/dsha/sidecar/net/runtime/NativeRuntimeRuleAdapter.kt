@@ -82,7 +82,8 @@ class NativeRuntimeRuleAdapter(
                         ServerName.Suppress -> null
                     }
                     NativeTlsPolicy(resolved.tls.verificationHost, sniHost = sni,
-                        trustMode = UpstreamTrustMode.STRICT, trustContext = upstreamTrustContext)
+                        trustMode = UpstreamTrustMode.STRICT, trustContext = upstreamTrustContext,
+                        echRequired = resolved.echRequired)
                 } else null
                 if (resolved.echRequired) {
                     if (policy == null) throw IOException("ECH requires an upstream TLS route")
