@@ -17,6 +17,10 @@ kotlin {
 }
 
 dependencies {
+    compileOnly("org.conscrypt:conscrypt-openjdk-uber:2.8.0")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.79")
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.79")
+    testImplementation("org.conscrypt:conscrypt-openjdk-uber:2.8.0")
     testImplementation(kotlin("test"))
     testImplementation("junit:junit:4.13.2")
 }

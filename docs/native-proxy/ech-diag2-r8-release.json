@@ -1,0 +1,128 @@
+{
+  "schema": 1,
+  "date": "2026-11-02",
+  "artifact": "android-ech-probe/artifacts/native-ech-probe-v2-r8-release.apk",
+  "sha256": "c23945c327c52add1035675d78c9db317f360845df54ab3f4a310383d76218e3",
+  "bytes": 3035833,
+  "package": "com.dsha.nativeechtest",
+  "versionCode": 2,
+  "versionName": "0.2-diagnostic",
+  "minSdk": 24,
+  "targetSdk": 37,
+  "abi": "arm64-v8a",
+  "minifiedR8": true,
+  "apkV2SignatureVerified": true,
+  "signerDn": "CN=Android Debug, O=Android, C=US",
+  "signerCertSha256": "d8755927514c111bf255341f3f8171d6edc61c89be0ac4f3c45fe7909e36950b",
+  "build": {
+    "offline": true,
+    "gradle": "9.8.2",
+    "jdk": "21.0.2",
+    "gradleExited": true,
+    "heapMb": 256,
+    "workers": 1
+  },
+  "alignment": {
+    "elfOffsetAddressCongruence16K": true,
+    "zipPassed": true,
+    "elfLoadSegments": 3,
+    "elfLoadPAlign": [
+      "0x4000",
+      "0x4000",
+      "0x4000"
+    ],
+    "zipalignCommand": "zipalign -c -P 16 -v 4",
+    "nativeStoredUncompressed": true,
+    "nativeZipDataOffset": 229376,
+    "nativeZipDataOffsetMultiple16K": 14
+  },
+  "actualDex": {
+    "preflightGetEchOptions": true,
+    "managerClassDefinition": true,
+    "policyReturnsRequiredEnum": true,
+    "exactPublicPolicyMethodDefinition": true,
+    "diagnosticConstStringMarkers": [
+      "diag2-explicit-tmf",
+      "causeClasses",
+      "causeChainTruncated",
+      "nativeAvailable",
+      "configValidated",
+      "TRUST_MANAGER_CREATION",
+      "REQUIRED_POLICY_PREFLIGHT"
+    ],
+    "preflightGetDomainEncryptionMode": true,
+    "preflightIsFailClosed": true
+  },
+  "onlyInternetPermission": true,
+  "testOnly": true,
+  "backupDisabled": true,
+  "noJvmPayload": true,
+  "protectedDebug": [
+    {
+      "path": "android-ech-probe/artifacts/native-ech-probe-v2-debug.apk",
+      "sha256": "d32ff875e357f1076a113cc5106d8a6baeb9fef98f22ecca3def2d9bdc462da0",
+      "bytes": 4051807,
+      "shaSizeTimestampUnchanged": true
+    },
+    {
+      "path": "android-ech-probe/app/build/outputs/apk/debug/app-debug.apk",
+      "sha256": "d32ff875e357f1076a113cc5106d8a6baeb9fef98f22ecca3def2d9bdc462da0",
+      "bytes": 4051807,
+      "shaSizeTimestampUnchanged": true
+    },
+    {
+      "path": "docs/native-proxy/android-ech-apks.json",
+      "sha256": "dbaa6dccd41738ac21b4aa8d00819a82bf37f0266354c471cf673b8a02e16e19",
+      "bytes": 2177,
+      "shaSizeTimestampUnchanged": true
+    },
+    {
+      "path": "docs/native-proxy/ech-diag2-source.sha256",
+      "sha256": "7fb49e58249165d1b16abbb92cd49dcbf4b720dfd04f181d537eacb891cf7680",
+      "bytes": 542,
+      "shaSizeTimestampUnchanged": true
+    }
+  ],
+  "evidence": [
+    {
+      "path": "C:\\Users\\HONOR\\.codex\\worktrees\\native-ech-android\\dev-sidecar-lightning\\.tools\\artifact-audits\\diag2-r8-release\\badging.txt",
+      "sha256": "6be3fbb0199f4b26f94d28dd66e1f47fce128670b7bad062d5770bb5bd6ab6b2"
+    },
+    {
+      "path": "C:\\Users\\HONOR\\.codex\\worktrees\\native-ech-android\\dev-sidecar-lightning\\.tools\\artifact-audits\\diag2-r8-release\\configuration.txt",
+      "sha256": "f56a10066ee1732e7f69b0d66cd0c5f98e176633c152cde3f447948c6f71e1f0"
+    },
+    {
+      "path": "C:\\Users\\HONOR\\.codex\\worktrees\\native-ech-android\\dev-sidecar-lightning\\.tools\\artifact-audits\\diag2-r8-release\\elf-program-headers.txt",
+      "sha256": "e872dc4977c1e813518a0398928d631802abf6a75dedcd1a19b1bc4bcaa04568"
+    },
+    {
+      "path": "C:\\Users\\HONOR\\.codex\\worktrees\\native-ech-android\\dev-sidecar-lightning\\.tools\\artifact-audits\\diag2-r8-release\\manifest.txt",
+      "sha256": "68b82c12f48a45c449d680958089a8bbbed5291da2fdba0b4bb5eb3b942626c1"
+    },
+    {
+      "path": "C:\\Users\\HONOR\\.codex\\worktrees\\native-ech-android\\dev-sidecar-lightning\\.tools\\artifact-audits\\diag2-r8-release\\mapping.txt",
+      "sha256": "1f5e4a6aad13b9ddaa3d37c54f7e222b3b9092d759d036009cb7197d657cd437"
+    },
+    {
+      "path": "C:\\Users\\HONOR\\.codex\\worktrees\\native-ech-android\\dev-sidecar-lightning\\.tools\\artifact-audits\\diag2-r8-release\\protected-debug-before.json",
+      "sha256": "75093fba1417ca2312b605ed8b55448b41c95b851c9d58ce58ae431e23130e83"
+    },
+    {
+      "path": "C:\\Users\\HONOR\\.codex\\worktrees\\native-ech-android\\dev-sidecar-lightning\\.tools\\artifact-audits\\diag2-r8-release\\required-dex-excerpts.txt",
+      "sha256": "388a884624f86c6d65505ba8081575abac959ec4469521ed9348b278eb31eabd"
+    },
+    {
+      "path": "C:\\Users\\HONOR\\.codex\\worktrees\\native-ech-android\\dev-sidecar-lightning\\.tools\\artifact-audits\\diag2-r8-release\\signature.txt",
+      "sha256": "5a57b99551ac6c63caa149f62cc9a825a3cec9ed561149c39e1c786828ec2fd5"
+    },
+    {
+      "path": "C:\\Users\\HONOR\\.codex\\worktrees\\native-ech-android\\dev-sidecar-lightning\\.tools\\artifact-audits\\diag2-r8-release\\zipalign.txt",
+      "sha256": "bb20d11be6e0aebd7ecb040fbffa9799c6129ac068cd6a42164d1c9e3d13dbc6"
+    }
+  ],
+  "adbInvoked": false,
+  "deviceRun": false,
+  "androidRepairClaimed": false,
+  "deviceGate": "Parent scheduling: verify v2 debug accepted with independent Go peer before v2 R8 device path"
+}

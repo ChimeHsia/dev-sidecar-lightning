@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ephemeral public Android ECH peer inputs",
+  "type": "object",
+  "required": ["schema", "scenario", "device_host", "device_port", "host_port", "expected", "timeout_ms", "trust", "config_b64", "ca_b64"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": 1},
+    "scenario": {"type": "string"},
+    "device_host": {"const": "127.0.0.1"},
+    "device_port": {"type": "integer", "minimum": 1024, "maximum": 65535},
+    "host_port": {"type": "integer", "minimum": 1, "maximum": 65535},
+    "expected": {"enum": ["accepted", "ECH_REJECTED", "PEER_AUTHENTICATION", "HANDSHAKE", "TIMEOUT", "CANCELLED"]},
+    "timeout_ms": {"type": "integer", "minimum": 100, "maximum": 10000},
+    "trust": {"enum": ["anchors", "system"]},
+    "config_b64": {"type": "string", "maxLength": 90000},
+    "ca_b64": {"type": "string", "maxLength": 16384}
+  }
+}

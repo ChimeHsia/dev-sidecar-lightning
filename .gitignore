@@ -9,6 +9,7 @@ captures/
 .cxx/
 tools/
 .jdk/
+.tools/
 __pycache__/
 
 # ---- 构建产物 ----

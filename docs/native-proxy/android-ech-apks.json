@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "date": "2026-11-02",
+  "package": "com.dsha.nativeechtest",
+  "minSdk": 24,
+  "targetSdk": 37,
+  "abi": "arm64-v8a",
+  "permission": [
+    "android.permission.INTERNET"
+  ],
+  "testOnly": true,
+  "signerDn": "CN=Android Debug, O=Android, C=US",
+  "signerCertificateSha256": "d8755927514c111bf255341f3f8171d6edc61c89be0ac4f3c45fe7909e36950b",
+  "apkV2Verified": true,
+  "releasePolicyHookPreserved": true,
+  "jvmTests": 48,
+  "buildHeapMb": 256,
+  "workerCount": 1,
+  "gradleSlotReleased": true,
+  "phoneRun": false,
+  "apks": [
+    {
+      "variant": "debug-diagnostic-v2",
+      "path": "android-ech-probe/artifacts/native-ech-probe-v2-debug.apk",
+      "bytes": 4051807,
+      "sha256": "d32ff875e357f1076a113cc5106d8a6baeb9fef98f22ecca3def2d9bdc462da0",
+      "versionCode": 2,
+      "versionName": "0.2-diagnostic",
+      "r8": false,
+      "deviceRun": false
+    }
+  ],
+  "independentProxyEvidenceSha256": "b8443bc83e2455aa9e98611363d630693ffccf3481fdcb97151d7c25daaead7e",
+  "reportedAndroidStatus": "BLOCKED: Terra reported v1 debug/release accepted+reject HANDSHAKE at 8-9ms; Go EOF and 0 application bytes",
+  "androidEchAccepted": false,
+  "phoneRunByThisWorker": false,
+  "nextSourceRevision": "diag2-explicit-tmf",
+  "diagnosticApkBuilt": true,
+  "diagnosticBuildGate": "BUILD_GO_GRANTED_BUILD_COMPLETE_WAITING_PHONE_GO",
+  "currentSourceJvmTests": 56,
+  "offlineGuardTests": 20,
+  "historicalVersion1Apks": [
+    {
+      "variant": "debug",
+      "path": "android-ech-probe/app/build/outputs/apk/debug/app-debug.apk",
+      "bytes": 4051795,
+      "sha256": "80292aa9c608ee9d27a61233e3269473f497c6a956b39c88afc5ba2b261c7410",
+      "r8": false
+    },
+    {
+      "variant": "release",
+      "path": "android-ech-probe/app/build/outputs/apk/release/app-release.apk",
+      "bytes": 3019441,
+      "sha256": "d3862b3a8f4f2a8651c252aacb9d55419ae614ab3596b027211e96c140d57b54",
+      "r8": true
+    }
+  ],
+  "diagnosticSafetyChecked": "Static stages, max 8 cause class names; no throwable messages/stack traces/cert/config/private-key contents; source tests and APK DEX markers checked"
+}

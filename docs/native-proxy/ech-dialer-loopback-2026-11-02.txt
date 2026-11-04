@@ -1,0 +1,14 @@
+NativeProxyServer verified CONNECT/MITM -> Conscrypt ECH -> Go HTTP origin
+mitm-wrong-host echAccepted=true sni=inner.example applicationBytes=0 request=
+android-http-read-to-eof-host-proof echAccepted=true sni=inner.example applicationBytes=87 request=GET /native/android-ech-proof?q=24 HTTP/1.1
+explicit-no-ech-strict-platform echAccepted=false sni=inner.example applicationBytes=81 request=GET /native/ech-proof?q=2 HTTP/1.1
+mitm-tamper echAccepted=false sni=cover.example applicationBytes=0 request=
+explicit-non-ech-chain-only echAccepted=false sni=inner.example applicationBytes=81 request=GET /native/ech-proof?q=2 HTTP/1.1
+mitm-stall echAccepted=false sni= applicationBytes=0 request=
+explicit-non-ech-unverified echAccepted=false sni=inner.example applicationBytes=81 request=GET /native/ech-proof?q=2 HTTP/1.1
+mitm-expired echAccepted=true sni=inner.example applicationBytes=0 request=
+engine-stop echAccepted=false sni= applicationBytes=0 request=
+connect-mitm-ech-go-http echAccepted=true sni=inner.example applicationBytes=81 request=GET /native/ech-proof?q=2 HTTP/1.1
+mitm-record-tamper echAccepted=true sni=inner.example applicationBytes=0 request=
+mitm-noech echAccepted=false sni=cover.example applicationBytes=0 request=
+mitm-reject echAccepted=false sni=cover.example applicationBytes=0 request=
