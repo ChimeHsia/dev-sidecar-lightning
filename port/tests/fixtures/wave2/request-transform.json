@@ -1,0 +1,759 @@
+[
+  {
+    "name": "origin-http-default",
+    "input": {
+      "url": "/",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "origin-https-default",
+    "input": {
+      "url": "/asset?q=one",
+      "ssl": true,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "https:",
+      "hostname": "example.test",
+      "port": 443,
+      "path": "/asset?q=one",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "absolute-http-overrides-ssl",
+    "input": {
+      "url": "http://url.test/a?b=c",
+      "ssl": true,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/a?b=c",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "absolute-https-does-not-enable-ssl",
+    "input": {
+      "url": "https://url.test/a?b=c",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/a?b=c",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "absolute-https-with-ssl",
+    "input": {
+      "url": "https://url.test/a?b=c",
+      "ssl": true,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "https:",
+      "hostname": "example.test",
+      "port": 443,
+      "path": "/a?b=c",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "host-header-destination-over-absolute-authority",
+    "input": {
+      "url": "http://url.test:8080/path",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "Route.TEST:8181"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "Route.TEST",
+      "port": 8181,
+      "path": "/path",
+      "headers": {
+        "host": "Route.TEST:8181",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "absolute-no-path",
+    "input": {
+      "url": "https://url.test",
+      "ssl": true,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "https:",
+      "hostname": "example.test",
+      "port": 443,
+      "path": "/",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "absolute-query-without-path",
+    "input": {
+      "url": "https://url.test?q=a%2Fb+z&empty=",
+      "ssl": true,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "https:",
+      "hostname": "example.test",
+      "port": 443,
+      "path": "/?q=a%2Fb+z&empty=",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "escaped-origin-query",
+    "input": {
+      "url": "/a%2fb/%25?q=a%20b&next=%2F%3F&plus=a+b&x=%23",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/a%2fb/%25?q=a%20b&next=%2F%3F&plus=a+b&x=%23",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "escaped-absolute-query",
+    "input": {
+      "url": "http://url.test/a%2Fb?q=%3F%26%3D&keep=%252F",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/a%2Fb?q=%3F%26%3D&keep=%252F",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "raw-spaces-are-escaped",
+    "input": {
+      "url": "/a b?q=hello world&v=%2F+%25",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/a%20b?q=hello%20world&v=%2F+%25",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "legacy-origin-fast-path-preserves-punctuation",
+    "input": {
+      "url": "/a\"<>`{}|^'z?x=\"<>`{}|^'y",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/a\"<>`{}|^'z?x=\"<>`{}|^'y",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "fragment-is-not-forwarded",
+    "input": {
+      "url": "http://url.test/a?q=yes#local",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/a?q=yes",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "origin-fragment-is-not-forwarded",
+    "input": {
+      "url": "/a?q=yes#local",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/a?q=yes",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "uppercase-scheme-and-zero-padded-port",
+    "input": {
+      "url": "HTTP://url.test:0080/a",
+      "ssl": true,
+      "method": "GET",
+      "headers": {
+        "host": "Mixed.Host.TEST:00081"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "Mixed.Host.TEST",
+      "port": 81,
+      "path": "/a",
+      "headers": {
+        "host": "Mixed.Host.TEST:00081",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "canonical-ipv4",
+    "input": {
+      "url": "/v4",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "192.0.2.5:8080"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "192.0.2.5",
+      "port": 8080,
+      "path": "/v4",
+      "headers": {
+        "host": "192.0.2.5:8080",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "bracketed-ipv6-default",
+    "input": {
+      "url": "/v6",
+      "ssl": true,
+      "method": "GET",
+      "headers": {
+        "host": "[2001:DB8::1]"
+      }
+    },
+    "expected": {
+      "protocol": "https:",
+      "hostname": "[2001:DB8::1]",
+      "port": 443,
+      "path": "/v6",
+      "headers": {
+        "host": "[2001:DB8::1]",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "bracketed-ipv6-explicit-port",
+    "input": {
+      "url": "http://[::1]:8888/v6?x=%3A",
+      "ssl": true,
+      "method": "GET",
+      "headers": {
+        "host": "[2001:db8::2]:8443"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "[2001:db8::2]",
+      "port": 8443,
+      "path": "/v6?x=%3A",
+      "headers": {
+        "host": "[2001:db8::2]:8443",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "ipv4-mapped-ipv6",
+    "input": {
+      "url": "https://[::ffff:192.0.2.1]/",
+      "ssl": true,
+      "method": "GET",
+      "headers": {
+        "host": "[::ffff:192.0.2.2]:443"
+      }
+    },
+    "expected": {
+      "protocol": "https:",
+      "hostname": "[::ffff:192.0.2.2]",
+      "port": 443,
+      "path": "/",
+      "headers": {
+        "host": "[::ffff:192.0.2.2]:443",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "trailing-dot-host",
+    "input": {
+      "url": "/host",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "Example.TEST."
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "Example.TEST.",
+      "port": 80,
+      "path": "/host",
+      "headers": {
+        "host": "Example.TEST.",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "close-token-case-and-whitespace",
+    "input": {
+      "url": "/close",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test",
+        "connection": " keep-alive, ClOsE , upgrade "
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/close",
+      "headers": {
+        "host": "example.test",
+        "connection": " keep-alive, ClOsE , upgrade "
+      }
+    }
+  },
+  {
+    "name": "close-token-preserves-multivalue",
+    "input": {
+      "url": "/close",
+      "ssl": true,
+      "method": "GET",
+      "headers": {
+        "host": "example.test",
+        "connection": [
+          "Upgrade",
+          " Keep-Alive, CLOSE "
+        ],
+        "x-multi": [
+          "first",
+          "second"
+        ]
+      }
+    },
+    "expected": {
+      "protocol": "https:",
+      "hostname": "example.test",
+      "port": 443,
+      "path": "/close",
+      "headers": {
+        "host": "example.test",
+        "connection": [
+          "Upgrade",
+          " Keep-Alive, CLOSE "
+        ],
+        "x-multi": [
+          "first",
+          "second"
+        ]
+      }
+    }
+  },
+  {
+    "name": "no-close-multivalue-becomes-keepalive",
+    "input": {
+      "url": "/keep",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test",
+        "connection": [
+          "Upgrade",
+          "keep-alive"
+        ]
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/keep",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "close-substring-is-not-close",
+    "input": {
+      "url": "/keep",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test",
+        "connection": "disclose, x-close, closed"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/keep",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "empty-connection-becomes-keepalive",
+    "input": {
+      "url": "/",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test",
+        "connection": ""
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "http2-pseudo-and-proxy-connection-filter",
+    "input": {
+      "url": "/h2",
+      "ssl": true,
+      "method": "POST",
+      "headers": {
+        "host": "example.test",
+        ":method": "POST",
+        ":path": "/ignored",
+        ":authority": "ignored.test",
+        ":scheme": "http",
+        "proxy-connection": "close",
+        "x-present": "yes"
+      }
+    },
+    "expected": {
+      "protocol": "https:",
+      "hostname": "example.test",
+      "port": 443,
+      "path": "/h2",
+      "headers": {
+        "host": "example.test",
+        "x-present": "yes",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "authorization-and-other-headers-survive",
+    "input": {
+      "url": "http://other.test/path",
+      "ssl": false,
+      "method": "POST",
+      "headers": {
+        "host": "route.test",
+        "authorization": "Bearer retained",
+        "proxy-authorization": "Basic retained",
+        "x-multi": [
+          "a",
+          "b"
+        ],
+        "content-length": "0"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "route.test",
+      "port": 80,
+      "path": "/path",
+      "headers": {
+        "host": "route.test",
+        "authorization": "Bearer retained",
+        "proxy-authorization": "Basic retained",
+        "x-multi": [
+          "a",
+          "b"
+        ],
+        "content-length": "0",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "options-asterisk",
+    "input": {
+      "url": "*",
+      "ssl": false,
+      "method": "OPTIONS",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "*",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "encoded-controls-stay-encoded",
+    "input": {
+      "url": "/?next=%0d%0aX-Test%3Avalue",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/?next=%0d%0aX-Test%3Avalue",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "dot-segments-remain-literal",
+    "input": {
+      "url": "/a/../b/./c?x=..",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/a/../b/./c?x=..",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "legacy-absolute-punctuation-is-escaped",
+    "input": {
+      "url": "http://url.test/a\"<>`{}|^'z?x=\"<>`{}|^'y",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/a%22%3C%3E%60%7B%7D%7C%5E%27z?x=%22%3C%3E%60%7B%7D%7C%5E%27y",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "legacy-at-in-path-disables-fast-path",
+    "input": {
+      "url": "/a'b@x?q=1",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/a%27b@x?q=1",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "legacy-at-in-query-keeps-fast-path",
+    "input": {
+      "url": "/a'b?x=@v",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/a'b?x=@v",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  },
+  {
+    "name": "legacy-fragment-disables-fast-path",
+    "input": {
+      "url": "/a'b?x=1#fragment",
+      "ssl": false,
+      "method": "GET",
+      "headers": {
+        "host": "example.test"
+      }
+    },
+    "expected": {
+      "protocol": "http:",
+      "hostname": "example.test",
+      "port": 80,
+      "path": "/a%27b?x=1",
+      "headers": {
+        "host": "example.test",
+        "connection": "keep-alive"
+      }
+    }
+  }
+]

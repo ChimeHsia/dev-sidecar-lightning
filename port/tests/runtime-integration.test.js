@@ -20,7 +20,7 @@ const nat64Path = path.join(core, 'node_modules/@blue-frontier/mitmproxy/src/lib
 const merge = require(mergePath)
 const originalMerge = merge.doMerge
 const originalCleanup = merge.deleteNullItems
-const counts = { merges: 0, cleans: 0, matches: 0, nat64: 0 }
+const counts = { merges: 0, cleans: 0, matches: 0, nat64: 0, all: 0, paths: 0, choices: 0, requests: 0 }
 const tracked = {
   ...helpers,
   mergeConfig (...args) { counts.merges++; return helpers.mergeConfig(...args) },
@@ -29,8 +29,16 @@ const tracked = {
     const compiled = helpers.createHostnameMatcher(...args)
     return { match (host) { counts.matches++; return compiled.match(host) } }
   },
+  createHostnameAllMatcher (...args) {
+    const compiled = helpers.createHostnameAllMatcher(...args)
+    return { match (host) { counts.all++; return compiled.match(host) } }
+  },
+  matchPathRule (...args) { counts.paths++; return helpers.matchPathRule(...args) },
+  createDynamicChoice (...args) { counts.choices++; return helpers.createDynamicChoice(...args) },
+  wave2RequestTransform (...args) { counts.requests++; return helpers.wave2RequestTransform(...args) },
 }
-require(path.join(project, 'kotlin-helpers.js')).install(core, tracked)
+const context = require(path.join(project, 'kotlin-helpers.js')).install(core, tracked)
+require(path.join(project, 'kotlin-wave2.js')).install(core, tracked, context)
 const initialization = { ...counts }
 
 test('initial core configuration loading already delegates to Kotlin', () => {
@@ -71,6 +79,32 @@ test('real domain utility returns original values and keeps matchHostnameAll wor
     { nested: { inherited: 2, value: 1 }, enabled: false, sni: 'front.test' },
   )
   assert.ok(counts.matches >= 2)
+  assert.ok(counts.all > 0)
+})
+
+test('real path, request options and cached candidate calls dispatch into Kotlin', () => {
+  const base = path.join(core, 'node_modules/@blue-frontier/mitmproxy/src')
+  const util = require(path.join(base, 'utils/util.match.js'))
+  assert.deepEqual(Array.from(util.isMatched('/api?q=1', 'q=(\\d+)')), ['q=1', '1'])
+  const { ChoiceCache } = require(path.join(base, 'lib/choice/index.js'))
+  const cache = new ChoiceCache()
+  const choice = cache.getOrCreate('integration.test', ['192.0.2.1', '192.0.2.2'])
+  assert.equal(choice.value, '192.0.2.1')
+  choice.doCount(choice.value, true)
+  assert.equal(choice.value, '192.0.2.2')
+  assert.equal(cache.getOrCreate('integration.test', ['192.0.2.3']), choice)
+  const requestUtil = require(path.join(base, 'lib/proxy/common/util.js'))
+  const options = requestUtil.getOptionsFromRequest({
+    url: '/path%2f?q=a+b', method: 'GET', socket: {},
+    headers: { host: 'example.test', connection: 'close', 'proxy-connection': 'keep-alive' },
+  }, true, null, { timeoutMapping: util.domainMapRegexply({}), tlsVersionMapping: {}, verifySsl: true })
+  assert.equal(options.protocol, 'https:')
+  assert.equal(options.path, '/path%2f?q=a+b')
+  assert.equal(options.headers.connection, 'close')
+  assert.equal(options.headers['proxy-connection'], undefined)
+  assert.equal(options.agent.options.minVersion, 'TLSv1.3')
+  options.agent.destroy()
+  for (const name of ['all', 'paths', 'choices', 'requests']) assert.ok(counts[name] > 0, name)
 })
 
 test('real NAT64 lookup internal closure delegates to compiled Kotlin without external DNS', async () => {

@@ -28,7 +28,9 @@ import sys
 import tarfile
 import urllib.request
 import zipfile
-from kotlin_payload import helper_entries, patch_nat64, NAT64
+from kotlin_payload import (
+    helper_entries, patch_core_file, PATCH_TARGETS,
+)
 
 TUNA = 'https://mirrors.tuna.tsinghua.edu.cn/termux/apt/termux-main/pool/main'
 NODE_DEB = f'{TUNA}/n/nodejs-lts/nodejs-lts_24.22.1_aarch64.deb'
@@ -177,9 +179,9 @@ def build(args):
             for f in fs:
                 p = os.path.join(r, f)
                 archive_name = 'core/' + os.path.relpath(p, project).replace(os.sep, '/')
-                if archive_name == NAT64:
+                if archive_name in PATCH_TARGETS:
                     with open(p, encoding='utf-8') as source:
-                        z.writestr(archive_name, patch_nat64(source.read()))
+                        z.writestr(archive_name, patch_core_file(archive_name, source.read()))
                 else:
                     z.write(p, archive_name)
 

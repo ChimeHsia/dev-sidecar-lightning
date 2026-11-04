@@ -1,0 +1,1482 @@
+[
+  {
+    "name": "initial-empty-constructor",
+    "candidates": [],
+    "operations": [],
+    "expected": {
+      "value": null,
+      "backupList": [],
+      "counts": {},
+      "resetResults": []
+    }
+  },
+  {
+    "name": "initial-seeds-and-selection",
+    "candidates": [
+      "192.0.2.1",
+      "2001:db8::1",
+      "example.test"
+    ],
+    "operations": [],
+    "expected": {
+      "value": "192.0.2.1",
+      "backupList": [
+        "2001:db8::1",
+        "example.test"
+      ],
+      "counts": {
+        "192.0.2.1": {
+          "total": 4,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "2001:db8::1": {
+          "total": 2,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        },
+        "example.test": {
+          "total": 1,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "first-failure-retains-rate-and-uncounted-successor",
+    "candidates": [
+      "a",
+      "b"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      }
+    ],
+    "expected": {
+      "value": "b",
+      "backupList": [],
+      "counts": {
+        "a": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.75
+        },
+        "b": {
+          "total": 1,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "count-start-counts-a-non-error",
+    "candidates": [
+      "a",
+      "b"
+    ],
+    "operations": [
+      {
+        "method": "countStart",
+        "args": [
+          "a"
+        ]
+      }
+    ],
+    "expected": {
+      "value": "a",
+      "backupList": [
+        "b"
+      ],
+      "counts": {
+        "a": {
+          "total": 4,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "b": {
+          "total": 1,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "late-failure-does-not-switch-current",
+    "candidates": [
+      "a",
+      "b",
+      "c"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      },
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      },
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      }
+    ],
+    "expected": {
+      "value": "b",
+      "backupList": [
+        "c"
+      ],
+      "counts": {
+        "a": {
+          "total": 2,
+          "error": 2,
+          "keepErrorCount": 2,
+          "successRate": 0
+        },
+        "b": {
+          "total": 2,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        },
+        "c": {
+          "total": 1,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "late-success-clears-only-consecutive-errors",
+    "candidates": [
+      "a",
+      "b",
+      "c"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      },
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      },
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      },
+      {
+        "method": "countStart",
+        "args": [
+          "a"
+        ]
+      }
+    ],
+    "expected": {
+      "value": "b",
+      "backupList": [
+        "c"
+      ],
+      "counts": {
+        "a": {
+          "total": 3,
+          "error": 2,
+          "keepErrorCount": 0,
+          "successRate": 0.33333333333333337
+        },
+        "b": {
+          "total": 2,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        },
+        "c": {
+          "total": 1,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "unlisted-error-seeds-at-five",
+    "candidates": [
+      "a"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "late",
+          true
+        ]
+      }
+    ],
+    "expected": {
+      "value": "a",
+      "backupList": [],
+      "counts": {
+        "a": {
+          "total": 2,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "late": {
+          "total": 6,
+          "error": 1,
+          "keepErrorCount": 1,
+          "successRate": 0.8333333333333334
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "unlisted-count-start-seeds-at-five",
+    "candidates": [],
+    "operations": [
+      {
+        "method": "countStart",
+        "args": [
+          "late"
+        ]
+      }
+    ],
+    "expected": {
+      "value": null,
+      "backupList": [],
+      "counts": {
+        "late": {
+          "total": 6,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "rank-can-select-unlisted-feedback",
+    "candidates": [
+      "a"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "late",
+          true
+        ]
+      },
+      {
+        "method": "countStart",
+        "args": [
+          "late"
+        ]
+      },
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      },
+      {
+        "method": "doRank",
+        "args": []
+      }
+    ],
+    "expected": {
+      "value": "late",
+      "backupList": [
+        "a"
+      ],
+      "counts": {
+        "a": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.6666666666666667
+        },
+        "late": {
+          "total": 8,
+          "error": 1,
+          "keepErrorCount": 0,
+          "successRate": 0.875
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "replacing-list-preserves-history-and-new-only-seeding",
+    "candidates": [
+      "a",
+      "b"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "b",
+          true
+        ]
+      },
+      {
+        "method": "setBackupList",
+        "args": [
+          [
+            "b",
+            "c",
+            "c",
+            "d"
+          ]
+        ]
+      }
+    ],
+    "expected": {
+      "value": "b",
+      "backupList": [
+        "c",
+        "c",
+        "d"
+      ],
+      "counts": {
+        "a": {
+          "total": 3,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "b": {
+          "total": 3,
+          "error": 1,
+          "keepErrorCount": 0,
+          "successRate": 0.6666666666666667
+        },
+        "c": {
+          "total": 4,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        },
+        "d": {
+          "total": 3,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "duplicate-initial-queue",
+    "candidates": [
+      "a",
+      "a",
+      "b"
+    ],
+    "operations": [],
+    "expected": {
+      "value": "a",
+      "backupList": [
+        "a",
+        "b"
+      ],
+      "counts": {
+        "a": {
+          "total": 4,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "b": {
+          "total": 2,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "duplicate-can-reselect-the-failed-current",
+    "candidates": [
+      "a",
+      "a",
+      "b"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      }
+    ],
+    "expected": {
+      "value": "a",
+      "backupList": [
+        "b"
+      ],
+      "counts": {
+        "a": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.8
+        },
+        "b": {
+          "total": 2,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "duplicate-fails-again-after-total-reset",
+    "candidates": [
+      "a",
+      "a",
+      "b"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      },
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      }
+    ],
+    "expected": {
+      "value": "b",
+      "backupList": [],
+      "counts": {
+        "a": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0
+        },
+        "b": {
+          "total": 2,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "exhaustion-preserves-historical-counters",
+    "candidates": [
+      "a",
+      "b"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      },
+      {
+        "method": "doCount",
+        "args": [
+          "b",
+          true
+        ]
+      }
+    ],
+    "expected": {
+      "value": null,
+      "backupList": [],
+      "counts": {
+        "a": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.75
+        },
+        "b": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "late-success-after-exhaustion-does-not-revive",
+    "candidates": [
+      "a",
+      "b"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      },
+      {
+        "method": "doCount",
+        "args": [
+          "b",
+          true
+        ]
+      },
+      {
+        "method": "countStart",
+        "args": [
+          "a"
+        ]
+      }
+    ],
+    "expected": {
+      "value": null,
+      "backupList": [],
+      "counts": {
+        "a": {
+          "total": 1,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "b": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "rank-after-exhaustion-revives-candidate",
+    "candidates": [
+      "a",
+      "b"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      },
+      {
+        "method": "doCount",
+        "args": [
+          "b",
+          true
+        ]
+      },
+      {
+        "method": "countStart",
+        "args": [
+          "a"
+        ]
+      },
+      {
+        "method": "doRank",
+        "args": []
+      }
+    ],
+    "expected": {
+      "value": "a",
+      "backupList": [
+        "b"
+      ],
+      "counts": {
+        "a": {
+          "total": 2,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "b": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "rank-uses-stored-rate-after-reset-totals",
+    "candidates": [
+      "a",
+      "b",
+      "c"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      },
+      {
+        "method": "doRank",
+        "args": []
+      }
+    ],
+    "expected": {
+      "value": "a",
+      "backupList": [
+        "b",
+        "c"
+      ],
+      "counts": {
+        "a": {
+          "total": 1,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "b": {
+          "total": 2,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        },
+        "c": {
+          "total": 1,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "rank-ties-follow-original-key-order",
+    "candidates": [
+      "a",
+      "b",
+      "c"
+    ],
+    "operations": [
+      {
+        "method": "countStart",
+        "args": [
+          "b"
+        ]
+      },
+      {
+        "method": "countStart",
+        "args": [
+          "c"
+        ]
+      },
+      {
+        "method": "setBackupList",
+        "args": [
+          [
+            "c",
+            "b",
+            "a"
+          ]
+        ]
+      },
+      {
+        "method": "doRank",
+        "args": []
+      }
+    ],
+    "expected": {
+      "value": "a",
+      "backupList": [
+        "b",
+        "c"
+      ],
+      "counts": {
+        "a": {
+          "total": 5,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "b": {
+          "total": 3,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "c": {
+          "total": 3,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "numeric-key-snapshot-order",
+    "candidates": [
+      "10",
+      "2",
+      "01",
+      "4294967295",
+      "4294967294",
+      "0",
+      "-0"
+    ],
+    "operations": [],
+    "expected": {
+      "value": "10",
+      "backupList": [
+        "2",
+        "01",
+        "4294967295",
+        "4294967294",
+        "0",
+        "-0"
+      ],
+      "counts": {
+        "0": {
+          "total": 2,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        },
+        "2": {
+          "total": 6,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        },
+        "10": {
+          "total": 8,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "4294967294": {
+          "total": 3,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        },
+        "01": {
+          "total": 5,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        },
+        "4294967295": {
+          "total": 4,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        },
+        "-0": {
+          "total": 1,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "numeric-key-rank-tie-order",
+    "candidates": [
+      "10",
+      "2",
+      "01",
+      "4294967295",
+      "4294967294",
+      "0",
+      "-0"
+    ],
+    "operations": [
+      {
+        "method": "countStart",
+        "args": [
+          "10"
+        ]
+      },
+      {
+        "method": "countStart",
+        "args": [
+          "2"
+        ]
+      },
+      {
+        "method": "countStart",
+        "args": [
+          "01"
+        ]
+      },
+      {
+        "method": "countStart",
+        "args": [
+          "4294967295"
+        ]
+      },
+      {
+        "method": "countStart",
+        "args": [
+          "4294967294"
+        ]
+      },
+      {
+        "method": "countStart",
+        "args": [
+          "0"
+        ]
+      },
+      {
+        "method": "countStart",
+        "args": [
+          "-0"
+        ]
+      },
+      {
+        "method": "doRank",
+        "args": []
+      }
+    ],
+    "expected": {
+      "value": "0",
+      "backupList": [
+        "2",
+        "10",
+        "4294967294",
+        "01",
+        "4294967295",
+        "-0"
+      ],
+      "counts": {
+        "0": {
+          "total": 4,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "2": {
+          "total": 7,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "10": {
+          "total": 9,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "4294967294": {
+          "total": 4,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "01": {
+          "total": 6,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "4294967295": {
+          "total": 5,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "-0": {
+          "total": 2,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "numeric-key-reset-order",
+    "candidates": [
+      "10",
+      "2",
+      "01",
+      "4294967295",
+      "4294967294",
+      "0",
+      "-0"
+    ],
+    "operations": [
+      {
+        "method": "resetChoice",
+        "args": [
+          "2"
+        ]
+      }
+    ],
+    "expected": {
+      "value": "0",
+      "backupList": [
+        "10",
+        "4294967294",
+        "01",
+        "4294967295",
+        "-0"
+      ],
+      "counts": {
+        "0": {
+          "total": 1,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "2": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "10": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "4294967294": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "01": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "4294967295": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "-0": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        }
+      },
+      "resetResults": [
+        true
+      ]
+    }
+  },
+  {
+    "name": "reset-from-hostname-fallback",
+    "candidates": [
+      "a",
+      "b",
+      "example.test"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      },
+      {
+        "method": "doCount",
+        "args": [
+          "b",
+          true
+        ]
+      },
+      {
+        "method": "resetChoice",
+        "args": [
+          "example.test"
+        ]
+      }
+    ],
+    "expected": {
+      "value": "a",
+      "backupList": [
+        "b"
+      ],
+      "counts": {
+        "a": {
+          "total": 1,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "b": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "example.test": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        }
+      },
+      "resetResults": [
+        true
+      ]
+    }
+  },
+  {
+    "name": "reset-includes-removed-and-late-candidates",
+    "candidates": [
+      "a",
+      "example.test"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      },
+      {
+        "method": "doCount",
+        "args": [
+          "late",
+          true
+        ]
+      },
+      {
+        "method": "setBackupList",
+        "args": [
+          [
+            "example.test"
+          ]
+        ]
+      },
+      {
+        "method": "resetChoice",
+        "args": [
+          "example.test"
+        ]
+      }
+    ],
+    "expected": {
+      "value": "a",
+      "backupList": [
+        "late"
+      ],
+      "counts": {
+        "a": {
+          "total": 1,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "example.test": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "late": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        }
+      },
+      "resetResults": [
+        true
+      ]
+    }
+  },
+  {
+    "name": "reset-hostname-exclusion-is-case-sensitive",
+    "candidates": [
+      "a",
+      "example.test"
+    ],
+    "operations": [
+      {
+        "method": "resetChoice",
+        "args": [
+          "EXAMPLE.TEST"
+        ]
+      }
+    ],
+    "expected": {
+      "value": "a",
+      "backupList": [
+        "example.test"
+      ],
+      "counts": {
+        "a": {
+          "total": 1,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "example.test": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        }
+      },
+      "resetResults": [
+        true
+      ]
+    }
+  },
+  {
+    "name": "reset-only-hostname-clears-counters-keeps-queue",
+    "candidates": [
+      "example.test",
+      "example.test"
+    ],
+    "operations": [
+      {
+        "method": "countStart",
+        "args": [
+          "example.test"
+        ]
+      },
+      {
+        "method": "resetChoice",
+        "args": [
+          "example.test"
+        ]
+      }
+    ],
+    "expected": {
+      "value": "example.test",
+      "backupList": [
+        "example.test"
+      ],
+      "counts": {
+        "example.test": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        }
+      },
+      "resetResults": [
+        false
+      ]
+    }
+  },
+  {
+    "name": "reset-exhausted-only-hostname-keeps-null",
+    "candidates": [
+      "example.test"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "example.test",
+          true
+        ]
+      },
+      {
+        "method": "resetChoice",
+        "args": [
+          "example.test"
+        ]
+      }
+    ],
+    "expected": {
+      "value": null,
+      "backupList": [],
+      "counts": {
+        "example.test": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        }
+      },
+      "resetResults": [
+        false
+      ]
+    }
+  },
+  {
+    "name": "reset-empty-constructor-returns-false",
+    "candidates": [],
+    "operations": [
+      {
+        "method": "resetChoice",
+        "args": [
+          "example.test"
+        ]
+      }
+    ],
+    "expected": {
+      "value": null,
+      "backupList": [],
+      "counts": {},
+      "resetResults": [
+        false
+      ]
+    }
+  },
+  {
+    "name": "reset-after-exhaustion-restores-historical-order",
+    "candidates": [
+      "a",
+      "b"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      },
+      {
+        "method": "doCount",
+        "args": [
+          "b",
+          true
+        ]
+      },
+      {
+        "method": "resetChoice",
+        "args": [
+          "example.test"
+        ]
+      }
+    ],
+    "expected": {
+      "value": "a",
+      "backupList": [
+        "b"
+      ],
+      "counts": {
+        "a": {
+          "total": 1,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "b": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        }
+      },
+      "resetResults": [
+        true
+      ]
+    }
+  },
+  {
+    "name": "literal-undefined-is-an-ordinary-string",
+    "candidates": [
+      "undefined",
+      "b"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "undefined",
+          true
+        ]
+      }
+    ],
+    "expected": {
+      "value": "b",
+      "backupList": [],
+      "counts": {
+        "undefined": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.75
+        },
+        "b": {
+          "total": 1,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "rank-deduplicates-the-backup-list",
+    "candidates": [
+      "a",
+      "a",
+      "b"
+    ],
+    "operations": [
+      {
+        "method": "doRank",
+        "args": []
+      }
+    ],
+    "expected": {
+      "value": "a",
+      "backupList": [
+        "b"
+      ],
+      "counts": {
+        "a": {
+          "total": 5,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 1
+        },
+        "b": {
+          "total": 2,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  },
+  {
+    "name": "count-start-clears-errors-before-next-current-failure",
+    "candidates": [
+      "a",
+      "b"
+    ],
+    "operations": [
+      {
+        "method": "doCount",
+        "args": [
+          "b",
+          true
+        ]
+      },
+      {
+        "method": "doCount",
+        "args": [
+          "a",
+          true
+        ]
+      },
+      {
+        "method": "countStart",
+        "args": [
+          "b"
+        ]
+      },
+      {
+        "method": "doCount",
+        "args": [
+          "b",
+          true
+        ]
+      }
+    ],
+    "expected": {
+      "value": null,
+      "backupList": [],
+      "counts": {
+        "a": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.75
+        },
+        "b": {
+          "total": 0,
+          "error": 0,
+          "keepErrorCount": 0,
+          "successRate": 0.5
+        }
+      },
+      "resetResults": []
+    }
+  }
+]

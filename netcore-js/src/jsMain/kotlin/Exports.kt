@@ -30,7 +30,7 @@ fun sanitizeConfig(json: String): String =
 fun toNat64Address(prefix: String?, ipv4: String?): String? =
     Nat64Address.toNat64Address(prefix, ipv4)
 
-private fun parseObject(json: String): Map<String, Any?> {
+internal fun parseObject(json: String): Map<String, Any?> {
     val value = fromJs(JSON.parse<dynamic>(json))
     require(value is Map<*, *>) { "Expected a JSON object" }
     @Suppress("UNCHECKED_CAST")
@@ -50,7 +50,7 @@ private fun fromJs(value: dynamic): Any? = when {
     }
 }
 
-private fun toJs(value: Any?): dynamic = when (value) {
+internal fun toJs(value: Any?): dynamic = when (value) {
     is Map<*, *> -> {
         // A null prototype also preserves JSON keys such as "__proto__".
         val obj: Json = js("Object.create(null)")

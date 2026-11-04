@@ -1,4 +1,5 @@
 import importlib.util
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -10,8 +11,61 @@ SPEC = importlib.util.spec_from_file_location(
 payload = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(payload)
 
+OPTIONS_SOURCE = "      agent = false\n"
+HANDLER_SOURCE = (
+    "              if (!sock || !sock.connecting) {\n"
+    "            if (socket.connecting) {\n              startConnectTimer()\n"
+    "              socket.once('connect', () => {\n                clearConnectTimer()\n"
+    "          proxyReq.on('timeout', () => {\n"
+)
+REQUEST_PATCHES = json.loads(
+    (payload.ROOT / "port/node/request-runtime-patches.json").read_text(encoding="utf-8")
+)
+REQUEST_SOURCE = "\n".join(patch["old"] for patch in REQUEST_PATCHES)
+VALIDATION_PATCHES = json.loads(
+    (payload.ROOT / "port/node/request-validation-patches.json").read_text(encoding="utf-8")
+)
+
 
 class KotlinPayloadTest(unittest.TestCase):
+    def test_request_validation_is_patched_in_both_real_handlers_and_is_strict(self):
+        for name, patches in VALIDATION_PATCHES.items():
+            source = "\n".join(patch["old"] for patch in patches)
+            patched = payload.patch_request_validation(name, source)
+            self.assertIn("DSHA_INVALID_REQUEST", patched)
+            self.assertEqual(patched, payload.patch_request_validation(name, patched))
+            self.assertEqual(
+                patched, payload.patch_request_validation(name, source.replace("\n", "\r\n")),
+            )
+            with self.assertRaises(ValueError):
+                payload.patch_request_validation(name, "// unsupported upstream")
+
+    def test_request_runtime_patch_is_strict_and_idempotent(self):
+        patched = payload.patch_request_runtime(REQUEST_SOURCE)
+        for patch in REQUEST_PATCHES:
+            self.assertIn(patch["new"], patched)
+        self.assertEqual(patched, payload.patch_request_runtime(patched))
+        self.assertEqual(patched, payload.patch_request_runtime(REQUEST_SOURCE.replace("\n", "\r\n")))
+        with self.assertRaises(ValueError):
+            payload.patch_request_runtime("// unsupported upstream")
+
+    def test_transport_patches_cover_tls_handshake_and_preserve_close_policy(self):
+        options = payload.patch_transport(payload.REQUEST_OPTIONS, OPTIONS_SOURCE)
+        self.assertIn("createAgent(protocol, timeoutConfig, serverSetting.verifySsl)", options)
+        handler = payload.patch_transport(payload.REQUEST_HANDLER, HANDLER_SOURCE)
+        self.assertIn("sock.secureConnecting", handler)
+        self.assertIn("socket.secureConnecting", handler)
+        self.assertIn("socket.encrypted ? 'secureConnect' : 'connect'", handler)
+        self.assertIn("proxyReq.once('close', clearConnectTimer)", handler)
+        for name, source, patched in [
+            (payload.REQUEST_OPTIONS, OPTIONS_SOURCE, options),
+            (payload.REQUEST_HANDLER, HANDLER_SOURCE, handler),
+        ]:
+            self.assertEqual(patched, payload.patch_transport(name, patched))
+            self.assertEqual(patched, payload.patch_transport(name, source.replace("\n", "\r\n")))
+            with self.assertRaises(ValueError):
+                payload.patch_transport(name, "// unsupported upstream")
+
     def test_replaces_internal_closure_and_preserves_export_and_call_sites(self):
         source = (
             "before\nfunction toNat64Address (prefix, ipv4) {\n"
@@ -41,6 +95,15 @@ class KotlinPayloadTest(unittest.TestCase):
             with zipfile.ZipFile(archive, "w") as result:
                 result.writestr("main.js", "old entrypoint")
                 result.writestr("core/keep.txt", "untouched")
+                result.writestr(payload.REQUEST_OPTIONS, OPTIONS_SOURCE + REQUEST_SOURCE)
+                result.writestr(
+                    payload.REQUEST_HANDLER,
+                    HANDLER_SOURCE + "\n".join(p["old"] for p in VALIDATION_PATCHES[payload.REQUEST_HANDLER]),
+                )
+                result.writestr(
+                    payload.UPGRADE_HANDLER,
+                    "\n".join(p["old"] for p in VALIDATION_PATCHES[payload.UPGRADE_HANDLER]),
+                )
                 result.writestr("kotlin/stale.js", "old compiled module")
                 result.writestr(
                     payload.NAT64,
@@ -55,7 +118,21 @@ class KotlinPayloadTest(unittest.TestCase):
                 self.assertEqual(b"untouched", result.read("core/keep.txt"))
                 self.assertEqual(b"compiled", result.read("kotlin/" + payload.MODULE))
                 self.assertIn(b"Kotlin helpers active", result.read("main.js"))
+                self.assertIn(b"require('./kotlin-wave2').install", result.read("main.js"))
+                for name in [
+                    "kotlin-wave2.js", "kotlin-match-runtime.js",
+                    "kotlin-choice-runtime.js", "kotlin-request-runtime.js",
+                ]:
+                    self.assertEqual(
+                        (payload.ROOT / "port/node" / name).read_bytes(), result.read(name),
+                    )
                 self.assertIn(b"require('./http-navigation').install(CORE)", result.read("main.js"))
+                self.assertIn(b"require('./proxy-runtime').start(CORE, config)", result.read("main.js"))
+                self.assertIn(b"waitForListening", result.read("proxy-runtime.js"))
+                self.assertIn(b"sock.secureConnecting", result.read(payload.REQUEST_HANDLER))
+                self.assertIn(b"kotlinRequestRuntimeVersion = 1", result.read(payload.REQUEST_OPTIONS))
+                for name in [payload.REQUEST_HANDLER, payload.UPGRADE_HANDLER]:
+                    self.assertIn(b"DSHA_INVALID_REQUEST", result.read(name))
                 self.assertIn(b"https-navigation", result.read("http-navigation.js"))
                 self.assertEqual(
                     (payload.ROOT / "port/node/navigation-rules.json").read_bytes(),

@@ -1,0 +1,730 @@
+[
+  {
+    "name": "exact-wins-with-inherited-fields",
+    "entries": {
+      "*": {
+        "winner": "wildcard",
+        "retained": 1
+      },
+      "example.com": {
+        "winner": "exact"
+      }
+    },
+    "hostname": "example.com",
+    "expected": {
+      "winner": "exact",
+      "retained": 1
+    },
+    "expectedKeys": [
+      "winner",
+      "retained"
+    ]
+  },
+  {
+    "name": "all-four-precedence-levels",
+    "entries": {
+      "^.*$": {
+        "winner": "regex",
+        "a": 1
+      },
+      "*example.com": {
+        "winner": "suffix",
+        "b": 2
+      },
+      "*.example.com": {
+        "winner": "apex",
+        "c": 3
+      },
+      "example.com": {
+        "winner": "exact",
+        "d": 4
+      }
+    },
+    "hostname": "example.com",
+    "expected": {
+      "winner": "exact",
+      "a": 1,
+      "b": 2,
+      "c": 3,
+      "d": 4
+    },
+    "expectedKeys": [
+      "winner",
+      "a",
+      "b",
+      "c",
+      "d"
+    ]
+  },
+  {
+    "name": "star-dot-beats-star-at-apex",
+    "entries": {
+      "*.example.com": {
+        "winner": "dot"
+      },
+      "*example.com": {
+        "winner": "suffix"
+      }
+    },
+    "hostname": "example.com",
+    "expected": {
+      "winner": "dot"
+    },
+    "expectedKeys": [
+      "winner"
+    ]
+  },
+  {
+    "name": "overlapping-patterns-use-insertion-order",
+    "entries": {
+      "*.example.com": {
+        "winner": "first",
+        "first": 1
+      },
+      "*.api.example.com": {
+        "winner": "last"
+      }
+    },
+    "hostname": "v1.api.example.com",
+    "expected": {
+      "winner": "last",
+      "first": 1
+    },
+    "expectedKeys": [
+      "winner",
+      "first"
+    ]
+  },
+  {
+    "name": "duplicate-compiled-pattern-retains-position",
+    "entries": {
+      "^.*$": {
+        "winner": "first"
+      },
+      "*.example.com": {
+        "winner": "site"
+      },
+      "*": {
+        "winner": "last-value-first-position"
+      }
+    },
+    "hostname": "www.example.com",
+    "expected": {
+      "winner": "site"
+    },
+    "expectedKeys": [
+      "winner"
+    ]
+  },
+  {
+    "name": "leading-dot-apex",
+    "entries": {
+      ".example.com": {
+        "alias": true
+      }
+    },
+    "hostname": "example.com",
+    "expected": {
+      "alias": true
+    },
+    "expectedKeys": [
+      "alias"
+    ]
+  },
+  {
+    "name": "leading-dot-descendant",
+    "entries": {
+      ".example.com": {
+        "alias": true
+      }
+    },
+    "hostname": "a.b.example.com",
+    "expected": {
+      "alias": true
+    },
+    "expectedKeys": [
+      "alias"
+    ]
+  },
+  {
+    "name": "leading-dot-boundary-miss",
+    "entries": {
+      ".example.com": {
+        "alias": true
+      }
+    },
+    "hostname": "notexample.com",
+    "expected": null
+  },
+  {
+    "name": "explicit-wildcard-suppresses-leading-dot",
+    "entries": {
+      ".example.com": {
+        "alias": 1
+      },
+      "*.example.com": {
+        "explicit": 2
+      }
+    },
+    "hostname": "www.example.com",
+    "expected": {
+      "explicit": 2
+    },
+    "expectedKeys": [
+      "explicit"
+    ]
+  },
+  {
+    "name": "null-explicit-wildcard-overwrites-alias",
+    "entries": {
+      ".example.com": {
+        "alias": 1
+      },
+      "*.example.com": null
+    },
+    "hostname": "example.com",
+    "expected": null
+  },
+  {
+    "name": "alias-after-null-explicit-wildcard",
+    "entries": {
+      "*.example.com": null,
+      ".example.com": {
+        "alias": 1
+      }
+    },
+    "hostname": "example.com",
+    "expected": {
+      "alias": 1
+    },
+    "expectedKeys": [
+      "alias"
+    ]
+  },
+  {
+    "name": "null-exact-does-not-delete-config",
+    "entries": {
+      "*": {
+        "retained": true
+      },
+      "example.com": null
+    },
+    "hostname": "example.com",
+    "expected": {
+      "retained": true
+    },
+    "expectedKeys": [
+      "retained"
+    ]
+  },
+  {
+    "name": "null-and-delete-recursively",
+    "entries": {
+      "*": {
+        "remove": 1,
+        "nested": {
+          "a": 1,
+          "b": 2
+        },
+        "list": [
+          1,
+          2
+        ]
+      },
+      "example.com": {
+        "remove": null,
+        "nested": {
+          "a": "[delete]",
+          "c": 3
+        },
+        "list": null
+      }
+    },
+    "hostname": "example.com",
+    "expected": {
+      "nested": {
+        "b": 2,
+        "c": 3
+      }
+    },
+    "expectedKeys": [
+      "nested"
+    ]
+  },
+  {
+    "name": "deletion-only-is-empty-object",
+    "entries": {
+      "example.com": {
+        "remove": null,
+        "also": "[delete]"
+      }
+    },
+    "hostname": "example.com",
+    "expected": {},
+    "expectedKeys": []
+  },
+  {
+    "name": "empty-matched-object-is-miss",
+    "entries": {
+      "example.com": {}
+    },
+    "hostname": "example.com",
+    "expected": null
+  },
+  {
+    "name": "deletions-are-applied-after-all-overlays",
+    "entries": {
+      "*": {
+        "nested": {
+          "old": 1
+        }
+      },
+      "^example": {
+        "nested": null
+      },
+      "example.com": {
+        "nested": {
+          "new": 2
+        }
+      }
+    },
+    "hostname": "example.com",
+    "expected": {
+      "nested": {
+        "new": 2
+      }
+    },
+    "expectedKeys": [
+      "nested"
+    ]
+  },
+  {
+    "name": "arrays-replace-rather-than-concatenate",
+    "entries": {
+      "*": {
+        "list": [
+          1,
+          2,
+          3
+        ]
+      },
+      "example.com": {
+        "list": [
+          9
+        ]
+      }
+    },
+    "hostname": "example.com",
+    "expected": {
+      "list": [
+        9
+      ]
+    },
+    "expectedKeys": [
+      "list"
+    ]
+  },
+  {
+    "name": "array-replaced-by-object",
+    "entries": {
+      "*": {
+        "value": [
+          1,
+          2
+        ]
+      },
+      "example.com": {
+        "value": {
+          "new": 3
+        }
+      }
+    },
+    "hostname": "example.com",
+    "expected": {
+      "value": {
+        "new": 3
+      }
+    },
+    "expectedKeys": [
+      "value"
+    ]
+  },
+  {
+    "name": "object-replaced-by-array",
+    "entries": {
+      "*": {
+        "value": {
+          "old": 1
+        }
+      },
+      "example.com": {
+        "value": [
+          4,
+          5
+        ]
+      }
+    },
+    "hostname": "example.com",
+    "expected": {
+      "value": [
+        4,
+        5
+      ]
+    },
+    "expectedKeys": [
+      "value"
+    ]
+  },
+  {
+    "name": "sparse-array-json-transport",
+    "entries": {
+      "example.com": {
+        "list": [
+          null,
+          1,
+          "[delete]",
+          {
+            "gone": null,
+            "keep": 2
+          },
+          [
+            null,
+            "x"
+          ]
+        ]
+      }
+    },
+    "hostname": "example.com",
+    "expected": {
+      "list": [
+        null,
+        1,
+        null,
+        {
+          "keep": 2
+        },
+        [
+          null,
+          "x"
+        ]
+      ]
+    },
+    "expectedKeys": [
+      "list"
+    ]
+  },
+  {
+    "name": "numeric-root-key-order",
+    "entries": {
+      "*": {
+        "10": "ten",
+        "later": 1
+      },
+      "example.com": {
+        "2": "two",
+        "later": 2,
+        "tail": 3
+      }
+    },
+    "hostname": "example.com",
+    "expected": {
+      "2": "two",
+      "10": "ten",
+      "later": 2,
+      "tail": 3
+    },
+    "expectedKeys": [
+      "2",
+      "10",
+      "later",
+      "tail"
+    ]
+  },
+  {
+    "name": "captures-full-first-then-only-subgroups",
+    "entries": {
+      "^([^.]+)\\.": {
+        "first": 1
+      },
+      "^([^.]+)\\.([^.]+)": {
+        "second": 2
+      }
+    },
+    "hostname": "api.example.com",
+    "expected": {
+      "first": 1,
+      "matched": [
+        "api.",
+        "api",
+        "api",
+        "example"
+      ],
+      "second": 2
+    },
+    "expectedKeys": [
+      "first",
+      "matched",
+      "second"
+    ]
+  },
+  {
+    "name": "single-named-capture",
+    "entries": {
+      "^(?<sub>[^.]+)\\.": {
+        "route": true
+      }
+    },
+    "hostname": "api.example.com",
+    "expected": {
+      "route": true,
+      "matched": [
+        "api.",
+        "api"
+      ]
+    },
+    "expectedKeys": [
+      "route",
+      "matched"
+    ],
+    "expectedGroups": {
+      "sub": "api"
+    },
+    "expectedCaptureIndex": 0
+  },
+  {
+    "name": "named-capture-on-second-match-discards-old-groups",
+    "entries": {
+      "^(?<first>[^.]+)\\.": {},
+      "^(?<second>[^.]+)": {}
+    },
+    "hostname": "api.example.com",
+    "expected": {
+      "matched": [
+        "api.",
+        "api",
+        "api"
+      ]
+    },
+    "expectedKeys": [
+      "matched"
+    ],
+    "expectedGroups": {
+      "second": "api"
+    }
+  },
+  {
+    "name": "unnamed-capture-on-second-match-clears-groups",
+    "entries": {
+      "^(?<first>[^.]+)\\.": {},
+      "^([^.]+)": {}
+    },
+    "hostname": "api.example.com",
+    "expected": {
+      "matched": [
+        "api.",
+        "api",
+        "api"
+      ]
+    },
+    "expectedKeys": [
+      "matched"
+    ]
+  },
+  {
+    "name": "optional-capture-is-null-in-json",
+    "entries": {
+      "^(?<optional>www\\.)?(?<host>example)\\.com$": {}
+    },
+    "hostname": "example.com",
+    "expected": {
+      "matched": [
+        "example.com",
+        null,
+        "example"
+      ]
+    },
+    "expectedKeys": [
+      "matched"
+    ],
+    "expectedGroups": {
+      "host": "example"
+    },
+    "expectedCaptureIndex": 0
+  },
+  {
+    "name": "capture-from-null-config",
+    "entries": {
+      "^([^.]+)\\.": null
+    },
+    "hostname": "api.example.com",
+    "expected": {
+      "matched": [
+        "api.",
+        "api"
+      ]
+    },
+    "expectedKeys": [
+      "matched"
+    ],
+    "expectedCaptureIndex": 0
+  },
+  {
+    "name": "explicit-matched-array-precedes-captures",
+    "entries": {
+      "^([^.]+)\\.": {
+        "matched": [
+          "configured"
+        ]
+      }
+    },
+    "hostname": "api.example.com",
+    "expected": {
+      "matched": [
+        "configured",
+        "api"
+      ]
+    },
+    "expectedKeys": [
+      "matched"
+    ]
+  },
+  {
+    "name": "exact-array-replaces-capture-and-metadata",
+    "entries": {
+      "^(?<sub>[^.]+)\\.": {},
+      "api.example.com": {
+        "matched": [
+          "exact"
+        ]
+      }
+    },
+    "hostname": "api.example.com",
+    "expected": {
+      "matched": [
+        "exact"
+      ]
+    },
+    "expectedKeys": [
+      "matched"
+    ]
+  },
+  {
+    "name": "exact-null-deletes-captures",
+    "entries": {
+      "^(?<sub>[^.]+)\\.": {},
+      "api.example.com": {
+        "matched": null
+      }
+    },
+    "hostname": "api.example.com",
+    "expected": {},
+    "expectedKeys": []
+  },
+  {
+    "name": "regex-prefix-search",
+    "entries": {
+      "^api\\.": {
+        "prefix": true
+      }
+    },
+    "hostname": "api.example.com",
+    "expected": {
+      "prefix": true
+    },
+    "expectedKeys": [
+      "prefix"
+    ]
+  },
+  {
+    "name": "wildcard-pattern-keeps-other-regex-metacharacters",
+    "entries": {
+      "(api|www).*": {
+        "route": 1
+      }
+    },
+    "hostname": "api.example.com",
+    "expected": {
+      "route": 1,
+      "matched": [
+        "api.example.com",
+        "api"
+      ]
+    },
+    "expectedKeys": [
+      "route",
+      "matched"
+    ],
+    "expectedCaptureIndex": 0
+  },
+  {
+    "name": "case-sensitive-miss",
+    "entries": {
+      "example.com": {
+        "x": 1
+      }
+    },
+    "hostname": "EXAMPLE.COM",
+    "expected": null
+  },
+  {
+    "name": "trailing-dot-miss",
+    "entries": {
+      "example.com": {
+        "x": 1
+      }
+    },
+    "hostname": "example.com.",
+    "expected": null
+  },
+  {
+    "name": "empty-entries-miss",
+    "entries": {},
+    "hostname": "example.com",
+    "expected": null
+  },
+  {
+    "name": "ordinary-miss",
+    "entries": {
+      "example.com": {
+        "x": 1
+      }
+    },
+    "hostname": "other.test",
+    "expected": null
+  },
+  {
+    "name": "array-like-object-converted-before-array-merge",
+    "entries": {
+      "*": {
+        "list": {
+          "0": {
+            "old": 1
+          },
+          "1": "tail",
+          "length": 3
+        }
+      },
+      "x": {
+        "list": [
+          {
+            "new": 2
+          }
+        ]
+      }
+    },
+    "hostname": "x",
+    "expected": {
+      "list": [
+        {
+          "old": 1,
+          "new": 2
+        },
+        "tail",
+        null
+      ]
+    },
+    "expectedKeys": [
+      "list"
+    ]
+  }
+]
