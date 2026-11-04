@@ -58,7 +58,12 @@ class ConscryptNativeTlsDialer(
                 throw NativeEchDialException(NativeEchDialFailure.CONFIG_RESOLUTION, failure)
             }
             return when (selection) {
-                NativeEchSelection.NotRequired -> ordinary.connect(raw, policy, handshakeTimeoutMillis)
+                NativeEchSelection.NotRequired -> {
+                    if (policy.echRequired) {
+                        throw NativeEchDialException(NativeEchDialFailure.REQUIRED_CONFIG_UNAVAILABLE)
+                    }
+                    ordinary.connect(raw, policy, handshakeTimeoutMillis)
+                }
                 NativeEchSelection.RequiredButUnavailable ->
                     throw NativeEchDialException(NativeEchDialFailure.REQUIRED_CONFIG_UNAVAILABLE)
                 is NativeEchSelection.Required -> {

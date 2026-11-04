@@ -14,8 +14,9 @@ data class NativeRuntimeEchRoute(val innerHost: String?, val verifyHost: String,
 
 /** A paired composite dialer must independently enforce REQUIRED ECH; no ordinary-TLS fallback. */
 fun interface NativeRuntimeEchRequirement {
-    /** Memory-only config/capability lookup; fail if the required configuration is unavailable. */
+    /** Bounded preflight before TCP connect; fail if the required configuration is unavailable. */
     fun requireConfiguration(route: NativeRuntimeEchRoute)
+    fun clearPreflight() {}
 }
 
 /**
@@ -37,6 +38,7 @@ class NativeRuntimeRuleAdapter(
 
     override fun onRequest(request: NativeProxyRequest): NativeRequestDecision {
         exchange.remove()
+        echRequirement?.clearPreflight()
         routes.clearPrepared()
         if (request.head.method == "CONNECT") return NativeRequestDecision.Forward(request.head)
         val path = when (val target = request.head.target) {
@@ -82,7 +84,8 @@ class NativeRuntimeRuleAdapter(
                         ServerName.Suppress -> null
                     }
                     NativeTlsPolicy(resolved.tls.verificationHost, sniHost = sni,
-                        trustMode = UpstreamTrustMode.STRICT, trustContext = upstreamTrustContext)
+                        trustMode = UpstreamTrustMode.STRICT, trustContext = upstreamTrustContext,
+                        echRequired = resolved.echRequired)
                 } else null
                 if (resolved.echRequired) {
                     if (policy == null) throw IOException("ECH requires an upstream TLS route")

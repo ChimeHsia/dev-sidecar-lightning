@@ -352,7 +352,7 @@ class ConscryptNativeTlsDialerTest {
     }
 }
 
-private class HttpPeer(mode: String) : AutoCloseable {
+internal class HttpPeer(mode: String) : AutoCloseable {
     private val process = ProcessBuilder(System.getProperty("ech.http.peer.exe"), "-mode", mode)
         .redirectError(ProcessBuilder.Redirect.INHERIT).start()
     private val input = process.inputStream.bufferedReader()

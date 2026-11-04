@@ -18,6 +18,7 @@ data class NativeTlsPolicy(
     /** A caller-owned trust context. Never reinitialized by the connector. */
     val trustContext: SSLContext? = null,
     val protocols: List<String> = listOf("TLSv1.3", "TLSv1.2"),
+    val echRequired: Boolean = false,
 ) {
     init {
         CertificateHost.parse(verifyHost)
