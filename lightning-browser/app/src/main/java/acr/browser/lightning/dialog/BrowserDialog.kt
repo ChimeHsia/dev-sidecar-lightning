@@ -24,7 +24,7 @@ import android.app.Dialog
 import android.content.Context
 import android.view.ViewGroup
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 object BrowserDialog {
 
@@ -43,7 +43,7 @@ object BrowserDialog {
         } else {
             activity.getString(message)
         }
-        AlertDialog.Builder(activity).apply {
+        MaterialAlertDialogBuilder(activity).apply {
             setTitle(title)
             setMessage(messageValue)
             setOnCancelListener { onCancel() }

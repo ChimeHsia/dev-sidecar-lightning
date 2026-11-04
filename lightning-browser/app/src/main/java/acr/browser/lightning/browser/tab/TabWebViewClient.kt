@@ -29,8 +29,8 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.appcompat.app.AlertDialog
 import androidx.webkit.WebViewAssetLoader.InternalStoragePathHandler
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -210,7 +210,7 @@ class TabWebViewClient @AssistedInject constructor(
         realm: String
     ) {
         val context = view.context
-        AlertDialog.Builder(context).apply {
+        MaterialAlertDialogBuilder(context).apply {
             val dialogView = DialogAuthRequestBinding.inflate(LayoutInflater.from(context))
 
             val realmLabel = dialogView.authRequestRealmTextview
@@ -221,6 +221,7 @@ class TabWebViewClient @AssistedInject constructor(
 
             setView(dialogView.root)
             setTitle(R.string.title_sign_in)
+            setIcon(R.drawable.ic_login)
             setCancelable(true)
             setPositiveButton(R.string.title_sign_in) { _, _ ->
                 val user = name.text.toString()
@@ -236,8 +237,9 @@ class TabWebViewClient @AssistedInject constructor(
 
     override fun onFormResubmission(view: WebView, dontResend: Message, resend: Message) {
         val context = view.context
-        AlertDialog.Builder(context).apply {
+        MaterialAlertDialogBuilder(context).apply {
             setTitle(context.getString(R.string.title_form_resubmission))
+            setIcon(R.drawable.ic_refresh)
             setMessage(context.getString(R.string.message_form_resubmission))
             setCancelable(true)
             setPositiveButton(context.getString(R.string.action_yes)) { _, _ ->
@@ -274,10 +276,11 @@ class TabWebViewClient @AssistedInject constructor(
         val alertMessage =
             context.getString(R.string.message_insecure_connection, stringBuilder.toString())
 
-        AlertDialog.Builder(context).apply {
+        MaterialAlertDialogBuilder(context).apply {
             val view = DialogSslWarningBinding.inflate(LayoutInflater.from(context))
             val dontAskAgain = view.checkBoxDontAskAgain
             setTitle(context.getString(R.string.title_warning))
+            setIcon(R.drawable.ic_unsecured)
             setMessage(alertMessage)
             setCancelable(true)
             setView(view.root)

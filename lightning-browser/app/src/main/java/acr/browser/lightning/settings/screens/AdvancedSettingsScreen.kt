@@ -24,6 +24,7 @@ class AdvancedSettingsScreen @Inject constructor(
         title = resourceProvider.stringResource(R.string.settings_advanced),
         content = listOf(
             ToggleState(
+                icon = R.drawable.ic_open_in_new,
                 title = resourceProvider.stringResource(R.string.window),
                 summary = { resourceProvider.stringResource(R.string.recommended) },
                 isChecked = { userPreferencesDataStore.popupsEnabled.get() },
@@ -33,6 +34,7 @@ class AdvancedSettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_cookie,
                 title = resourceProvider.stringResource(R.string.cookies),
                 summary = { resourceProvider.stringResource(R.string.recommended) },
                 isChecked = { userPreferencesDataStore.cookiesEnabled.get() },
@@ -42,6 +44,7 @@ class AdvancedSettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_settings_backup_restore,
                 title = resourceProvider.stringResource(R.string.restore),
                 summary = { resourceProvider.stringResource(R.string.recommended) },
                 isChecked = { userPreferencesDataStore.restoreLostTabsEnabled.get() },
@@ -51,6 +54,7 @@ class AdvancedSettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_apps,
                 title = resourceProvider.stringResource(R.string.open_available_apps),
                 summary = { resourceProvider.stringResource(R.string.recommended) },
                 isChecked = { userPreferencesDataStore.openAvailableAppsEnabled.get() },
@@ -60,6 +64,7 @@ class AdvancedSettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_tab,
                 title = resourceProvider.stringResource(R.string.limit_active_tabs),
                 summary = {
                     resourceProvider.stringResource(
@@ -74,6 +79,7 @@ class AdvancedSettingsScreen @Inject constructor(
                 }
             ),
             ClickableState(
+                icon = R.drawable.ic_text_fields,
                 title = resourceProvider.stringResource(R.string.text_encoding),
                 summary = { userPreferencesDataStore.textEncoding.get() },
                 onClick = ClickableOnClick.ItemSelector(
@@ -94,6 +100,7 @@ class AdvancedSettingsScreen @Inject constructor(
                 )
             ),
             ClickableState(
+                icon = R.drawable.ic_contrast,
                 title = resourceProvider.stringResource(R.string.rendering_mode),
                 summary = {
                     userPreferencesDataStore.renderingMode.get().toDisplayString(resourceProvider)
@@ -120,6 +127,7 @@ class AdvancedSettingsScreen @Inject constructor(
                 )
             ),
             ClickableState(
+                icon = R.drawable.ic_link,
                 title = resourceProvider.stringResource(R.string.url_contents),
                 summary = {
                     userPreferencesDataStore.urlBoxContentChoice.get()

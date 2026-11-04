@@ -22,6 +22,7 @@ class PrivacySettingsScreen @Inject constructor(
         title = resourceProvider.stringResource(R.string.settings_privacy),
         content = listOf(
             ToggleState(
+                icon = R.drawable.ic_location_on,
                 title = resourceProvider.stringResource(R.string.location),
                 isChecked = { userPreferencesDataStore.locationEnabled.get() },
                 onToggle = {
@@ -30,6 +31,7 @@ class PrivacySettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_cookie,
                 title = resourceProvider.stringResource(R.string.third_party),
                 isChecked = { userPreferencesDataStore.blockThirdPartyCookiesEnabled.get() },
                 onToggle = {
@@ -38,6 +40,7 @@ class PrivacySettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_do_not_disturb_on,
                 title = resourceProvider.stringResource(R.string.do_not_track),
                 isChecked = { userPreferencesDataStore.doNotTrackEnabled.get() },
                 onToggle = {
@@ -50,6 +53,7 @@ class PrivacySettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_visibility_off,
                 title = resourceProvider.stringResource(R.string.remove_identifying_headers),
                 summary = { "${WebViewFactory.HEADER_REQUESTED_WITH}, ${WebViewFactory.HEADER_WAP_PROFILE}" },
                 isChecked = { userPreferencesDataStore.removeIdentifyingHeadersEnabled.get() },
@@ -63,6 +67,7 @@ class PrivacySettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_videocam,
                 title = resourceProvider.stringResource(R.string.webrtc_support),
                 isChecked = { userPreferencesDataStore.webRtcEnabled.get() },
                 onToggle = {
@@ -71,6 +76,7 @@ class PrivacySettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_auto_delete,
                 title = resourceProvider.stringResource(R.string.cache),
                 isChecked = { userPreferencesDataStore.clearCacheExit.get() },
                 onToggle = {
@@ -79,6 +85,7 @@ class PrivacySettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_auto_delete,
                 title = resourceProvider.stringResource(R.string.clear_history_exit),
                 isChecked = { userPreferencesDataStore.clearHistoryExitEnabled.get() },
                 onToggle = {
@@ -87,6 +94,7 @@ class PrivacySettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_auto_delete,
                 title = resourceProvider.stringResource(R.string.clear_cookies_exit),
                 isChecked = { userPreferencesDataStore.clearCookiesExitEnabled.get() },
                 onToggle = {
@@ -95,6 +103,7 @@ class PrivacySettingsScreen @Inject constructor(
                 }
             ),
             ToggleState(
+                icon = R.drawable.ic_auto_delete,
                 title = resourceProvider.stringResource(R.string.clear_web_storage_exit),
                 isChecked = { userPreferencesDataStore.clearWebStorageExitEnabled.get() },
                 onToggle = {
@@ -103,6 +112,7 @@ class PrivacySettingsScreen @Inject constructor(
                 }
             ),
             ClickableState(
+                icon = R.drawable.ic_cached,
                 title = resourceProvider.stringResource(R.string.clear_cache),
                 onClick = ClickableOnClick.Snackbar {
                     webUtils.clearCache()
@@ -110,6 +120,7 @@ class PrivacySettingsScreen @Inject constructor(
                 }
             ),
             ClickableState(
+                icon = R.drawable.ic_history,
                 title = resourceProvider.stringResource(R.string.title_clear_history),
                 onClick = ClickableOnClick.Confirmation(
                     produceState = {
@@ -133,6 +144,7 @@ class PrivacySettingsScreen @Inject constructor(
                 )
             ),
             ClickableState(
+                icon = R.drawable.ic_cookie,
                 title = resourceProvider.stringResource(R.string.clear_cookies),
                 onClick = ClickableOnClick.Confirmation(
                     produceState = {
@@ -156,6 +168,7 @@ class PrivacySettingsScreen @Inject constructor(
                 )
             ),
             ClickableState(
+                icon = R.drawable.ic_database,
                 title = resourceProvider.stringResource(R.string.clear_web_storage),
                 onClick = ClickableOnClick.Snackbar {
                     webUtils.clearWebStorage()

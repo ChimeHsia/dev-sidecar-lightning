@@ -248,6 +248,7 @@ fun BookmarkAddOrEditSheet(
                     folderState.forEach { option ->
                         DropdownMenuItem(
                             text = { Text(option, color = MaterialTheme.colorScheme.onSurface) },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_folder), contentDescription = null) },
                             onClick = {
                                 selectedFolder = option
                                 expanded = false

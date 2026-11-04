@@ -31,7 +31,7 @@ public final class ThemeUtils {
      */
     @ColorInt
     public static int getAccentColor(@NonNull Context context) {
-        return getColor(context, androidx.appcompat.R.attr.colorAccent);
+        return getColor(context, androidx.appcompat.R.attr.colorPrimary);
     }
 
     /**

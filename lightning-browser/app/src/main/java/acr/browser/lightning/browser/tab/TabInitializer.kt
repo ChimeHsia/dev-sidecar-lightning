@@ -13,7 +13,7 @@ import acr.browser.lightning.preference.UserPreferencesDataStore
 import android.app.Activity
 import android.os.Bundle
 import android.os.Message
-import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.Reusable
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -235,8 +235,9 @@ class PermissionInitializer @AssistedInject constructor(
     }
 
     private suspend fun showDialog(): DialogChoice = suspendCancellableCoroutine { continuation ->
-        AlertDialog.Builder(activity).apply {
+        MaterialAlertDialogBuilder(activity).apply {
             setTitle(R.string.title_warning)
+            setIcon(R.drawable.ic_warning)
             setMessage(R.string.message_blocked_local)
             setCancelable(false)
             setOnDismissListener {

@@ -15,13 +15,13 @@ fun CloseBrowserSheet(
     ListItemSheet(
         title = stringResource(R.string.dialog_title_close_browser),
         items = listOf(
-            DialogItem(title = R.string.close_tab) {
+            DialogItem(icon = R.drawable.ic_tab_close, title = R.string.close_tab) {
                 onClick(BrowserContract.CloseTabEvent.CLOSE_CURRENT)
             },
-            DialogItem(title = R.string.close_other_tabs) {
+            DialogItem(icon = R.drawable.ic_tab_close_right, title = R.string.close_other_tabs) {
                 onClick(BrowserContract.CloseTabEvent.CLOSE_OTHERS)
             },
-            DialogItem(title = R.string.close_all_tabs) {
+            DialogItem(icon = R.drawable.ic_close, title = R.string.close_all_tabs) {
                 onClick(BrowserContract.CloseTabEvent.CLOSE_ALL)
             },
         ),

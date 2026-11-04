@@ -19,7 +19,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,9 +66,11 @@ fun ListItemSheet(
                                 modifier = Modifier.padding(start = 16.dp),
                                 painter = painterResource(icon),
                                 contentDescription = "test",
-                                tint = item.colorTint?.let {
-                                    colorResource(it)
-                                } ?: LocalContentColor.current
+                                tint = if (item.isDestructive) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    LocalContentColor.current
+                                }
                             )
                         }
                         Text(

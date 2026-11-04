@@ -28,6 +28,7 @@ class AdBlockSettingsScreen @Inject constructor(
     fun createSettingsFrameworkState(): SettingsFrameworkState = SettingsFrameworkState(
         resourceProvider.stringResource(R.string.settings_adblock), content = listOf(
             ToggleState(
+                icon = R.drawable.ic_block,
                 title = resourceProvider.stringResource(R.string.block_ads),
                 isChecked = { userPreferencesDataStore.adBlockEnabled.get() },
                 onToggle = {
@@ -35,6 +36,7 @@ class AdBlockSettingsScreen @Inject constructor(
                     null
                 }), if (BuildConfig.FULL_VERSION) {
                 ClickableState(
+                    icon = R.drawable.ic_dns,
                     title = resourceProvider.stringResource(R.string.block_ad_source),
                     summary = {
                         userPreferencesDataStore.selectedHostsSource().toSummary(resourceProvider)
@@ -123,6 +125,7 @@ class AdBlockSettingsScreen @Inject constructor(
             } else {
                 ClickableState(
                     enabled = { false },
+                    icon = R.drawable.ic_dns,
                     title = resourceProvider.stringResource(R.string.block_ad_source),
                     summary = { resourceProvider.stringResource(R.string.block_ads_upsell_source) },
                     onClick = ClickableOnClick.None
@@ -130,6 +133,7 @@ class AdBlockSettingsScreen @Inject constructor(
             },
             ClickableState(
                 enabled = { userPreferencesDataStore.selectedHostsSource() is HostsSourceType.Remote },
+                icon = R.drawable.ic_refresh,
                 title = resourceProvider.stringResource(R.string.block_ad_refresh_now),
                 summary = { resourceProvider.stringResource(R.string.block_ad_remote_refresh_frequency_description) },
                 onClick = ClickableOnClick.Action {

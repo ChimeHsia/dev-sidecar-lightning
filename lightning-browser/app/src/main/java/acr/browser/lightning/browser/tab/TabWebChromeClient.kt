@@ -29,7 +29,6 @@ import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import androidx.activity.result.ActivityResult
-import androidx.appcompat.app.AlertDialog
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -379,8 +378,9 @@ class TabWebChromeClient @AssistedInject constructor(
             .request { allGranted, _, _ ->
                 if (allGranted) {
                     val remember = true
-                    AlertDialog.Builder(activity).apply {
+                    MaterialAlertDialogBuilder(activity).apply {
                         setTitle(activity.getString(R.string.location))
+                        setIcon(R.drawable.ic_my_location)
                         val org = if (origin.length > 50) {
                             "${origin.subSequence(0, 50)}..."
                         } else {

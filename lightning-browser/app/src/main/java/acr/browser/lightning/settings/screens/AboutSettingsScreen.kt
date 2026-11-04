@@ -16,30 +16,36 @@ class AboutSettingsScreen @Inject constructor(
         title = resourceProvider.stringResource(R.string.settings_about),
         content = listOf(
             ClickableState(
+                icon = R.drawable.ic_mail,
                 title = resourceProvider.stringResource(R.string.action_follow_me),
                 summary = { "https://bsky.app/profile/anthonycr.bsky.social" },
                 onClick = ClickableOnClick.WebLink("https://bsky.app/profile/anthonycr.bsky.social")
             ),
             ClickableState(
+                icon = R.drawable.ic_info,
                 title = resourceProvider.stringResource(R.string.version),
                 summary = { BuildConfig.VERSION_NAME },
                 onClick = ClickableOnClick.Action {}
             ),
             ClickableState(
+                icon = R.drawable.ic_description,
                 title = resourceProvider.stringResource(R.string.licenses),
                 onClick = ClickableOnClick.Navigate(SettingsNavigation.LICENSES)
             ),
             ClickableState(
+                icon = R.drawable.ic_open_in_new,
                 title = resourceProvider.stringResource(R.string.app_name),
                 summary = { resourceProvider.stringResource(R.string.mpl_license) },
                 onClick = ClickableOnClick.WebLink("http://www.mozilla.org/MPL/2.0/")
             ),
             ClickableState(
+                icon = R.drawable.ic_open_in_new,
                 title = resourceProvider.stringResource(R.string.android_open_source_project),
                 summary = { resourceProvider.stringResource(R.string.apache) },
                 onClick = ClickableOnClick.WebLink("http://www.apache.org/licenses/LICENSE-2.0")
             ),
             ClickableState(
+                icon = R.drawable.ic_open_in_new,
                 title = resourceProvider.stringResource(R.string.hphosts_ad_server_list),
                 summary = { resourceProvider.stringResource(R.string.freeware) },
                 onClick = ClickableOnClick.WebLink("http://hosts-file.net/")
