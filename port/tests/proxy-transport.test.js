@@ -37,7 +37,7 @@ function settings(match, extra = {}) {
   }
 }
 
-async function listen(server, t) {
+async function listen(server, t, host = '127.0.0.1') {
   const sockets = new Set()
   server.on('connection', socket => {
     sockets.add(socket)
@@ -47,7 +47,7 @@ async function listen(server, t) {
     for (const socket of sockets) socket.destroy()
     server.close()
   })
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
+  await new Promise(resolve => server.listen(0, host, resolve))
   return server.address().port
 }
 
@@ -350,7 +350,7 @@ test('a submitted POST is not replayed for a configured retry status', enabled, 
   assert.equal(received, 1)
 })
 
-test('each TLS connect timeout records one candidate failure, not one per emitted event', enabled, async t => {
+test('one TLS candidate is penalized once and is not connected again after exhaustion', enabled, async t => {
   const requireCore = createRequire(path.join(core, 'index.js'))
   const match = requireCore('./utils/util.match')
   const blackhole = net.createServer(() => {})
@@ -379,8 +379,8 @@ test('each TLS connect timeout records one candidate failure, not one per emitte
   assert.equal(response.status, 500)
   assert.match(response.body, /连接超时/)
   assert.equal(lookups, 2)
-  assert.equal(dnsFailures, 2)
-  assert.equal(backupFailures, 2)
+  assert.equal(dnsFailures, 1)
+  assert.equal(backupFailures, 1)
 })
 
 test('failed custom DNS candidates rotate and a GET recovers within one retry', enabled, async t => {
@@ -445,6 +445,94 @@ test('a buffered POST can recover from DNS failure before transmission and reach
   assert.equal(lookups, 2)
   assert.deepEqual(received, ['payment'])
 })
+
+for (const scenario of [
+  { ssl: false, racingSpeedTest: false },
+  { ssl: false, racingSpeedTest: true },
+  { ssl: true, racingSpeedTest: false },
+  { ssl: true, racingSpeedTest: true },
+  { ssl: true, racingSpeedTest: false, realPreset: true },
+  { ssl: false, racingSpeedTest: false, retryTimes: 1 },
+  { ssl: false, racingSpeedTest: true, exhausted: true },
+]) {
+  const { ssl, racingSpeedTest, retryTimes, exhausted, realPreset } = scenario
+  test(`${ssl ? 'HTTPS' : 'HTTP'} candidate failover: ${JSON.stringify(scenario)}`,
+    enabled, async t => {
+      const requireCore = createRequire(path.join(core, 'index.js'))
+      const match = requireCore('./utils/util.match')
+      const speed = requireCore('./lib/speed')
+      const addresses = exhausted
+        ? ['127.0.0.2', '127.0.0.3', '127.0.0.4', '127.0.0.5', '127.0.0.6', '127.0.0.1']
+        : ['127.0.0.2', '127.0.0.3', '127.0.0.1']
+      const attempts = []
+      const failed = new Set()
+      let provider = {
+        dnsName: 'controlled',
+        cache: new Map([['recovery.test', { backupList: addresses }]]),
+        lookup: async (_host, options) =>
+          addresses.find(ip => !failed.has(ip) && (!options.ipChecker || options.ipChecker(ip))),
+        count: (_host, ip) => failed.add(ip),
+      }
+      const original = speed.getSpeedTester
+      const backups = addresses.map(host => ({ host, dns: 'controlled', status: 'success', time: 1 }))
+      // A concurrent TCP-only retest can republish a candidate whose actual
+      // TLS/request already failed. Each request must remember its own failures.
+      speed.getSpeedTester = () => racingSpeedTest ? {
+        backupList: backups, alive: backups,
+        pickFastAliveIpObj: () => backups[0],
+        pickNextForProbing: () => backups[0],
+        reportProbeResult: () => {},
+      } : null
+      t.after(() => { speed.getSpeedTester = original })
+      const fixture = ssl ? tlsFixture(requireCore) : null
+      const respond = (_req, res) => res.end('third candidate')
+      const upstream = ssl
+        ? https.createServer({ pfx: fixture.pfx, passphrase: 'changeit' }, respond)
+        : http.createServer(respond)
+      upstream.on('tlsClientError', () => {})
+      const port = await listen(net.createServer(socket => {
+        attempts.push(socket.localAddress)
+        if (socket.localAddress === '127.0.0.1') upstream.emit('connection', socket)
+        // TLS blackholes accept TCP (and would pass a speed test) but never
+        // send a ServerHello. HTTP candidates fail with a connection reset.
+        else if (!ssl) socket.destroy()
+      }), t, '0.0.0.0')
+      const config = {
+        dnsMap: { PreSet: provider },
+        preSetIpList: match.domainMapRegexply({ 'recovery.test': addresses }),
+      }
+      if (realPreset) {
+        const Preset = requireCore('./lib/dns/preset')
+        provider = new Preset(match.domainMapRegexply({
+          'recovery.test': Object.fromEntries(addresses.map(ip => [ip, true])),
+        }))
+        config.dnsMap.PreSet = provider
+      }
+      const handler = handlerFactory()(context => {
+        if (ssl) {
+          context.rOptions.ca = fixture.ca
+          context.rOptions.servername = 'localhost'
+          context.rOptions.verifyHost = 'localhost'
+        }
+        if (retryTimes != null) {
+          context.retryConfig = { methods: ['GET'], times: retryTimes, statuses: [] }
+        }
+        return []
+      }, [], null, config, settings(match), null)
+      const proxyPort = await listen(http.createServer((req, res) => handler(req, res, ssl)), t)
+      const response = await request({
+        protocol: 'http:', hostname: '127.0.0.1', port: proxyPort, path: '/',
+        headers: { Host: `recovery.test:${port}`, Connection: 'close' },
+      })
+      if (retryTimes != null || exhausted) {
+        assert.equal(response.status, 500)
+        assert.deepEqual(attempts, addresses.slice(0, exhausted ? 4 : retryTimes + 1))
+      } else {
+        assert.deepEqual(response, { status: 200, body: 'third candidate' })
+        assert.deepEqual(attempts, addresses)
+      }
+    })
+}
 
 test('the no-response guard closes the upstream and does not retry after completing 504', enabled, async t => {
   const requireCore = createRequire(path.join(core, 'index.js'))

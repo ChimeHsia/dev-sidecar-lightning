@@ -14,6 +14,7 @@ REQUEST_HANDLER = "core/node_modules/@blue-frontier/mitmproxy/src/lib/proxy/mitm
 REQUEST_OPTIONS = "core/node_modules/@blue-frontier/mitmproxy/src/lib/proxy/common/util.js"
 UPGRADE_HANDLER = "core/node_modules/@blue-frontier/mitmproxy/src/lib/proxy/mitmproxy/createUpgradeHandler.js"
 DNS_LOOKUP = "core/node_modules/@blue-frontier/mitmproxy/src/lib/proxy/mitmproxy/dnsLookup.js"
+UPSTREAM_CANDIDATES = REQUEST_HANDLER.rsplit("/", 1)[0] + "/upstreamCandidates.js"
 PATCH_TARGETS = {NAT64, REQUEST_HANDLER, REQUEST_OPTIONS, UPGRADE_HANDLER, DNS_LOOKUP}
 START = "function toNat64Address (prefix, ipv4) {"
 END = "\n}\n"
@@ -104,6 +105,9 @@ def patch_core_file(name, source):
     patches = json.loads((ROOT / "port/node/transport-recovery-patches.json").read_text(encoding="utf-8"))
     for patch in patches.get(name, []):
         source = replace_once(source, patch["old"], patch["new"], patch.get("count", 1))
+    patches = json.loads((ROOT / "port/node/candidate-recovery-patches.json").read_text(encoding="utf-8"))
+    for patch in patches.get(name, []):
+        source = replace_once(source, patch["old"], patch["new"])
     return source
 
 
@@ -125,6 +129,7 @@ def helper_entries(library=LIBRARY):
         "http-navigation.js": (ROOT / "port/node/http-navigation.js").read_bytes(),
         "proxy-runtime.js": (ROOT / "port/node/proxy-runtime.js").read_bytes(),
         "navigation-rules.json": (ROOT / "port/node/navigation-rules.json").read_bytes(),
+        UPSTREAM_CANDIDATES: (ROOT / "port/node/upstream-candidates.js").read_bytes(),
     }
     for file in library.glob("*.js"):
         entries["kotlin/" + file.name] = file.read_bytes()

@@ -19,6 +19,14 @@ shots/
 
 # ---- 工具生成的工作记忆/缓存（不是项目资产）----
 .workbuddy/
+.codex/
+# worktree 是完整仓库副本（含全部源码与构建产物）。若进入检索范围，
+# 代码搜索会命中两份同名源文件，输出量翻倍并触发工具输出超限。
+.claude/worktrees/
+
+# ---- JVM 崩溃/诊断日志（崩溃时自动生成，非源码）----
+hs_err_pid*.log
+replay_pid*.log
 
 # ---- 内嵌 Node 运行时与负载（体积 76MB+，由 port/build-payload.py 生成，不进版本库）----
 *.zip

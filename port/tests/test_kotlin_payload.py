@@ -16,7 +16,7 @@ HANDLER_SOURCE = (
     "              if (!sock || !sock.connecting) {\n"
     "            if (socket.connecting) {\n              startConnectTimer()\n"
     "              socket.once('connect', () => {\n                clearConnectTimer()\n"
-    "          proxyReq.on('timeout', () => {\n"
+    "          proxyReq.on('timeout', () => {\n            clearConnectTimer()\n"
 )
 REQUEST_PATCHES = json.loads(
     (payload.ROOT / "port/node/request-runtime-patches.json").read_text(encoding="utf-8")
@@ -32,11 +32,24 @@ RECOVERY_SOURCES = {
     name: "\n".join(patch["old"] * patch.get("count", 1) for patch in patches)
     for name, patches in RECOVERY_PATCHES.items()
 }
+CANDIDATE_PATCHES = json.loads(
+    (payload.ROOT / "port/node/candidate-recovery-patches.json").read_text(encoding="utf-8")
+)
+
+
+def with_candidate_targets(name, source):
+    for patch in CANDIDATE_PATCHES.get(name, []):
+        if patch["old"] not in source:
+            source += "\n" + patch["old"]
+    return source
 
 
 class KotlinPayloadTest(unittest.TestCase):
     def test_repeated_transport_patch_requires_the_exact_expected_count(self):
-        patched = payload.patch_core_file(payload.DNS_LOOKUP, RECOVERY_SOURCES[payload.DNS_LOOKUP])
+        patched = payload.patch_core_file(
+            payload.DNS_LOOKUP,
+            with_candidate_targets(payload.DNS_LOOKUP, RECOVERY_SOURCES[payload.DNS_LOOKUP]),
+        )
         self.assertEqual(patched, payload.patch_core_file(payload.DNS_LOOKUP, patched))
         for source in ["", "if (res) {" * 4, "if (res) {" * 6, patched + "if (res) {"]:
             with self.assertRaises(ValueError):
@@ -112,10 +125,16 @@ class KotlinPayloadTest(unittest.TestCase):
                 result.writestr(payload.REQUEST_OPTIONS, OPTIONS_SOURCE + REQUEST_SOURCE)
                 result.writestr(
                     payload.REQUEST_HANDLER,
-                    HANDLER_SOURCE + "\n".join(p["old"] for p in VALIDATION_PATCHES[payload.REQUEST_HANDLER])
-                    + "\n" + RECOVERY_SOURCES[payload.REQUEST_HANDLER],
+                    with_candidate_targets(
+                        payload.REQUEST_HANDLER,
+                        HANDLER_SOURCE + "\n".join(p["old"] for p in VALIDATION_PATCHES[payload.REQUEST_HANDLER])
+                        + "\n" + RECOVERY_SOURCES[payload.REQUEST_HANDLER],
+                    ),
                 )
-                result.writestr(payload.DNS_LOOKUP, RECOVERY_SOURCES[payload.DNS_LOOKUP])
+                result.writestr(
+                    payload.DNS_LOOKUP,
+                    with_candidate_targets(payload.DNS_LOOKUP, RECOVERY_SOURCES[payload.DNS_LOOKUP]),
+                )
                 result.writestr(
                     payload.UPGRADE_HANDLER,
                     "\n".join(p["old"] for p in VALIDATION_PATCHES[payload.UPGRADE_HANDLER]),
@@ -133,6 +152,10 @@ class KotlinPayloadTest(unittest.TestCase):
                 self.assertNotIn("kotlin/stale.js", names)
                 self.assertEqual(b"untouched", result.read("core/keep.txt"))
                 self.assertEqual(b"compiled", result.read("kotlin/" + payload.MODULE))
+                self.assertEqual(
+                    (payload.ROOT / "port/node/upstream-candidates.js").read_bytes(),
+                    result.read(payload.UPSTREAM_CANDIDATES),
+                )
                 self.assertIn(b"Kotlin helpers active", result.read("main.js"))
                 self.assertIn(b"require('./kotlin-wave2').install", result.read("main.js"))
                 for name in [

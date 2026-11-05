@@ -112,6 +112,15 @@ JAVA_HOME=../.jdk/jdk-21.0.2 ./gradlew assembleLightningPlusRelease
 
 ## 已知问题
 
+### 2026-11-05 GitHub 候选 IP 切换修复
+
+- 普通自定义 DNS 请求独立记录失败 IP，避免 TCP 测速再次选中已在 TLS 或请求阶段失败的地址。
+- 默认重试额度按候选数量计算，最多重试 3 次；显式重试配置和 POST 重放限制继续生效。
+- 浏览器 payload 标记为 12，需同步更新后的 Node zip。
+- 702 项 Node 回归、7 项 Python 打包测试、215 项浏览器 JVM 测试及 Release 构建通过。
+  本机真实代理与受控第三候选验证见 [修复记录](docs/GITHUB-TIMEOUT-FIX-2026-11-05.md)；
+  本轮尚未进行手机验收。
+
 ### 2026-11-01 离线启动与 TLS 修复
 
 - payload 8 等待实际服务器监听后才发出精确 READY 协议；失败退出并复位 Android 等待状态，旧启动回调不能标记新启动成功。

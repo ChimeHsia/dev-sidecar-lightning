@@ -1,0 +1,50 @@
+{
+  "core/node_modules/@blue-frontier/mitmproxy/src/lib/proxy/mitmproxy/createRequestHandler.js": [
+    {
+      "old": "const dnsLookup = require('./dnsLookup')",
+      "new": "const dnsLookup = require('./dnsLookup')\nconst UpstreamCandidates = require('./upstreamCandidates')"
+    },
+    {
+      "old": "    let responded = false",
+      "new": "    const upstreamCandidates = new UpstreamCandidates()\n    let responded = false"
+    },
+    {
+      "old": "                ignoreSpeedTest: isEchDomain,",
+      "new": "                ignoreSpeedTest: isEchDomain,\n                candidates: isEchDomain ? null : upstreamCandidates,"
+    },
+    {
+      "old": "          proxyReq.on('error', (e) => {",
+      "new": "          proxyReq.on('error', (e) => {\n            if (e.upstreamCandidatesExhausted) {\n              clearConnectTimer()\n              reject(e)\n              return\n            }\n            if (!cancelled && isDnsIntercept.candidates) upstreamCandidates.fail(isDnsIntercept, e)"
+    },
+    {
+      "old": "          proxyReq.on('timeout', () => {\n            clearConnectTimer()",
+      "new": "          proxyReq.on('timeout', () => {\n            clearConnectTimer()\n            if (!cancelled && !responseStarted && isDnsIntercept.candidates) upstreamCandidates.fail(isDnsIntercept)"
+    },
+    {
+      "old": ": (bodySafe || (rOptions.method || 'GET').toUpperCase() === 'GET' ? 1 : 0)",
+      "new": ": (bodySafe ? upstreamCandidates.retryLimit : 0)"
+    }
+  ],
+  "core/node_modules/@blue-frontier/mitmproxy/src/lib/proxy/mitmproxy/dnsLookup.js": [
+    {
+      "old": "    const resetOnHostnameFallback = options.resetOnHostnameFallback === true",
+      "new": "    const resetOnHostnameFallback = options.resetOnHostnameFallback === true\n    const candidates = options.candidates || null"
+    },
+    {
+      "old": "      const all = options && options.all === true",
+      "new": "      const all = options && options.all === true\n      if (isDnsIntercept) isDnsIntercept.candidates = candidates\n      if (candidates) callback = candidates.wrapLookup(callback)"
+    },
+    {
+      "old": "        const aliveIpObj = tester.pickFastAliveIpObj()",
+      "new": "        const aliveIpObj = candidates ? candidates.pickAlive(tester) : tester.pickFastAliveIpObj()"
+    },
+    {
+      "old": "        const probe = tester.pickNextForProbing()",
+      "new": "        const probe = candidates ? candidates.pickProbe(tester) : tester.pickNextForProbing()"
+    },
+    {
+      "old": "      const ipChecker = createIpChecker(tester)",
+      "new": "      const speedChecker = createIpChecker(tester)\n      const ipChecker = candidates\n        ? ip => candidates.allows(ip) && (!speedChecker || speedChecker(ip))\n        : speedChecker"
+    }
+  ]
+}

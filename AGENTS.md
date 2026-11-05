@@ -26,6 +26,20 @@ Follow the surrounding Kotlin and Gradle Kotlin DSL style: four-space indentatio
 
 Recent commits use short prefixed subjects such as `chore: ...`, `port: ...`, and `baseline: ...`; describe the change concisely. Open pull requests against `main`, summarize behavior and verification, link relevant issues, and include screenshots for visible UI changes.
 
+## Agent Tool Output Constraints
+
+This workspace holds multi-megabyte generated assets, and linked worktrees in `.claude/worktrees/` are full repository copies. Unbounded tool output is the main cause of agent sessions stalling with "too large" or timeout errors, so these limits are mandatory rather than advisory.
+
+- Never read a file in full unless it is under roughly 200 lines. Locate the region first, then read it with `offset`/`limit` or `sed -n 'A,Bp'`.
+- The following are excluded through the shared `.git/info/exclude` and must never be read whole: `app/src/main/assets/hosts.txt` and `lightning-browser/app/src/main/assets/hosts.txt` (1.7 MB each), `build/outputs/mapping/**`, `build/intermediates/r8_art_profile/**`, plus all `*.zip`, `*.so`, `*.dex`, `*.apk` assets.
+- Bound every search: use `-m 20` or pipe through `head -n 40`. Never search from the repository root without a path or `--glob` narrowing.
+- Never dump a full build log. Filter it, for example `./gradlew <task> 2>&1 | grep -E "error:|FAILED|BUILD" | tail -n 30`.
+- Prefer one targeted read over reading a directory of files.
+- When delegating to a subagent, ask for findings plus short evidence (paths and line numbers), not full file contents.
+- To inspect an excluded file on purpose, override explicitly with `rg --no-ignore <pattern> <path>` and keep the output bounded.
+
+`.git/info/exclude` sits in the common git directory, so every linked worktree shares it and checkout, merge, and rebase never overwrite it. Do not rewrite it from inside a worktree; extend it only from the primary checkout.
+
 ## Security and Configuration
 
 Generated Node binaries, payload archives, local configuration, and CA key material must not be committed. The browser uses a local MITM proxy on `127.0.0.1:31181`; stop competing test packages before device testing. Release builds currently use the debug signing configuration and are intended for local use.
