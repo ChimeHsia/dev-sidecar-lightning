@@ -63,7 +63,7 @@ R8 把 kotlinx.serialization / Room 的类型信息裁坏了（上游靠 CI 的 
 | `AndroidManifest.xml` | `tools:node="remove"` 去 LeakLauncherActivity |
 | `app/build.gradle.kts` | `jniLibs.useLegacyPackaging`、`noCompress(zip,pem)`、release 关混淆 + debug 签名 |
 | `gradle.properties` | `ksp.incremental=false`（跨盘符增量编译必崩） |
-| `res/values/styles.xml`、`theme_colors.xml` | XML 主题迁到 Material3，颜色与 `compose/Color.kt` 一致，`ThemeColorsTest` 校验 |
+| `res/values/browser_themes.xml`、`theme_colors.xml` | XML 主题迁到 Material3，颜色与 `compose/Color.kt` 一致，`ThemeColorsTest` 校验 |
 | `res/drawable/ic_*.xml`（`viewportWidth="960"` 的那些） | 取自 [Material Symbols](https://github.com/google/material-design-icons)（Outlined，wght 400，npm `@material-symbols/svg-400` 0.48.2，Apache-2.0） |
 
 ## 关键文件
