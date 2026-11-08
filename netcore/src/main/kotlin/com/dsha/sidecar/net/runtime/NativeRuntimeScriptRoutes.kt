@@ -41,6 +41,9 @@ class NativeRuntimeScriptRoutes(
         ScriptRouteService(ReadOnlyScriptCatalog(sources, limits), proxyAliases, limits)
     }
 
+    internal fun allowsConnect(request: NativeProxyRequest): Boolean =
+        Origin("https", request.authority.host, request.authority.port) in origins
+
     internal fun requireBodyLimit(maximum: Long) {
         require(limits.maximumAssetBytes <= maximum) { "Script asset limit exceeds the proxy body quota" }
     }

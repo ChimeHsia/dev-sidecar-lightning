@@ -41,6 +41,8 @@ data class NativeProxyRoute(
     val connectPolicy: ConnectPolicy = ConnectPolicy.MITM,
     val tls: NativeTlsPolicy? = null,
     val socketOutcome: (NativeSocketOutcome) -> Unit = {},
+    /** Explicit trusted proxy rules may choose an HTTP origin behind a downstream HTTPS connection. */
+    val permitsPlaintext: Boolean = false,
 ) {
     init {
         require(!destination.isUnresolved && destination.port in 1..65535)

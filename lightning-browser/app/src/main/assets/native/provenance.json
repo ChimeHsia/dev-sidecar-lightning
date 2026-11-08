@@ -1,0 +1,12 @@
+{
+  "upstream": "@blue-frontier/dev-sidecar",
+  "version": "2.3.1",
+  "source": "Reviewed effective Android configuration, exported as data only",
+  "sourceSha256": "d33617ad71feadaad305c766207cba5ab5710226e5653d90b1420498bd91bc36",
+  "configurationSha256": "8063087f30bd6c89db4de3e03a80f6a8d02b4e41973d8131f9349e733b63776c",
+  "omittedRuntimeSettings": [
+    "userBasePath",
+    "rootDir",
+    "rootCaFile"
+  ]
+}

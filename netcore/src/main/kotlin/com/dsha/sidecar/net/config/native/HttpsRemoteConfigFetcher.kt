@@ -84,6 +84,18 @@ class HttpsRemoteConfigFetcher internal constructor(
         },
     )
 
+    /** Caller-scoped local proxy and CA context; never installs a global verifier or trust store. */
+    constructor(limits: HttpsConfigLimits, proxy: Proxy, context: SSLContext) : this(
+        limits,
+        { uri -> uri.toURL().openConnection(proxy) as HttpsURLConnection },
+        { context },
+    ) {
+        require(proxy.type() == Proxy.Type.HTTP &&
+            (proxy.address() as? java.net.InetSocketAddress)?.address?.isLoopbackAddress == true) {
+            "Configuration proxy must be a resolved loopback HTTP proxy"
+        }
+    }
+
     private val closed = AtomicBoolean()
     private val active = Collections.newSetFromMap(ConcurrentHashMap<HttpsOperation, Boolean>())
     private val io = ThreadPoolExecutor(

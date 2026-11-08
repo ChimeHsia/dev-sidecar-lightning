@@ -1,6 +1,33 @@
 # Worktree 合仓交接（2026-11-05）
 
-## 当前任务：海外网站连接超时（2026-11-05）
+## 当前任务：Node 到 Android Kotlin 完整接线（2026-11-08）
+
+- 用户要求：先提交并推 GitHub，再完成原生 Kotlin 迁移；实现结束后集中测试，允许成熟库。
+- 已完成：现有全部改动提交为 `7be44cb`，已推送 `origin/main`。
+- 当前目标：接通原生重试/备用目标、脚本响应、DNS→ECH、Android 生命周期与纯原生打包。
+- 已有基础：`netcore` 原生 HTTP/CONNECT MITM、DNS、证书、规则、脚本与调度组件；
+  `android-native-check` 已有 Android 依赖打包方案，Lightning 尚未接入。
+- 待办：实现完整链路、保存无机器路径的默认数据、补回归、最后统一 JVM/Android/APK 检查。
+- 注意：不能通过关闭默认 ECH/脚本/backup 绕过迁移；Node 归档和 ELF 不得继续打进产品。
+- `@RTK.md` 在当前目录与父目录均未找到，继续遵守已提供的 AGENTS.md。
+
+### 实现阶段交接
+
+- 已改：`NativeProxyServer` 增加响应提交前重试与显式授权的小请求体缓冲；
+  runtime 接通候选排除、backup 重组、HTML 注入、Brotli、自动 ECH/NAT64、后台 TCP 观测。
+- Android：新增 `lightning-browser/native-core` 模块；`DshaAccel` 改用原生 runtime，
+  增加绑定服务及配置继承；默认规则数据由 `port/build-native-data.py` 导出。
+- 打包：排除旧 Node jniLibs/两份 zip；新增 APK 检查脚本；versionCode 103。
+- 已补：真实候选切换、显式 POST 重放、备用目标、脚本注入、默认配置加载、
+  Android 配置继承回归；历史拒绝测试按新行为调整。
+- 当前：原生 JVM 979 项，977 通过、2 跳过、0 失败；浏览器 JVM 220 项通过；APK 初检 21.2 MiB，Node 0 项。
+- 远程配置已补运行时 epoch 热切换和在途回归，额外 DNS→ECH→Go HTTP 与远程配置→本地 MITM 贯通通过。
+- 隐身就绪改为 Binder 查询主进程服务归属，重建及两项归属回归通过；lint 本机 SDK 路径已转义，lintRelease 通过（0 error、5 warnings）。
+- 最终 Android Release、220 项浏览器 JVM、native-core lintRelease 同轮 BUILD SUCCESSFUL；Python 7 项、APK 复核和 diff 检查通过。
+- 后续：提交迁移；adb 无设备，真机 D01–D08 待验收。
+- 当前证据及边界见 `docs/NATIVE-KOTLIN-MIGRATION-2026-11-08.md`。
+
+## 已完成历史任务：海外网站连接超时（2026-11-05）
 
 - 用户要求分析并修复 GitHub 等站点连接超时，最初 Node.js 版本可用。
 - 当前浏览器仍使用 Node payload 11，Kotlin 原生 runtime 未接管浏览器。

@@ -2,7 +2,22 @@
 
 > 目标：用成熟浏览器外壳（Lightning Browser，MPL-2.0，2451★）+ 内嵌 dev-sidecar 核心。
 
-## 当前状态：✅ 可用（2026-11-01 04:12 真机实测）
+## 当前原生集成（2026-11-08）
+
+主产品现由 `BrowserApp → DshaAccel → NativeProxyService → NativeRuntime` 驱动。
+`native-core` Android 模块编译共享 Kotlin 网络源码，普通/隐身通过主进程服务持有一个核心；WebView 继续使用 127.0.0.1:31181。
+默认规则、ECH 和脚本均保留，配置更新为新请求切换规则并等待在途请求释放旧状态。
+
+从零构建使用 JDK 21、Android SDK 和本机 CA 配置，在 `lightning-browser/` 运行
+`./gradlew assembleLightningPlusRelease`；无需生成或同步 Node payload。
+Release versionCode 103，APK 约 21.2 MiB；打包检查确认没有 Node ELF、归档和 node_modules。
+验证结果、依赖、CA 配置及尚缺的真机验收见 [迁移记录](docs/NATIVE-KOTLIN-MIGRATION-2026-11-08.md)。
+
+## 以下为历史 Node 集成记录
+
+本节后面的 payload 生成、Node 启动和设备结果仅说明旧版路径，不作为当前原生包的构建或验收依据。
+
+### 历史可用状态（2026-11-01 04:12 真机实测）
 
 | 测试 | 结果 |
 |---|---|

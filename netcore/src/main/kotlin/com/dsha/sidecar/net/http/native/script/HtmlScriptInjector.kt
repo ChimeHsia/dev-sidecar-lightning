@@ -10,6 +10,7 @@ import java.util.zip.DeflaterOutputStream
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 import java.util.zip.InflaterInputStream
+import org.brotli.dec.BrotliInputStream
 import com.dsha.sidecar.net.http.native.ActionResponseHead
 import com.dsha.sidecar.net.rules.native.RuleRequest
 
@@ -61,7 +62,7 @@ class HtmlScriptInjector(private val limits: ScriptLimits = ScriptLimits()) {
                 throw ScriptInjectionException(ScriptProblem.UNSUPPORTED_CHARSET)
             }
             val encoding = ScriptSafety.first(upstream.headers, "content-encoding")?.lowercase(Locale.ROOT)
-            if (encoding !in listOf(null, "", "identity", "gzip", "deflate")) {
+            if (encoding !in listOf(null, "", "identity", "gzip", "deflate", "br")) {
                 throw ScriptInjectionException(ScriptProblem.UNSUPPORTED_ENCODING)
             }
             val expected = ScriptSafety.first(upstream.headers, "content-length")?.toLong()
@@ -74,6 +75,7 @@ class HtmlScriptInjector(private val limits: ScriptLimits = ScriptLimits()) {
             val plain = when (encoding) {
                 "gzip" -> GZIPInputStream(ByteArrayInputStream(encoded)).use { read(it, limits.maximumDecodedBytes, ::checkCancelled) }
                 "deflate" -> InflaterInputStream(ByteArrayInputStream(encoded)).use { read(it, limits.maximumDecodedBytes, ::checkCancelled) }
+                "br" -> BrotliInputStream(ByteArrayInputStream(encoded)).use { read(it, limits.maximumDecodedBytes, ::checkCancelled) }
                 else -> {
                     if (encoded.size > limits.maximumDecodedBytes) throw ScriptInjectionException(ScriptProblem.BODY_LIMIT)
                     encoded
@@ -110,6 +112,8 @@ class HtmlScriptInjector(private val limits: ScriptLimits = ScriptLimits()) {
                 "http2-settings", "etag", "last-modified", "content-md5", "digest", "content-digest", "repr-digest", "accept-ranges",
             ) + nominated
             headers.removeAll { it.name.lowercase(Locale.ROOT) in remove }
+            // Brotli decoding is pure Java; send the modified representation with identity encoding.
+            if (encoding == "br") headers.removeAll { it.name.equals("content-encoding", true) }
             if (tags.repairCsp) {
                 ScriptSafety.first(headers, "content-security-policy")?.let { ScriptSafety.set(headers, "content-security-policy", patchCsp(it)) }
             }

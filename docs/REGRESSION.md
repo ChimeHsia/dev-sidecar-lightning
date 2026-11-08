@@ -1,5 +1,21 @@
 # Lightning + sidecar 真机回归基线
 
+## 原生 Kotlin 基线（2026-11-08）
+
+当前产品使用原生 Kotlin 核心，最新范围和主机结果见 [迁移记录](NATIVE-KOTLIN-MIGRATION-2026-11-08.md)。
+先运行带 Go ECH 对端的 `scripts/test-native-core.py`，再在浏览器构建执行
+`assembleLightningPlusRelease testLightningPlusDebugUnitTest :native-core:lintRelease`，最后运行
+`scripts/verify-native-browser-apk.py --apk <release.apk>`。具体参数见仓库 README。
+
+真机仍按 D01–D08 检查首次启动、温/冷启动、GitHub、Google HK、多标签/隐身、端口冲突及退出清理。
+当前包不解压 Node zip，也不应产生 Node 子进程；记录主进程服务与隐身绑定、31181 实际归属、在途请求和远程配置更新。
+升级只迁移受限配置文件，另查用户规则保留及 CA 匹配。记录 versionCode 103、commit、APK SHA-256 和系统/WebView 版本。
+本轮没有连接设备，以上场景均待原生包实测。历史采集脚本中的 Node 字段可以为空，采集成功不等于验收通过。
+
+## 以下为历史 Node 回归指南
+
+旧版 payload 步骤和测试数保留作追溯，不用于当前原生包的构建及验收结论。
+
 主产物是 `lightning-browser/` 的 **LightningPlus release / arm64-v8a**，包名 `top.panming.dsbrowser`，链路为 WebView → `127.0.0.1:31181` → 内嵌 Node/dev-sidecar。根目录 `app/`、JVM `netcore/` 含原生代理候选及参考壳；部分纯逻辑也由 `netcore-js/` 编译给 Node 使用。JVM 测试通过不能证明当前 Node payload、Lightning 代理或页面正常。
 
 历史设备记录中的 `com.dsha.browser` 是当时实际验收的包名。应用 ID 改名后属于另一个 Android 应用，不能将旧包的数据和设备验收结果视为自动迁移到新包。

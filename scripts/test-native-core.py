@@ -56,6 +56,7 @@ def main():
         jar("org.jetbrains.kotlin", "kotlin-test", "2.0.21"),
         jar("org.jetbrains.kotlin", "kotlin-test-junit", "2.0.21"),
         str(args.conscrypt_jar.resolve()),
+        jar("org.brotli", "dec", "0.1.2"),
     ] + [jar("org.bouncycastle", artifact, "1.79") for artifact in (
         "bcprov-jdk18on", "bcpkix-jdk18on", "bcutil-jdk18on",
     )]

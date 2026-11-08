@@ -228,7 +228,7 @@ class NativeRuntimeIntegrationTest {
                     }
 
                     val rejected = repository.reload(ConfigDocuments(defaults, user = """
-                        { server: { intercepts: { 'origin.test': { '.*': { retry: { count: 2 } } } } } }
+                        { server: { intercepts: { 'origin.test': { '.*': { unknownScript: true } } } } }
                     """.trimIndent())) as ConfigUpdate.Rejected
                     assertSame(applied.snapshot, rejected.previous)
                     assertSame(applied.snapshot, repository.current())
@@ -268,7 +268,7 @@ class NativeRuntimeIntegrationTest {
                         send(socket, "GET /source/captured HTTP/1.1\r\nHost: browser.test\r\nCookie: private\r\nConnection: close\r\n\r\n")
                         assertEquals("/mirror/captured", reply(socket).body)
                     }
-                    assertTrue(dns.questions.containsAll(listOf("browser.test", "origin.test")))
+                    assertEquals(listOf("origin.test"), dns.questions.toList())
                     assertEquals(1, calls.get())
                     val actual = origin.requests.single()
                     assertEquals(listOf("applied"), actual.head.headers.values("X-Rule"))
@@ -412,9 +412,7 @@ class NativeRuntimeIntegrationTest {
     @Test fun configLoadRejectsUnsupportedActionsBeforeAnyTraffic() {
         DnsPeer().use { dns ->
             for (rule in listOf(
-                mapOf("script" to listOf("https://script.test/asset.js")),
-                mapOf("unknownScript" to true), mapOf("nativeMemoryCache" to true), mapOf("retry" to 2),
-                mapOf("proxy" to "mirror.test", "backup" to listOf("backup.test")),
+                mapOf("unknownScript" to true), mapOf("nativeMemoryCache" to true),
                 mapOf("responseReplace" to mapOf("body" to "modified")),
                 mapOf("responseReplace" to mapOf("headers" to mapOf("Content-Length" to "5"))),
             )) {
@@ -427,12 +425,12 @@ class NativeRuntimeIntegrationTest {
         }
     }
 
-    @Test fun globalScriptGateAloneIsSupportedWithExplicitHeaderOnlyDiagnostics() {
+    @Test fun globalScriptGateEnablesBoundedResponseProcessing() {
         DnsPeer().use { dns ->
             val snapshot = NativeRuntimeConfig.decode(decoded(dns, gate = true))
             assertTrue(snapshot.responseHeadersEnabled)
-            assertTrue(snapshot.diagnostics.any { it.contains("header-only") })
-            assertTrue(snapshot.diagnostics.any { it.contains("failover") })
+            assertTrue(snapshot.diagnostics.any { it.contains("bounded HTML") })
+            assertTrue(snapshot.diagnostics.any { it.contains("retries") })
         }
     }
 
@@ -538,25 +536,25 @@ class NativeRuntimeIntegrationTest {
         }
     }
 
-    @Test fun realConnectFailureAdvancesNextExchangeWithoutRetryingCurrentRequest() {
+    @Test fun realConnectFailureRetriesCurrentRequestAndKeepsHealthyCandidate() {
         DnsPeer(addresses = listOf(byteArrayOf(127, 0, 0, 2), byteArrayOf(127, 0, 0, 1))).use { dns ->
             Origin().use { origin ->
                 runtime(decoded(dns)).use { runtime ->
                     runtime.start()
                     socket(runtime).use { socket ->
                         send(socket, get("/", "candidate.test:${origin.port}"))
-                        assertEquals(502, reply(socket).head.status)
-                    }
-                    assertEquals(0, origin.accepted.get())
-                    assertEquals(1L, runtime.routes.state().selections)
-                    assertEquals(1L, runtime.routes.state().feedbackReports)
-                    socket(runtime).use { socket ->
-                        send(socket, get("/next", "candidate.test:${origin.port}"))
-                        assertEquals("/next", reply(socket).body)
+                        assertEquals(200, reply(socket).head.status)
                     }
                     assertEquals(1, origin.accepted.get())
                     assertEquals(2L, runtime.routes.state().selections)
                     assertEquals(2L, runtime.routes.state().feedbackReports)
+                    socket(runtime).use { socket ->
+                        send(socket, get("/next", "candidate.test:${origin.port}"))
+                        assertEquals("/next", reply(socket).body)
+                    }
+                    assertEquals(2, origin.accepted.get())
+                    assertEquals(3L, runtime.routes.state().selections)
+                    assertEquals(3L, runtime.routes.state().feedbackReports)
                 }
             }
         }
@@ -587,13 +585,13 @@ class NativeRuntimeIntegrationTest {
         }
     }
 
-    @Test fun requiredEchConfigurationCannotBeHandedToOrdinaryDefaultConnector() {
+    @Test fun requiredEchAutoAssemblyStillRejectsExplicitOrdinaryConnector() {
         val config = NativeRuntimeConfig.decode(mapOf("server" to mapOf("dns" to mapOf(
             "ech" to mapOf("enabled" to true, "domains" to listOf("browser.test"))))))
         assertTrue(config.requiresEchAdapter)
-        assertThrows(NativeRuntimeConfigurationException::class.java) { NativeRuntime(config, clientCa.authority()) }
+        NativeRuntime(config, clientCa.authority()).use { assertEquals(NativeRuntimeState.NEW, it.state) }
         assertThrows(NativeRuntimeConfigurationException::class.java) {
-            NativeRuntime(config, clientCa.authority(), echRequirement = NativeRuntimeEchRequirement { })
+            NativeRuntime(config, clientCa.authority(), tlsDialer = NativeTlsConnector(), echRequirement = NativeRuntimeEchRequirement { })
         }
     }
 
@@ -763,13 +761,13 @@ class NativeRuntimeIntegrationTest {
         }
     }
 
-    @Test fun configuredActiveNat64IsAnExplicitConfigLoadFailureNotAnUnsupportedLiveTransport() {
-        for (prefix in listOf("64:ff9b::", " 64:ff9b::/96 ", "not-an-ipv6-prefix")) {
-            val nat64 = mapOf("enabled" to true, "prefix" to prefix, "domains" to listOf("*"))
-            val failure = assertThrows(NativeRuntimeConfigurationException::class.java) {
-                NativeRuntimeConfig.decode(mapOf("server" to mapOf("dns" to mapOf("nat64" to nat64))))
-            }
-            assertEquals(listOf("NAT64 provider execution is not bound by this runtime"), failure.problems)
+    @Test fun configuredNat64UsesNativeTransportAndRejectsMalformedPrefixes() {
+        val snapshot = NativeRuntimeConfig.decode(mapOf("server" to mapOf("dns" to mapOf("nat64" to mapOf(
+            "enabled" to true, "prefix" to "64:ff9b::", "domains" to listOf("*"))))))
+        assertNotNull(snapshot.catalog.providerKey("Nat64"))
+        assertThrows(IllegalArgumentException::class.java) {
+            NativeRuntimeConfig.decode(mapOf("server" to mapOf("dns" to mapOf("nat64" to mapOf(
+                "enabled" to true, "prefix" to "not-an-ipv6-prefix", "domains" to listOf("*"))))))
         }
     }
 
@@ -841,17 +839,17 @@ class NativeRuntimeIntegrationTest {
     @Test fun activeUnboundFeaturesAreCountedAsBlockingConfigIssuesBeforeTraffic() {
         val failure = assertThrows(NativeRuntimeConfigurationException::class.java) {
             NativeRuntimeConfig.decode(mapOf("server" to mapOf(
-                "whiteList" to listOf("bypass.test"),
+                "unboundWhitelist" to listOf("bypass.test"),
                 "newFeature" to mapOf("enabled" to true),
-                "setting" to mapOf("timeoutMapping" to mapOf("*" to 1000)),
-                "dns" to mapOf("speedTest" to mapOf("enabled" to true)),
+                "setting" to mapOf("newTimeoutPolicy" to mapOf("*" to 1000)),
+                "dns" to mapOf("newSpeedTest" to mapOf("enabled" to true)),
             )))
         }
         assertEquals(4, failure.problems.size)
-        assertTrue(failure.problems.any { it.contains("server.whiteList") })
+        assertTrue(failure.problems.any { it.contains("server.unboundWhitelist") })
         assertTrue(failure.problems.any { it.contains("server.newFeature") })
-        assertTrue(failure.problems.any { it.contains("setting.timeoutMapping") })
-        assertTrue(failure.problems.any { it.contains("dns.speedTest") })
+        assertTrue(failure.problems.any { it.contains("setting.newTimeoutPolicy") })
+        assertTrue(failure.problems.any { it.contains("dns.newSpeedTest") })
     }
 
     @Test fun disabledUnboundFeaturesDoNotRequireAnImplementation() {
@@ -1101,15 +1099,11 @@ class NativeRuntimeIntegrationTest {
         }
     }
 
-    @Test fun retryBackupAndUnknownEntityCacheRemainRejectedBeforeTraffic() {
+    @Test fun unknownEntityCacheAndLegacyCacheCoercionRemainRejectedBeforeTraffic() {
         DnsPeer().use { dns ->
             Origin().use { origin ->
                 for ((rule, issue) in listOf(
-                    mapOf("cacheDays" to 1, "retry" to 2) to "retry",
-                    mapOf("cacheDays" to 1, "proxy" to "origin.test:${origin.port}",
-                        "backup" to listOf("backup.test:${origin.port}")) to "backup",
                     mapOf("cacheDays" to 1, "nativeMemoryCache" to true) to "nativeMemoryCache",
-                    mapOf("cacheDays" to 1, "script" to "https://script.test/asset.js") to "script",
                     mapOf("cacheDays" to 1, "cacheImmutable" to "false") to "cacheImmutable",
                 )) {
                     val failure = assertThrows(NativeRuntimeConfigurationException::class.java) {
@@ -1251,8 +1245,8 @@ class NativeRuntimeIntegrationTest {
                     assertEquals("window.bootstrap = true;", response.body)
                     assertEquals(listOf("ds_script"), response.head.headers.values("DS-Middleware"))
                 }
-                assertEquals(1L, runtime.routes.state().selections)
-                assertEquals(listOf("browser.test"), dns.questions)
+                assertEquals(0L, runtime.routes.state().selections)
+                assertTrue(dns.questions.isEmpty())
             }
         }
     }
@@ -1275,8 +1269,6 @@ class NativeRuntimeIntegrationTest {
             )
             val queriesBefore = dns.questions.size
             for (rule in listOf(
-                mapOf("script" to listOf("alpha")),
-                mapOf("tampermonkeyScript" to "alpha"),
                 mapOf("responseReplace" to mapOf("body" to "changed")),
             )) {
                 assertThrows(NativeRuntimeConfigurationException::class.java) {

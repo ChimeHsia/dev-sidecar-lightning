@@ -1,109 +1,58 @@
 # dev-sidecar-lightning
 
-把 [docmirror/dev-sidecar](https://github.com/docmirror/dev-sidecar) 的加速能力塞进 Android 浏览器：
-WebView 流量走本地 MITM 核心（127.0.0.1:31181），由核心做 DNS 优选、SNI 伪装与证书签发。
+把 [docmirror/dev-sidecar](https://github.com/docmirror/dev-sidecar) 的加速能力接入 Android 浏览器。WebView 通过本地代理（127.0.0.1:31181）访问网络，由 Kotlin 核心处理 DNS、MITM、SNI、ECH 和规则。
 
-外壳用 [Lightning Browser](https://github.com/anthonycr/Lightning-Browser)（MPL-2.0），核心是
-dev-sidecar 原版 Node 代码 + Termux 的 aarch64 Node 运行时，跑在 App 自己的进程里。
+浏览器外壳基于 [Lightning Browser](https://github.com/anthonycr/Lightning-Browser)（MPL-2.0）。当前产品直接运行原生 Kotlin/JVM 核心；APK 不再携带或启动 Node.js。
 
-## 状态
+## 当前状态（2026-11-08）
 
-✅ **可用**。荣耀 PPG-AN00 / Android 16 实测：
-
-- 核心 `127.0.0.1:31181` 正常监听，WebView 代理生效
-- `github.com/trending` 完整渲染，15 秒内核心收到 207 个请求
-- `www.google.com.hk` 走 MITM + SNI 伪装返回 200
-- APK 58MB（release，仅 arm64）
+- 已接通原生核心、普通/隐身进程服务绑定、配置继承和远程规则热更新。
+- 默认 56 组域名规则保留 ECH、脚本、备用目标；请求失败支持有界候选切换。
+- Release versionCode 103，APK 约 21.2 MiB，已检查不含 Node 负载及运行时。
+- 本轮主机测试和构建记录见 [原生迁移记录](docs/NATIVE-KOTLIN-MIGRATION-2026-11-08.md)。当前没有连接 Android 设备，原生包尚未完成 WebView/生命周期真机验收；旧 Node 包的设备结果只作为历史记录。
 
 ## 仓库结构
 
-```
-lightning-browser/   Lightning fork + DshaAccel 集成 —— 主产物（包名 top.panming.dsbrowser）
-app/ netcore/        早期自研壳与 netcore（纯 Kotlin 转发器），现作为参考实现与单测载体
-port/                dev-sidecar 移植工具链：asar 提取 / payload 打包 / payload 同步
-patches/             EinkBro 对照实验的改动补丁（对应源码未入库）
-```
-
-文档：
-
-| 文件 | 内容 |
+| 目录 | 用途 |
 |---|---|
-| `LIGHTNING.md` | **主线文档**：集成细节、三个致命坑、改动清单 |
-| `PORT.md` | 核心移植：Node 运行时怎么来、8 处必改点、真机验证 |
-| `KOTLIN-MIGRATION.md` | Kotlin 替代差距、首批可单测模块、接线边界与后续拆分 |
-| `EINKBRO.md` | 换壳对照实验记录（EinkBro 版，可用但未采用） |
+| `lightning-browser/` | 主产品，包名 top.panming.dsbrowser；native-core 模块直接编译共享网络源码 |
+| `netcore/` | 原生代理、DNS、TLS/ECH、证书、规则、配置和 JVM 回归 |
+| `app/、netcore-js/` | 早期参考壳与历史 Kotlin/JS 迁移路径 |
+| `port/` | 默认数据导出、历史 Node 构建工具与测试基线 |
+| `patches/` | 早期浏览器对照补丁 |
 
-## 从零构建
+## 构建
 
-payload（`libnodebin.so` 46MB + node libs 30MB）不进版本库，必须先重建：
+使用 JDK 21 和 Android SDK，配置本机 `gradle.properties` / `local.properties`。原生构建使用已提交的规则数据，无需生成或同步 Node payload。
+
 
 ```bash
-# 1) 编译共享 Kotlin 纯逻辑，供 Node 直接调用
-./build.sh :netcore-js:jsNodeProductionLibraryDistribution
-
-# 2) 生成 Node 运行时 + dev-sidecar 核心（需要本机装有 dev-sidecar）
-python port/build-payload.py --resources "D:/App/Net/dev-sidecar/resources"
-
-# 3) 同步进壳
-./port/sync-payload.sh
-
-# 4) 构建
 cd lightning-browser
-JAVA_HOME=../.jdk/jdk-21.0.2 ./gradlew assembleLightningPlusRelease
+./gradlew assembleLightningPlusRelease
+./gradlew testLightningPlusDebugUnitTest :native-core:lintRelease
 ```
 
-`build-payload.py` 里硬编码了 Termux 清华镜像的 deb 版本（node 24.22.1 + 7 个依赖），升级时改那几个常量。
+APK：`lightning-browser/app/build/outputs/apk/lightningPlus/release/app-lightningPlus-release.apk`。
 
-已有 payload 时，重新编译 Kotlin 后可用
-`python port/kotlin_payload.py app/src/main/assets/nodejs-project.zip` 更新脚本和编译产物，
-再运行同步脚本。域名单/多结果匹配、路径匹配、配置合并/清理、候选选择、
-请求纯字段变换和 NAT64 转换现由同一份 Kotlin 源码编译成 JS 后在 Node 内执行；
-MITM/TLS 仍由原版核心承担。细节及验证见 `KOTLIN-MIGRATION.md`。
+本地 CA 文件沿用现有开发配置且不入库；首次克隆须配置与 App 信任资源匹配的 CA。生成的 Node 二进制、归档、配置与 CA 私钥均不得提交。Release 当前使用 debug 签名，仅供本地使用。
 
-## 为什么和最初设想不一样
+## 测试
 
-项目起步时定过四条约束，后来全部推翻了。原因记在这里，避免重走一遍：
+完整原生 JVM 回归使用带独立 Go ECH 对端的入口：
 
-| 最初的决定 | 现在的做法 | 为什么改 |
-|---|---|---|
-| 不做 MITM、不装根证书 | 做 MITM，CA 打包进 APK 只让本 App 信任 | Google 只给 `CN=invalid.invalid` 诱饵证书，纯字节转发必然被拒 |
-| 不用 Node | 内嵌 Termux aarch64 Node 24 | 官方 nodejs-mobile 停在 Node 12，跑不了现代代码；先求功能完整再谈瘦身 |
-| 不二开现成浏览器 | fork Lightning Browser | 自研壳缺多标签/书签/历史，没有大量用户测不出来的问题太多 |
-| 与上游只有规则语义交集 | 直接移植整个核心 | 规则引擎只是冰山一角，SNI 伪装、IP 优选、ECH、证书管理都在核心里 |
 
-一条仍然成立的结论：**不能在链路上改写 TLS 字节**。SNI 参与握手 transcript，改字节会让 Finished 校验失败。
-回归测试见 `netcore/src/test/.../TlsClientHelloTest.kt`。
-
-## 回归基线
-
-Windows 下使用 PowerShell 统一运行测试：
-
-```powershell
-.\scripts\test-baseline.ps1 -Suite All
-# 依赖已缓存时可加 -Offline；也可单独选择 Node、Netcore 或 Browser
+```bash
+python scripts/test-native-core.py --java-home <jdk21> --conscrypt-jar <conscrypt-openjdk-uber-2.8.0.jar> --go-exe <go>
+python scripts/verify-native-browser-apk.py --apk lightning-browser/app/build/outputs/apk/lightningPlus/release/app-lightningPlus-release.apk
 ```
 
-Node 测试验证当前 Android 核心入口的启动契约；Netcore 测试保护参考实现的
-规则、DNS、HTTP 和 TLS 行为；Browser 运行 Lightning 现有 JVM 测试。
-它们不能替代真机上的 WebView、证书和代理验收。
-真机检查步骤、证据采集命令和迁移顺序见 [回归指南](docs/REGRESSION.md)。
+依赖需预先下载到 Gradle 缓存，Go 需支持 TLS ECH。浏览器 JVM 测试和 APK 检查不能代替真机页面、证书与服务生命周期验证，步骤见 [回归指南](docs/REGRESSION.md)。
 
-第二波纯模块使用 `.\scripts\test-migration-wave2.ps1 -Offline` 验证；
-接入范围、运行时适配测试和保留的上游职责见 [第二波迁移记录](docs/MIGRATION-WAVE2.md)。
+## 文档与边界
 
-## 已知问题
-
-- **代理端口 31181 会被抢占**：多个测试包（`com.dsha.sidecar` / `top.panming.dsbrowser` / EinkBro 版）同时装时，
-  先启动的占住端口，后启动的核心报 `EADDRINUSE` 秒退。测试前 `adb shell am force-stop` 其它包。
-- **release 看不到核心日志**：`proguard-project.txt` 里有 `-assumenosideeffects`，`Log.i/d/v` 全被裁。
-  排查时关掉混淆或改用 `Log.e`。
-- **`www.google.com` 会 302 到 `google.cn` 再 404**：这是 Google 按出口 IP 的地域重定向，不是代理问题。
-  用 `www.google.com.hk`。
-- **APK 58MB**：46MB 是 Node 运行时。瘦身需要把核心重写成 Kotlin——那是下一步的事。
-
-## 环境注意
-
-- 构建使用标准 OpenJDK 21，通过 `JAVA_HOME`、IDE 的 Gradle JDK 或命令行 `-Dorg.gradle.java.home=<JDK 路径>` 指定；仓库不固定本机 JDK 目录。PowerShell 测试脚本通过 `-JavaHome` 或 `-Java` 显式指定 JDK 目录或 Java 可执行文件。
-- 本机 git 走 dev-sidecar 的 HTTPS 代理（`127.0.0.1:31182`），且需要
-  `git config --global http.schannelCheckRevoke false`——MITM 证书没法查吊销，schannel 会直接拒绝握手。
-- 仓库地址：<https://github.com/ChimeHsia/dev-sidecar-lightning>（private）
+- [当前原生迁移记录](docs/NATIVE-KOTLIN-MIGRATION-2026-11-08.md)：接入范围、测试、产物与限制。
+- [Lightning 集成记录](LIGHTNING.md)：当前入口及早期浏览器问题。
+- [历史差距分析](KOTLIN-MIGRATION.md)、[历史 Node 移植](PORT.md)：早期实现背景。
+- 桌面 PAC、系统代理安装、插件运行时和 cloudflareRoute 未启用；启用未实现选项时配置会明确拒绝。
+- 缓存规则保持上游 304/响应头语义，不提供内存实体缓存。ECH 失败保持拒绝；浏览器对旧 SNI 规则显式保留原有上游 TLS 兼容策略，独立核心默认严格校验。
+- 本地 31181 端口被其他测试包占用时核心启动失败；设备测试前检查并停止冲突包。

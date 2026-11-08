@@ -3,6 +3,7 @@ package com.dsha.sidecar.net.proxy.native
 import com.dsha.sidecar.net.proxy.http.*
 import com.dsha.sidecar.net.proxy.tls.LeafCertificateCache
 import java.io.Closeable
+import java.io.ByteArrayOutputStream
 import java.io.FilterOutputStream
 import java.io.IOException
 import java.io.InputStream
@@ -341,6 +342,8 @@ class NativeProxyServer(
             } catch (_: Exception) {
                 error(output, 502)
                 return
+            } finally {
+                runCatching { exchangePolicy.onExchangeComplete() }
             }
         }
     }
@@ -363,6 +366,8 @@ class NativeProxyServer(
         val upstreamRaw = AtomicReference<Socket?>()
         val writingClient = AtomicBoolean()
         val timedOut = AtomicBoolean()
+        val exchangeExpired = AtomicBoolean()
+        val bufferingUpload = AtomicBoolean()
         val clientOutput = object : FilterOutputStream(output) {
             override fun write(value: Int) {
                 writingClient.set(true)
@@ -379,14 +384,15 @@ class NativeProxyServer(
         }
         // The response worker remains free to send a timeout while the upload helper is blocked.
         val deadline = timer!!.schedule({
+            exchangeExpired.set(true)
             timedOut.set(true)
             upstreamRaw.get()?.let { runCatching { it.close() } }
-            if (writingClient.get()) runCatching { scope.downstream.close() }
+            if (writingClient.get() || bufferingUpload.get()) runCatching { scope.downstream.close() }
         }, options.exchangeTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
         try {
             var transformed: Http1RequestHead
             var checked: NativeProxyRequest
-            val outgoing: Http1RequestHead
+            var outgoing: Http1RequestHead
             try {
                 transformed = transformer.transform(validated)
                 checked = validateRequest(transformed, validated.connectAuthority)
@@ -430,115 +436,172 @@ class NativeProxyServer(
             val persistent = !last &&
                 Http1Persistence.isPersistent(request.head.version, request.head.headers) &&
                 Http1Persistence.isPersistent(transformed.version, transformed.headers)
-            val route = decision.route ?: resolver.resolve(checked)
-            if (checked.secure && route.tls == null) throw IOException("HTTPS route requires explicit TLS policy")
-            val raw = scope.open(route) { upstreamRaw.set(it) }
-            if (timedOut.get()) throw SocketTimeoutException("Exchange deadline")
-            val upstream = route.tls?.let { policy ->
-                val handshakeExpired = AtomicBoolean()
-                val abort = timer!!.schedule({
-                    handshakeExpired.set(true)
-                    runCatching { raw.close() }
-                }, options.handshakeTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
+            var route = decision.route ?: resolver.resolve(checked)
+            val bodyLimit = exchangePolicy.replayBodyLimit(checked).coerceIn(0, 1_048_576)
+            val fixedBody = request.framing as? Http1BodyFraming.Fixed
+            val bufferedBody = if (fixedBody != null && fixedBody.length > 0 &&
+                fixedBody.length <= bodyLimit && !negotiation.expectContinue && negotiation.upgrade == null) {
+                bufferingUpload.set(true)
                 try {
-                    tlsConnector.connect(raw, policy, options.handshakeTimeoutMillis)
-                } catch (failure: Exception) {
-                    if (handshakeExpired.get()) throw SocketTimeoutException("TLS handshake deadline")
-                    throw failure
-                } finally {
-                    abort.cancel(false)
-                }
-            } ?: raw
-            upstream.soTimeout = options.readTimeoutMillis
-            val upstreamOutput = upstream.getOutputStream()
-            Http1HeadCodec.writeRequest(upstreamOutput, outgoing, options.limits)
-            upstreamOutput.flush()
-            val wait = NativeResponseWait(upstream, raw, timer!!, options.readTimeoutMillis, timedOut,
-                hasRequestBody(request.framing), negotiation.expectContinue)
-            responseWait = wait
-            if (hasRequestBody(request.framing)) {
-                upload = NativeUpload(downstream, upstreamOutput, raw, helpers!!,
-                    negotiation.expectContinue, wait::bodyFinished)
-            } else {
-                downstream.transferBody(DISCARD)
-            }
-            val responses = Http1Reader(upstream.getInputStream(), options.limits)
-            val attempt = NativeUpstreamAttempt(responses, wait) { scope.drop(raw) }
-            upstreamAttempt = attempt
-            var informational = 0
-            while (true) {
-                val upstreamResponse = attempt.readHead(transformed.method)
-                val response = policyResponse(checked, upstreamResponse)
-                if (timedOut.get()) throw SocketTimeoutException("Response head deadline")
-                upload?.throwClientFailure()
-                if (response.head.status == 101) {
-                    validateUpstreamUpgrade(response, negotiation.upgrade)
-                    upload?.settleFinalResponse()
-                    if (upload?.bodyComplete?.get() == false) {
-                        throw NativeUpstreamFailure("Upstream upgraded before request body completed")
-                    }
-                    upload?.await(options.stopTimeoutMillis)
-                    val head = response.head.copy(headers = Http1Headers(
-                        hopHeaders(response.head.headers, client = false, upgrade = true).fields +
-                            Http1Header("Connection", " Upgrade")))
-                    Http1HeadCodec.writeResponse(DISCARD, head, transformed.method, options.limits)
+                    ByteArrayOutputStream(fixedBody.length.toInt()).also { downstream.transferBody(it) }.toByteArray()
+                } finally { bufferingUpload.set(false) }
+            } else null
+            var downstreamConsumed = bufferedBody != null
+            var retries = 0
+            var informationalCommitted = false
+            attempts@ while (true) {
+                var receivedFinal = false
+                try {
+                    if (checked.secure && route.tls == null && !route.permitsPlaintext) throw IOException("HTTPS route requires explicit TLS policy")
+                    val raw = scope.open(route) { upstreamRaw.set(it) }
                     if (timedOut.get()) throw SocketTimeoutException("Exchange deadline")
-                    wait.close()
-                    duplex(scope, downstream.handoff(), clientOutput, responses.handoff(),
-                        upstreamOutput, clientSocket, upstream) {
-                        committed = true
-                        Http1HeadCodec.writeResponse(clientOutput, head, transformed.method, options.limits)
-                        clientOutput.flush()
-                        deadline.cancel(false)
-                        if (timedOut.get()) throw SocketTimeoutException("Upgrade handshake deadline")
+                    val upstream = route.tls?.let { policy ->
+                        val handshakeExpired = AtomicBoolean()
+                        val abort = timer!!.schedule({
+                            handshakeExpired.set(true)
+                            runCatching { raw.close() }
+                        }, options.handshakeTimeoutMillis.toLong(), TimeUnit.MILLISECONDS)
+                        try {
+                            tlsConnector.connect(raw, policy, options.handshakeTimeoutMillis)
+                        } catch (failure: Exception) {
+                            if (handshakeExpired.get()) throw SocketTimeoutException("TLS handshake deadline")
+                            throw failure
+                        } finally {
+                            abort.cancel(false)
+                        }
+                    } ?: raw
+                    upstream.soTimeout = options.readTimeoutMillis
+                    val upstreamOutput = upstream.getOutputStream()
+                    Http1HeadCodec.writeRequest(upstreamOutput, outgoing, options.limits)
+                    upstreamOutput.flush()
+                    val wait = NativeResponseWait(upstream, raw, timer!!, options.readTimeoutMillis, timedOut,
+                        hasRequestBody(request.framing), negotiation.expectContinue)
+                    responseWait = wait
+                    if (bufferedBody != null) {
+                        upstreamOutput.write(bufferedBody)
+                        upstreamOutput.flush()
+                        wait.bodyFinished()
+                    } else if (hasRequestBody(request.framing)) {
+                        upload = NativeUpload(downstream, upstreamOutput, raw, helpers!!,
+                            negotiation.expectContinue, wait::bodyFinished)
+                    } else if (!downstreamConsumed) {
+                        downstream.transferBody(DISCARD)
+                        downstreamConsumed = true
                     }
-                    return false
-                }
-                if (response.framing == Http1BodyFraming.Handoff) throw NativeUpstreamFailure("Unexpected handoff")
-                val interim = response.head.status in 100..199
-                if (interim && ++informational > 16) throw IOException("Too many informational responses")
-                if (!interim) {
-                    upload?.settleFinalResponse()
-                    upload?.throwClientFailure()
-                    abandonUpload = upload?.bodyComplete?.get() == false
-                    if (abandonUpload) upload?.cancel()
-                    val entity = NativeResponseEntityReader(responses, response.framing, options.limits.maxBodyBytes)
-                    val prepared = exchangePolicy.onResponseEntity(checked, response.head, entity)
-                    if (prepared != null) {
-                        val head = preparedResponse(request.head, response.head, prepared, entity.complete)
+                    val responses = Http1Reader(upstream.getInputStream(), options.limits)
+                    val attempt = NativeUpstreamAttempt(responses, wait) { scope.drop(raw) }
+                    upstreamAttempt = attempt
+                    var informational = 0
+                    while (true) {
+                        val upstreamResponse = attempt.readHead(transformed.method)
+                        if (upstreamResponse.head.status >= 200 && !informationalCommitted &&
+                            negotiation.upgrade == null && (!hasRequestBody(request.framing) || bufferedBody != null)) {
+                            val next = exchangePolicy.retry(checked, route, retries, status = upstreamResponse.head.status)
+                            if (next != null) {
+                                if (++retries > 16) throw NativeUpstreamFailure("Retry limit exceeded")
+                                attempt.close()
+                                upstreamAttempt = null
+                                responseWait = null
+                                checked = trustedForward(checked, request, negotiation, next)
+                                transformed = checked.head
+                                outgoing = retryHead(checked, outgoing)
+                                route = next.route ?: resolver.resolve(checked)
+                                continue@attempts
+                            }
+                        }
+                        if (upstreamResponse.head.status >= 200) receivedFinal = true
+                        val response = policyResponse(checked, upstreamResponse)
+                        if (timedOut.get()) throw SocketTimeoutException("Response head deadline")
+                        upload?.throwClientFailure()
+                        if (response.head.status == 101) {
+                            validateUpstreamUpgrade(response, negotiation.upgrade)
+                            upload?.settleFinalResponse()
+                            if (upload?.bodyComplete?.get() == false) {
+                                throw NativeUpstreamFailure("Upstream upgraded before request body completed")
+                            }
+                            upload?.await(options.stopTimeoutMillis)
+                            val head = response.head.copy(headers = Http1Headers(
+                                hopHeaders(response.head.headers, client = false, upgrade = true).fields +
+                                    Http1Header("Connection", " Upgrade")))
+                            Http1HeadCodec.writeResponse(DISCARD, head, transformed.method, options.limits)
+                            if (timedOut.get()) throw SocketTimeoutException("Exchange deadline")
+                            wait.close()
+                            duplex(scope, downstream.handoff(), clientOutput, responses.handoff(),
+                                upstreamOutput, clientSocket, upstream) {
+                                committed = true
+                                Http1HeadCodec.writeResponse(clientOutput, head, transformed.method, options.limits)
+                                clientOutput.flush()
+                                deadline.cancel(false)
+                                if (timedOut.get()) throw SocketTimeoutException("Upgrade handshake deadline")
+                            }
+                            return false
+                        }
+                        if (response.framing == Http1BodyFraming.Handoff) throw NativeUpstreamFailure("Unexpected handoff")
+                        val interim = response.head.status in 100..199
+                        if (interim && ++informational > 16) throw IOException("Too many informational responses")
+                        if (!interim) {
+                            upload?.settleFinalResponse()
+                            upload?.throwClientFailure()
+                            abandonUpload = upload?.bodyComplete?.get() == false
+                            if (abandonUpload) upload?.cancel()
+                            val entity = NativeResponseEntityReader(responses, response.framing, options.limits.maxBodyBytes)
+                            val prepared = exchangePolicy.onResponseEntity(checked, response.head, entity)
+                            if (prepared != null) {
+                                val head = preparedResponse(request.head, response.head, prepared, entity.complete)
+                                if (timedOut.get()) throw SocketTimeoutException("Exchange deadline")
+                                committed = true
+                                Http1HeadCodec.writeResponse(clientOutput, head, transformed.method, options.limits)
+                                clientOutput.write(prepared.body)
+                                clientOutput.flush()
+                                if (!abandonUpload) upload?.await(options.stopTimeoutMillis)
+                                return false
+                            }
+                            if (entity.consumed) throw NativeUpstreamFailure("Consumed response cannot stream unchanged")
+                        }
+                        val decode = request.head.version == "HTTP/1.0" && response.framing == Http1BodyFraming.Chunked
+                        val close = !persistent || abandonUpload || decode ||
+                            response.framing == Http1BodyFraming.CloseDelimited
+                        var responseHeaders = hopHeaders(response.head.headers, client = false).fields
+                        if (decode) responseHeaders = responseHeaders.filterNot {
+                            it.name.equals("Transfer-Encoding", true) || it.name.equals("Trailer", true)
+                        }
+                        if (!interim) responseHeaders = responseHeaders +
+                            Http1Header("Connection", if (close) " close" else " keep-alive")
+                        val head = response.head.copy(version = request.head.version, headers = Http1Headers(responseHeaders))
                         if (timedOut.get()) throw SocketTimeoutException("Exchange deadline")
-                        committed = true
+                        Http1HeadCodec.writeResponse(DISCARD, head, transformed.method, options.limits)
+                        if (!interim) committed = true
+                        else informationalCommitted = true
                         Http1HeadCodec.writeResponse(clientOutput, head, transformed.method, options.limits)
-                        clientOutput.write(prepared.body)
+                        responses.transferBody(clientOutput, if (decode) Http1ChunkMode.DECODE else Http1ChunkMode.PRESERVE)
                         clientOutput.flush()
-                        if (!abandonUpload) upload?.await(options.stopTimeoutMillis)
-                        return false
+                        if (response.head.status == 100) {
+                            wait.continued()
+                            upload?.allowBody()
+                        }
+                        if (!interim) {
+                            if (!abandonUpload) upload?.await(options.stopTimeoutMillis)
+                            return !close
+                        }
                     }
-                    if (entity.consumed) throw NativeUpstreamFailure("Consumed response cannot stream unchanged")
-                }
-                val decode = request.head.version == "HTTP/1.0" && response.framing == Http1BodyFraming.Chunked
-                val close = !persistent || abandonUpload || decode ||
-                    response.framing == Http1BodyFraming.CloseDelimited
-                var responseHeaders = hopHeaders(response.head.headers, client = false).fields
-                if (decode) responseHeaders = responseHeaders.filterNot {
-                    it.name.equals("Transfer-Encoding", true) || it.name.equals("Trailer", true)
-                }
-                if (!interim) responseHeaders = responseHeaders +
-                    Http1Header("Connection", if (close) " close" else " keep-alive")
-                val head = response.head.copy(version = request.head.version, headers = Http1Headers(responseHeaders))
-                if (timedOut.get()) throw SocketTimeoutException("Exchange deadline")
-                Http1HeadCodec.writeResponse(DISCARD, head, transformed.method, options.limits)
-                if (!interim) committed = true
-                Http1HeadCodec.writeResponse(clientOutput, head, transformed.method, options.limits)
-                responses.transferBody(clientOutput, if (decode) Http1ChunkMode.DECODE else Http1ChunkMode.PRESERVE)
-                clientOutput.flush()
-                if (response.head.status == 100) {
-                    wait.continued()
-                    upload?.allowBody()
-                }
-                if (!interim) {
-                    if (!abandonUpload) upload?.await(options.stopTimeoutMillis)
-                    return !close
+                } catch (failure: Exception) {
+                    if (committed || informationalCommitted || receivedFinal || exchangeExpired.get() ||
+                        state != NativeProxyState.LISTENING || negotiation.upgrade != null ||
+                        hasRequestBody(request.framing) && bufferedBody == null ||
+                        failure is NativeClientFailure || Thread.currentThread().isInterrupted) throw failure
+                    val next = exchangePolicy.retry(checked, route, retries, failure = failure) ?: throw failure
+                    if (exchangeExpired.get()) throw SocketTimeoutException("Exchange deadline")
+                    timedOut.set(false)
+                    if (++retries > 16) throw failure
+                    upstreamAttempt?.close()
+                    responseWait?.close()
+                    upstreamRaw.getAndSet(null)?.let(scope::drop)
+                    upstreamAttempt = null
+                    responseWait = null
+                    checked = trustedForward(checked, request, negotiation, next)
+                    transformed = checked.head
+                    outgoing = retryHead(checked, outgoing)
+                    route = next.route ?: resolver.resolve(checked)
                 }
             }
         } catch (failure: Exception) {
@@ -572,8 +635,21 @@ class NativeProxyServer(
         }
     }
 
+    private fun retryHead(request: NativeProxyRequest, previous: Http1RequestHead): Http1RequestHead {
+        val target = when (val value = request.head.target) {
+            is Http1Target.Absolute -> Http1Target.Origin(value.originForm)
+            else -> value
+        }
+        val fields = hopHeaders(request.head.headers, client = true).fields.filterNot {
+            it.name.equals("Host", true) || it.name.equals("Connection", true)
+        } + Http1Header("Host", " ${request.authority.wire}") + Http1Header("Connection", " close")
+        return previous.copy(target = target, headers = Http1Headers(fields))
+    }
+
     private fun requestDecision(request: NativeProxyRequest): NativeRequestDecision = try {
         exchangePolicy.onRequest(request)
+    } catch (failure: SocketTimeoutException) {
+        throw failure
     } catch (failure: Exception) {
         throw NativeUpstreamFailure("Request policy failed", failure)
     }

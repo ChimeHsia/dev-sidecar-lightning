@@ -6,38 +6,30 @@ import android.webkit.WebView
 import androidx.webkit.ProxyConfig
 import androidx.webkit.ProxyController
 import androidx.webkit.WebViewFeature
-import java.io.BufferedReader
 import java.io.File
-import java.io.InputStreamReader
 import java.util.concurrent.Executors
+import com.dsha.sidecar.net.config.native.*
+import com.dsha.sidecar.net.proxy.native.NativeProxyOptions
+import com.dsha.sidecar.net.proxy.tls.MitmCertificateAuthority
+import com.dsha.sidecar.net.runtime.*
+import android.content.ComponentName
+import android.content.Intent
+import android.content.ServiceConnection
+import android.os.IBinder
 
 /**
- * 内嵌 dev-sidecar 核心：在本进程里拉起 Node（aarch64 ELF），
- * 再把 WebView 的流量指向它的 MITM 端口（127.0.0.1:31181）。
- *
- * 为什么是 MITM 而不是纯转发：Google 这类站点的 DNS 被投毒、可连的 IP 只给
- * 诱饵证书（CN=invalid.invalid），纯字节转发必然被浏览器拒绝；只有自己签发证书
- * 才能接住（CA 打包在 APK 内，只被本 App 的 network-security-config 信任）。
- *
- * 关键约束：
- * - `ProxyController` 是**进程级**的，一个进程调一次即对全部 WebView 生效。
- * - WebView 进程（`:incognito`）不重复拉 Node，只设代理指向主进程已开好的端口。
- * - Node 二进制必须以 `libnodebin.so` 放在 jniLibs（Android 10+ 只允许从
- *   nativeLibraryDir 执行文件），依赖库靠 LD_LIBRARY_PATH 指过去。
+ * Kotlin MITM runtime owned by the main process and a bound service.
+ * Each WebView process installs its own override; incognito binds the main-process owner.
  */
 object DshaAccel {
 
     private const val TAG = "dsha-accel"
     private const val PORT = 31181
-    private const val MARKER_READY = "[android] READY 127.0.0.1:$PORT"
-    private const val MARKER_FAILED = "[android] FAILED"
-    /** 负载版本：改了 assets 里的 zip 就 +1，保证升级后会重新解压。 */
-    private const val PAYLOAD_VERSION = "12"
 
     @Volatile
     private var started = false
 
-    /** 只在 node 就绪后置 true；代理本身可重复设置（WebView 每建一个都补一次）。 */
+    /** Binding and WebView callbacks must both finish before releasing initial navigation. */
     @Volatile
     private var coreReady = false
 
@@ -47,7 +39,9 @@ object DshaAccel {
     @Volatile
     private var activeToken = 0L
 
-    private var process: Process? = null
+    private var runtime: NativeRuntime? = null
+    private var ownerConnection: ServiceConnection? = null
+    private var remoteFetcher: HttpsRemoteConfigFetcher? = null
 
     @Volatile
     private var appContext: Context? = null
@@ -65,7 +59,7 @@ object DshaAccel {
         }
     }
 
-    /** 主进程调用：解压资源 → 起 Node → 等就绪 → 设代理。 */
+    /** Main process: construct the native runtime, bind, then install the WebView override. */
     @Synchronized
     fun start(context: Context) {
         if (started) return
@@ -75,14 +69,22 @@ object DshaAccel {
         val token = startupGate.begin()
         activeToken = token
         appContext = context.applicationContext
+        bindOwner(context.applicationContext)
         Thread({ boot(context.applicationContext, token) }, "dsha-boot").start()
     }
 
     /**
-     * WebView 子进程调用：核心已在主进程跑好，这里只需要把本进程的 WebView 指过去。
-     * 子进程里 `start()` 会拉 Node，那是错的，所以单独开一个入口。
+     * The service starts/retains the main process even when incognito is opened independently.
      */
+    @Synchronized
     fun attachProxyOnly(context: Context) {
+        appContext = context.applicationContext
+        if (!started) {
+            started = true
+            ownsCore = false
+            activeToken = startupGate.begin()
+        }
+        bindOwner(context.applicationContext)
         ensureProxy(context)
     }
 
@@ -90,14 +92,44 @@ object DshaAccel {
         try {
             synchronized(preparationLock) {
                 if (!isActive(token)) return
-                prepare(context)
+                val defaults = context.assets.open("native/default-config.json").bufferedReader().use { it.readText() }
+                val store = NativeCoreConfigStore(File(context.filesDir, "native-sidecar"),
+                    File(context.filesDir, "nodejs-project/home/.dev-sidecar"))
+                val config = store.load(defaults)
+                val authority = MitmCertificateAuthority.fromPem(
+                    context.assets.open("dsha_ca.crt").bufferedReader().use { it.readText() },
+                    context.assets.open("dsha_ca.key.pem").bufferedReader().use { it.readText() })
+                val navigation = NativeNavigationRuleStore(
+                    context.assets.open("native/navigation-rules.json").bufferedReader().use { it.readText() },
+                    File(context.getExternalFilesDir(null) ?: context.filesDir, "navigation-rules.json"))
+                val native = NativeRuntime(config, authority, NativeRuntimeOptions(
+                    proxy = NativeProxyOptions(port = PORT, workers = 24, queuedConnections = 96,
+                        connectTimeoutMillis = 4_000, handshakeTimeoutMillis = 6_000,
+                        readTimeoutMillis = 20_000, exchangeTimeoutMillis = 60_000),
+                    allowSystemDnsFallback = true, legacyTlsCompatibility = true),
+                    navigationRules = navigation::getRules)
+                synchronized(this) {
+                    if (!isActive(token)) { native.close(); return }
+                    runtime = native
+                }
+                native.start()
+                synchronized(this) {
+                    if (!isActive(token)) { native.close(); return }
+                    coreReady = true
+                }
+                Log.i(TAG, "[android] READY Kotlin 127.0.0.1:$PORT")
+                refreshProxy(context, token)
+                refreshRemote(store, defaults, token, authority)
             }
-            if (isActive(token)) launchNode(context, token)
         } catch (e: Throwable) {
             Log.e(TAG, "核心启动失败", e)
             failAttempt(token)
         }
     }
+
+    @Synchronized
+    internal fun isNativeOwnerReady(): Boolean = ownsCore && coreReady &&
+        runtime?.state == com.dsha.sidecar.net.runtime.NativeRuntimeState.LISTENING
 
     @Synchronized
     private fun isActive(token: Long): Boolean = started && activeToken == token
@@ -108,67 +140,96 @@ object DshaAccel {
         coreReady = false
         started = false
         startupGate.fail(token)
-        process?.destroy()
-        process = null
+        remoteFetcher?.close()
+        remoteFetcher = null
+        val previous = runtime
+        runtime = null
+        if (previous != null) Thread({ previous.close() }, "dsha-close").start()
     }
 
-    private fun launchNode(context: Context, token: Long) {
-        val root = File(context.filesDir, "node")
-        val projectDir = File(context.filesDir, "nodejs-project")
-        val homeDir = File(projectDir, "home")
-
-        val nodeBin = File(context.applicationInfo.nativeLibraryDir, "libnodebin.so")
-        if (!nodeBin.exists()) {
-            Log.e(TAG, "缺少 node 可执行文件：${nodeBin.absolutePath}")
-            failAttempt(token)
-            return
-        }
-
-        val pb = ProcessBuilder(nodeBin.absolutePath, "main.js")
-            .directory(projectDir)
-            .redirectErrorStream(true)
-        pb.environment().apply {
-            put("LD_LIBRARY_PATH", root.absolutePath)
-            put("HOME", homeDir.absolutePath)
-            put("TMPDIR", context.cacheDir.absolutePath)
-            put("SSL_CERT_FILE", File(root, "cacert.pem").absolutePath)
-            put("NODE_EXTRA_CA_CERTS", File(root, "cacert.pem").absolutePath)
-            put("DSHA_PORT", PORT.toString())
-            put("DSHA_NAVIGATION_CONFIG", File(
-                context.getExternalFilesDir(null) ?: context.filesDir,
-                "navigation-rules.json"
-            ).absolutePath)
-        }
-
-        val p = pb.start()
-        synchronized(this) {
-            if (!isActive(token)) {
-                p.destroy()
-                return
-            }
-            process = p
-        }
-        Log.i(TAG, "node 已启动")
-
-        try {
-            BufferedReader(InputStreamReader(p.inputStream)).useLines { lines ->
-                lines.forEach { line ->
-                    Log.i(TAG, line)
-                    if (line.startsWith(MARKER_FAILED)) {
-                        failAttempt(token)
-                    } else if (line == MARKER_READY && isActive(token)) {
-                        synchronized(this) {
-                            if (isActive(token)) coreReady = true
+    @Synchronized
+    private fun bindOwner(context: Context) {
+        if (ownerConnection != null) return
+        val connection = object : ServiceConnection {
+            override fun onServiceConnected(name: ComponentName, service: IBinder) {
+                if (ownsCore) return
+                val token = activeToken
+                Thread({
+                    val until = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(15)
+                    while (isActive(token) && System.nanoTime() < until) {
+                        val listening = runCatching {
+                            NativeProxyService.isReady(service)
+                        }.getOrDefault(false)
+                        if (listening) {
+                            synchronized(this@DshaAccel) {
+                                if (!isActive(token)) return@Thread
+                                coreReady = true
+                            }
+                            refreshProxy(context, token)
+                            return@Thread
                         }
-                        appContext?.let { refreshProxy(it, token) }
+                        Thread.sleep(100)
+                    }
+                    failAttempt(token)
+                }, "dsha-attach").start()
+            }
+
+            override fun onServiceDisconnected(name: ComponentName) {
+                if (!ownsCore) failAttempt(activeToken)
+            }
+        }
+        ownerConnection = connection
+        if (!context.bindService(Intent(context, NativeProxyService::class.java), connection, Context.BIND_AUTO_CREATE)) {
+            ownerConnection = null
+            if (!ownsCore) failAttempt(activeToken)
+        }
+    }
+
+    private fun refreshRemote(store: NativeCoreConfigStore, defaults: String, token: Long,
+        authority: MitmCertificateAuthority) {
+        Thread({
+            val keyStore = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType()).apply {
+                load(null, null)
+                setCertificateEntry("browser-proxy", authority.certificate)
+            }
+            val managers = javax.net.ssl.TrustManagerFactory.getInstance(
+                javax.net.ssl.TrustManagerFactory.getDefaultAlgorithm()).apply { init(keyStore) }
+            val context = javax.net.ssl.SSLContext.getInstance("TLS").apply {
+                init(null, managers.trustManagers, null)
+            }
+            val fetcher = HttpsRemoteConfigFetcher(HttpsConfigLimits(
+                connectTimeoutMillis = 4_000, readTimeoutMillis = 6_000, totalTimeoutMillis = 10_000),
+                java.net.Proxy(java.net.Proxy.Type.HTTP, java.net.InetSocketAddress("127.0.0.1", PORT)), context)
+            synchronized(this) {
+                if (!isActive(token)) { fetcher.close(); return@Thread }
+                remoteFetcher = fetcher
+            }
+            try {
+                val downloads = linkedMapOf<String, ByteArray>()
+                val result = store.repository().reloadWithFetcher(store.documents(defaults),
+                    RemoteConfigFetcher { address, maximum ->
+                        fetcher.fetch(address, maximum).also { bytes ->
+                            downloads[if (address.channel == RemoteChannel.PERSONAL)
+                                "remote_config_personal.json5" else "remote_config.json5"] = bytes
+                        }
+                    })
+                synchronized(preparationLock) {
+                    if (isActive(token) && result is ConfigUpdate.Applied) {
+                        val updated = NativeRuntimeConfig.decode(result.snapshot.configuration)
+                        runtime?.reconfigure(updated)
+                        downloads.forEach { (name, bytes) -> store.write(name, bytes) }
+                        if (downloads.isNotEmpty()) Log.i(TAG, "原生远程规则已更新并缓存，当前请求继续使用原规则")
+                    } else if (result is ConfigUpdate.Rejected) {
+                        Log.w(TAG, "远程规则更新被拒绝，保留当前规则: ${result.error}")
                     }
                 }
+            } catch (failure: Exception) {
+                Log.w(TAG, "远程规则刷新失败，保留当前规则", failure)
+            } finally {
+                synchronized(this) { if (remoteFetcher === fetcher) remoteFetcher = null }
+                fetcher.close()
             }
-        } catch (e: Throwable) {
-            Log.w(TAG, "读取 node 输出中断: ${e.message}")
-        }
-        failAttempt(token)
-        Log.w(TAG, "node 已退出 code=${runCatching { p.waitFor() }.getOrNull()}")
+        }, "dsha-config").start()
     }
 
     /**
@@ -219,41 +280,12 @@ object DshaAccel {
         }
     }
 
-    /** 首次启动解压 assets（用标记文件避免重复解压）。 */
-    private fun prepare(context: Context) {
-        val root = File(context.filesDir, "node").apply { mkdirs() }
-        val projectDir = File(context.filesDir, "nodejs-project").apply { mkdirs() }
-        val homeDir = File(projectDir, "home").apply { mkdirs() }
-
-        unzipAsset(context, "node-libs.zip", root)
-        unzipAsset(context, "nodejs-project.zip", projectDir)
-
-        // Termux 的 openssl 默认证书路径不存在，用自带证书包兜底
-        val ca = File(root, "cacert.pem")
-        if (!ca.exists()) copyAsset(context, "cacert.pem", ca)
-
-        // 用打包时固定的 CA 覆盖核心自签的那张：只有这张被 network-security-config
-        // 信任，否则 WebView 会报 ERR_CERT_AUTHORITY_INVALID
-        val dsDir = File(homeDir, ".dev-sidecar").apply { mkdirs() }
-        copyAsset(context, "dsha_ca.crt", File(dsDir, "dev-sidecar.ca.crt"))
-        copyAsset(context, "dsha_ca.key.pem", File(dsDir, "dev-sidecar.ca.key.pem"))
-    }
-
-    private fun copyAsset(context: Context, name: String, dest: File) {
-        context.assets.open(name).use { input -> dest.outputStream().use { input.copyTo(it) } }
-    }
-
-    private fun unzipAsset(context: Context, name: String, dest: File) {
-        val start = System.currentTimeMillis()
-        val count = PayloadExtractor.extract(name, PAYLOAD_VERSION, dest) {
-            context.assets.open(name)
-        } ?: return
-        Log.i(TAG, "解压 $name → ${dest.name}，$count 个文件，${System.currentTimeMillis() - start}ms")
-    }
-
     @Synchronized
     fun stop() {
         ownsCore = false
         failAttempt(activeToken)
+        val connection = ownerConnection
+        ownerConnection = null
+        if (connection != null) appContext?.let { runCatching { it.unbindService(connection) } }
     }
 }

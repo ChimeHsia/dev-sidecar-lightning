@@ -21,6 +21,21 @@ interface NativeExchangePolicy {
         entity: NativeResponseEntity,
     ): NativePreparedResponse? = null
 
+    /** Called only before any response bytes and only for a replayable request. */
+    fun retry(
+        request: NativeProxyRequest,
+        previous: NativeProxyRoute,
+        retries: Int,
+        failure: Exception? = null,
+        status: Int? = null,
+    ): NativeRequestDecision.Forward? = null
+
+    /** An explicit rule may authorize buffering a small fixed-length upload for replay. */
+    fun replayBodyLimit(request: NativeProxyRequest): Int = 0
+
+    /** Always called after an accepted request, including failures, tunnels and prepared bodies. */
+    fun onExchangeComplete() = Unit
+
     companion object {
         val Passthrough: NativeExchangePolicy = object : NativeExchangePolicy {}
     }

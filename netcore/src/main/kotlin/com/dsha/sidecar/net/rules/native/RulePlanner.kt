@@ -67,7 +67,7 @@ class RulePlanner(layers: List<Map<String, Any?>>) {
         port: Int = if (scheme == "https") 443 else 80,
     ): RequestPlan = plan(RuleRequest(host, path, method, headers, scheme, port))
 
-    fun plan(request: RuleRequest): RequestPlan {
+    fun plan(request: RuleRequest, backupTarget: String? = null): RequestPlan {
         require(request.host.isNotEmpty() && request.host.length <= 8192 &&
             request.path.length <= 8192 && request.scheme in listOf("http", "https") &&
             request.port in 1..65535 && request.method.matches(Regex("[A-Z]+"))) { "Invalid request metadata" }
@@ -165,7 +165,7 @@ class RulePlanner(layers: List<Map<String, Any?>>) {
                         add(RequestAction.Transform(changes, strip))
                     }
                     "proxy" -> {
-                        val proxy = text(config["proxy"])
+                        val proxy = backupTarget ?: text(config["proxy"])
                         val primary = RuleTargets.build(request, currentPath, proxy, config, source)
                         route = RuleTargets.route(primary)
                         currentPath = route.path
@@ -308,7 +308,7 @@ class RulePlanner(layers: List<Map<String, Any?>>) {
             if (key in setOf("requestReplace", "responseReplace")) {
                 if (value !is Map<*, *>) issue(key, "Replacement must be an object", IssueKind.UNSUPPORTED_VALUE)
                 for ((nested, item) in PlannerJson.obj(value)) {
-                    if (nested !in setOf("headers", "doDownload") && PlannerJson.truthy(item)) {
+                    if (nested !in setOf("headers", "doDownload", "desc", "remark") && PlannerJson.truthy(item)) {
                         issue("$key.$nested", "No native body executor; pinned replacement implementation handles headers/download only")
                     }
                     if (nested == "headers" && item !is Map<*, *>) {
@@ -425,7 +425,7 @@ class RulePlanner(layers: List<Map<String, Any?>>) {
         private val recognizedKeys = setOf(
             "options", "success", "abort", "redirect", "requestReplace", "proxy", "retry", "sni", "verifyHost",
             "unVerifySsl", "ssl", "baiduOcr", "responseReplace", "script", "tampermonkeyScript",
-            "desc", "order", "exclusions", "key", "replace", "backup", "matched",
+            "desc", "remark", "status", "order", "exclusions", "key", "replace", "backup", "matched",
             "cacheSeconds", "cacheMaxAge", "cache", "cacheMinutes", "cacheHours", "cacheDays", "cacheWeeks",
             "cacheMonths", "cacheYears", "cacheControlType", "cacheImmutable", "cacheMinStatusCode",
             "cacheMaxStatusCode", "cacheExcludeStatusCodeList", "optionsAllowHeaders", "optionsAllowMethods",

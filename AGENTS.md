@@ -3,15 +3,16 @@
 ## Project Structure
 
 - `lightning-browser/` is the primary Android application and a separate Gradle build. Kotlin sources, Android resources, and JVM tests are under `app/src/main/` and `app/src/test/`.
-- Root-level `app/` and `netcore/` are the earlier reference shell and Kotlin networking implementation; `netcore/src/test/` contains networking regression tests.
-- `port/` builds and synchronizes the embedded Node payload. `patches/` contains comparison patches. See `LIGHTNING.md` and `PORT.md` for integration details.
+- Root-level `app/` is the earlier reference shell. `netcore/` contains the shared native network core, compiled into the browser by `lightning-browser/native-core/`; `netcore/src/test/` contains networking regression tests.
+- `port/` exports native default data and retains the historical Node payload tools. `patches/` contains comparison patches. See `docs/NATIVE-KOTLIN-MIGRATION-2026-11-08.md` for current integration; `PORT.md` describes the historical Node path.
 
 ## Build, Test, and Development
 
 Use JDK 21 and the Android SDK. Check the machine-specific JDK path in `gradle.properties` and SDK configuration in `local.properties`.
 
-- `python port/build-payload.py --resources <dev-sidecar-resources>` builds the untracked Node payload from an installed dev-sidecar.
-- `./port/sync-payload.sh` copies that payload into the browser. Run this before building a functional browser APK.
+- Native builds use the committed `assets/native/` data; no Node payload build/sync is needed. Local CA assets must match the App trust resource and remain untracked.
+- `python scripts/test-native-core.py --java-home <jdk21> --conscrypt-jar <conscrypt-openjdk-uber-2.8.0.jar> --go-exe <go>` runs the full native suite with independent ECH peers.
+- `python scripts/verify-native-browser-apk.py --apk <apk>` verifies native packaging and absence of Node.
 - `cd lightning-browser && ./gradlew assembleLightningPlusRelease` builds the arm64 release APK.
 - `cd lightning-browser && ./gradlew testLightningPlusDebugUnitTest` runs browser JVM tests.
 - `./build.sh :netcore:test` runs root-project networking tests; set `GRADLE_BIN` if the script's default Gradle 8.14 path is unavailable. Add `-Pdsha.live=1` for opt-in network smoke tests.

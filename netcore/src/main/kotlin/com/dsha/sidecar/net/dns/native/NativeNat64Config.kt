@@ -18,7 +18,8 @@ object NativeNat64Config {
     ): DnsProviderCatalog {
         val copy = DnsProviderJson.copyObject(options)
         val nat64 = DnsProviderJson.objectOrEmpty(copy["nat64"], "nat64")
-        val prefix = DnsProviderJson.text(nat64["prefix"], "nat64.prefix").orEmpty()
+        val prefix = if (nat64["enabled"] == true)
+            DnsProviderJson.text(nat64["prefix"], "nat64.prefix").orEmpty() else ""
         val domains = nat64["domains"]
         val enabled = nat64["enabled"] == true && prefix.isNotEmpty() && domains is List<*> && domains.isNotEmpty()
         if (enabled) require(Nat64Address.toNat64Address(prefix, "0.0.0.1") != null) { "Invalid NAT64 /96 prefix" }

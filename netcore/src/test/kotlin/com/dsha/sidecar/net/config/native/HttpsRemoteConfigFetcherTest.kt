@@ -183,6 +183,25 @@ class HttpsRemoteConfigFetcherTest {
         }
     }
 
+    @Test fun explicitLoopbackProxyFetchesThroughTheNativeMitmWithoutGlobalTrustChanges() {
+        val ca = com.dsha.sidecar.net.proxy.tls.EphemeralTestCa.create()
+        val roots = KeyStore.getInstance(KeyStore.getDefaultType()).apply {
+            load(null, null)
+            setCertificateEntry("local-proxy", ca.certificate)
+        }
+        val managers = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply { init(roots) }
+        val proxyTrust = SSLContext.getInstance("TLS").apply { init(null, managers.trustManagers, null) }
+        val config = com.dsha.sidecar.net.runtime.NativeRuntimeConfig.decode(mapOf("server" to mapOf(
+            "preSetIpList" to mapOf("localhost" to listOf("127.0.0.1")),
+            "intercepts" to mapOf("localhost" to mapOf(".*" to emptyMap<String, Any?>())))))
+        com.dsha.sidecar.net.runtime.NativeRuntime(config, ca.authority(), upstreamTrustContext = clientContext).use { runtime ->
+            val proxy = Proxy(Proxy.Type.HTTP, runtime.start())
+            HttpsRemoteConfigFetcher(HttpsConfigLimits(), proxy, proxyTrust).use { client ->
+                assertEquals("{server:{port:4321}}", client.fetch(address("/ok"), 1024).toString(Charsets.UTF_8))
+            }
+        }
+    }
+
     @Test fun verifiedGetAndSameOriginRedirectSucceed() {
         fetcher().use { client ->
             val expected = "{server:{port:4321}}"

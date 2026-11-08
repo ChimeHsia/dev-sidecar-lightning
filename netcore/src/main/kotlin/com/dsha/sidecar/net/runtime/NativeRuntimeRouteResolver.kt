@@ -3,6 +3,7 @@ package com.dsha.sidecar.net.runtime
 import com.dsha.sidecar.net.dns.IpAddress
 import com.dsha.sidecar.net.dns.native.NativeDnsResolver
 import com.dsha.sidecar.net.dns.native.NativeDnsResult
+import com.dsha.sidecar.net.dns.native.NativeDnsStatus
 import com.dsha.sidecar.net.proxy.native.*
 import java.io.IOException
 import java.net.InetAddress
@@ -26,6 +27,7 @@ class NativeRuntimeRouteSelection internal constructor(
     internal val owner: Any,
 ) {
     internal val reported = AtomicBoolean()
+    internal val connected = AtomicBoolean()
 }
 
 enum class NativeRuntimeSocketOutcome { CONNECTED, CONNECT_FAILED }
@@ -37,6 +39,7 @@ enum class NativeRuntimeSocketOutcome { CONNECTED, CONNECT_FAILED }
 class NativeRuntimeRouteResolver(
     private val dns: NativeDnsResolver,
     private val dnsTimeoutMillis: Int,
+    private val allowSystemDnsFallback: Boolean = false,
 ) : RouteResolver {
     private val identity = Any()
     private val selections = AtomicLong()
@@ -44,7 +47,11 @@ class NativeRuntimeRouteResolver(
     private val closed = AtomicBoolean()
     private data class Prepared(val host: String, val port: Int, val tls: NativeTlsPolicy?)
     private val prepared = ThreadLocal<Prepared>()
+    private val latest = ThreadLocal<NativeRuntimeRouteSelection>()
     private val pending = java.util.concurrent.ConcurrentHashMap.newKeySet<java.util.concurrent.CompletableFuture<NativeDnsResult>>()
+    private val systemQueries = java.util.concurrent.ThreadPoolExecutor(2, 2, 0,
+        TimeUnit.MILLISECONDS, java.util.concurrent.ArrayBlockingQueue<Runnable>(32),
+        java.util.concurrent.ThreadFactory { Thread(it, "native-platform-dns").apply { isDaemon = true } })
 
     init { require(dnsTimeoutMillis > 0) }
 
@@ -71,7 +78,7 @@ class NativeRuntimeRouteResolver(
             if (request.secure) NativeTlsPolicy(request.authority.host) else null).route
     }
 
-    fun select(host: String, port: Int, tls: NativeTlsPolicy?): NativeRuntimeRouteSelection {
+    fun select(host: String, port: Int, tls: NativeTlsPolicy?, excluded: Set<String> = emptySet()): NativeRuntimeRouteSelection {
         if (closed.get()) throw IOException("Runtime routes are closed")
         val start = System.nanoTime()
         val future = dns.resolve(host, destinationPort = port)
@@ -80,19 +87,39 @@ class NativeRuntimeRouteResolver(
             if (closed.get()) { future.cancel(true); throw IOException("Runtime routes are closed") }
             val remaining = TimeUnit.MILLISECONDS.toNanos(dnsTimeoutMillis.toLong()) - (System.nanoTime() - start)
             if (remaining <= 0) throw SocketTimeoutException("Runtime DNS deadline")
-            val result = future.get(remaining, TimeUnit.NANOSECONDS)
+            var result = future.get(remaining, TimeUnit.NANOSECONDS)
             if (closed.get()) throw IOException("Runtime routes are closed")
-            val literal = result.selectedIp
-                ?: throw IOException("DNS ${result.status}: no literal candidate; hostname fallback is not silently used")
+            if (result.status == NativeDnsStatus.NO_PROVIDER && allowSystemDnsFallback) {
+                val query = systemQueries.submit<List<String>> {
+                    InetAddress.getAllByName(host).mapNotNull { it.hostAddress?.substringBefore('%') }.distinct()
+                }
+                try {
+                    val left = TimeUnit.MILLISECONDS.toNanos(dnsTimeoutMillis.toLong()) - (System.nanoTime() - start)
+                    if (left <= 0) throw SocketTimeoutException("Platform DNS deadline")
+                    val addresses = query.get(left, TimeUnit.NANOSECONDS)
+                    result = NativeDnsResult(host, null, result.family, port, NativeDnsStatus.CANDIDATES,
+                        addresses.firstOrNull(), addresses, addresses, false)
+                } finally { if (!query.isDone) query.cancel(true) }
+            }
+            val literal = (listOfNotNull(result.selectedIp) + result.candidateOrder + result.addresses)
+                .firstOrNull { it !in excluded && IpAddress.isIpLiteral(it) }
+                ?: throw IOException("DNS ${result.status}: no untried literal candidate")
             if (!IpAddress.isIpLiteral(literal)) throw IOException("DNS selected a nonliteral destination")
+            if (result.selectedIp != literal) result = NativeDnsResult(result.hostname, result.providerKey,
+                result.family, result.destinationPort, result.status, literal, result.candidateOrder,
+                result.addresses, result.cached, result.entryIdentity)
             // Guarded literal parsing never sends the hostname through JVM system DNS.
             val address = InetAddress.getByName(literal)
             selections.incrementAndGet()
             lateinit var selection: NativeRuntimeRouteSelection
             selection = NativeRuntimeRouteSelection(NativeProxyRoute(InetSocketAddress(address, port), tls = tls,
-                socketOutcome = { outcome -> feedback(selection, if (outcome == NativeSocketOutcome.CONNECTED)
-                    NativeRuntimeSocketOutcome.CONNECTED else NativeRuntimeSocketOutcome.CONNECT_FAILED) }),
+                socketOutcome = { outcome ->
+                    if (outcome == NativeSocketOutcome.CONNECTED) selection.connected.set(true)
+                    feedback(selection, if (outcome == NativeSocketOutcome.CONNECTED)
+                        NativeRuntimeSocketOutcome.CONNECTED else NativeRuntimeSocketOutcome.CONNECT_FAILED)
+                }),
                 result, identity)
+            latest.set(selection)
             return selection
         } catch (_: TimeoutException) {
             throw SocketTimeoutException("Runtime DNS deadline")
@@ -117,8 +144,17 @@ class NativeRuntimeRouteResolver(
         return dns.feedback(selection.dnsResult, outcome == NativeRuntimeSocketOutcome.CONNECTED)
     }
 
+    /** A TCP handshake can succeed while TLS/HTTP subsequently fails. Record that distinct outcome. */
+    internal fun requestFailed(route: NativeProxyRoute) {
+        val selection = latest.get() ?: return
+        if (selection.route.destination == route.destination && selection.connected.compareAndSet(true, false) && !closed.get()) {
+            dns.feedback(selection.dnsResult, false)
+        }
+    }
+
     internal fun close() {
         closed.set(true)
         cancelPendingQueries(pending)
+        systemQueries.shutdownNow()
     }
 }

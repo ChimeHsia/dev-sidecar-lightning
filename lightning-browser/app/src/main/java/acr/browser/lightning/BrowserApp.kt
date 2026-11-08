@@ -111,8 +111,7 @@ class BrowserApp : Application() {
             WebView.setWebContentsDebuggingEnabled(true)
         }
 
-        // 内嵌 dev-sidecar 核心：主进程拉起 Node（MITM 在 127.0.0.1:31181），
-        // WebView 子进程不重复拉，只把本进程的 WebView 指向同一个端口。
+        // 原生 Kotlin 核心由主进程持有；普通与无痕进程绑定同一服务和代理端口。
         if (isIncognito) {
             DshaAccel.attachProxyOnly(this)
         } else {

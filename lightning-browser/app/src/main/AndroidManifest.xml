@@ -40,6 +40,10 @@
         android:roundIcon="@mipmap/ic_launcher_orange"
         android:taskAffinity="com.anthonycr.browser.AffinityDefault"
         android:usesCleartextTraffic="true">
+        <service
+            android:name=".accel.NativeProxyService"
+            android:exported="false"
+            android:stopWithTask="false" />
         <!-- 去掉 LeakCanary 的桌面入口，否则桌面上会多出一个重复图标 -->
         <activity
             android:name="leakcanary.internal.activity.LeakLauncherActivity"

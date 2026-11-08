@@ -67,10 +67,6 @@ class ScriptOracleTest(private val id: String, private val fixture: Map<String, 
                 assertEquals(expected["tags"], (tags as ScriptTagDecision.Ready).headText)
                 val input = Base64.getDecoder().decode(expected["inputBase64"] as String)
                 val result = HtmlScriptInjector().prepare(request, head, tags, ByteArrayInputStream(input))
-                if (fixture["encoding"] == "br") {
-                    assertEquals(ScriptResponseDecision.Blocked(ScriptProblem.UNSUPPORTED_ENCODING), result)
-                    return
-                }
                 val response = (result as ScriptResponseDecision.Prepared).response
                 val body = when (fixture["encoding"]) {
                     "gzip" -> GZIPInputStream(response.bodyBytes().inputStream()).use { it.readBytes() }
@@ -78,7 +74,11 @@ class ScriptOracleTest(private val id: String, private val fixture: Map<String, 
                     else -> response.bodyBytes()
                 }
                 assertArrayEquals(Base64.getDecoder().decode(expected["decodedBase64"] as String), body)
-                obj(expected["outputHeaders"]).forEach { (name, value) -> assertEquals(value, scriptHeader(response.head, name)) }
+                obj(expected["outputHeaders"]).forEach { (name, value) ->
+                    if (fixture["encoding"] == "br" && name.equals("content-encoding", true)) {
+                        assertNull(scriptHeader(response.head, name))
+                    } else assertEquals(value, scriptHeader(response.head, name))
+                }
                 assertEquals(response.bodySize.toString(), scriptHeader(response.head, "content-length"))
             }
         }

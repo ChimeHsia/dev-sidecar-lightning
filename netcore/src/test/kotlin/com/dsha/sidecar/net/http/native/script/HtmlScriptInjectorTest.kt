@@ -15,6 +15,19 @@ class HtmlScriptInjectorTest {
     private val request = scriptRequest()
     private val injector = HtmlScriptInjector()
 
+    @Test fun `independent Node Brotli fixture decodes injects and becomes identity encoded`() {
+        val encoded = java.util.Base64.getDecoder().decode(
+            "GzQA+EVveL2uQw7XTxQpTclagFEqkQhlGDjQJV8dojuoJM/HrQU=")
+        val head = scriptHead(encoded, listOf(ActionHeader("Content-Encoding", "br")))
+        val tags = readyTags(head = head) as ScriptTagDecision.Ready
+        val response = (injector.prepare(request, head, tags, encoded.inputStream())
+            as ScriptResponseDecision.Prepared).response
+        assertNull(scriptHeader(response.head, "content-encoding"))
+        assertEquals("<html><head>${tags.headText}</head><body>Brotli fixture</body></html>",
+            response.bodyBytes().toString(Charsets.UTF_8))
+        assertEquals(response.bodySize.toString(), scriptHeader(response.head, "content-length"))
+    }
+
     @Test fun `split tags and UTF8 byte fragments inject once without document reencoding`() {
         val stream = object : ByteArrayInputStream(scriptHtml) {
             override fun read(bytes: ByteArray, offset: Int, length: Int): Int = super.read(bytes, offset, minOf(1, length))
@@ -86,8 +99,8 @@ class HtmlScriptInjectorTest {
         assertEquals(ScriptResponseDecision.Blocked(ScriptProblem.INVALID_HEADERS), injector.prepare(request.copy(host = "other.test"), head, tags, stream))
     }
 
-    @Test fun `Brotli and unknown stacked encodings block without consuming representation`() {
-        for (encoding in listOf("br", "compress", "gzip, deflate")) {
+    @Test fun `unknown and stacked encodings block without consuming representation`() {
+        for (encoding in listOf("compress", "gzip, deflate")) {
             val head = scriptHead(extra = listOf(ActionHeader("Content-Encoding", encoding)))
             val result = injector.prepare(request, head, readyTags(head = head), object : InputStream() { override fun read(): Int = error("No decode") })
             assertEquals(ScriptResponseDecision.Blocked(ScriptProblem.UNSUPPORTED_ENCODING), result)

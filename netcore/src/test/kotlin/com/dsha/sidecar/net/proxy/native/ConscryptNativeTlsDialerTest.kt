@@ -1,5 +1,9 @@
 package com.dsha.sidecar.net.proxy.native
 
+import com.dsha.sidecar.net.dns.native.*
+import com.dsha.sidecar.net.runtime.NativeRuntimeConfig
+import com.dsha.sidecar.net.runtime.NativeRuntimeEch
+import com.dsha.sidecar.net.runtime.NativeRuntimeEchRoute
 import com.dsha.sidecar.net.proxy.ech.EchConnectionException
 import com.dsha.sidecar.net.proxy.ech.EchFailure
 import com.dsha.sidecar.net.proxy.ech.EchPeerTrust
@@ -29,6 +33,42 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.TrustManagerFactory
 
 class ConscryptNativeTlsDialerTest {
+    @Test
+    fun runtimeHttpsDnsDiscoveryFeedsAnAcceptedIndependentEchHandshake() {
+        HttpPeer("accepted").use { peer ->
+            NativeDnsUdpServer { socket, packet ->
+                val query = packet.bytes()
+                assertEquals("inner.example", NativeDnsTestPackets.question(query).host)
+                assertEquals(65, NativeDnsTestPackets.question(query).type)
+                socket.reply(packet, NativeDnsTestPackets.response(query, listOf(
+                    NativeDnsTestPackets.Rr("inner.example", 65,
+                        NativeEchTestData.rdata(peer.config.wire), 60))))
+            }.use { dns ->
+                val config = NativeRuntimeConfig.decode(mapOf("server" to mapOf("dns" to mapOf(
+                    "providers" to mapOf("local" to mapOf("type" to "udp", "server" to "127.0.0.1", "port" to dns.port)),
+                    "ech" to mapOf("enabled" to true, "dns" to "local", "domains" to listOf("inner.example"))))))
+                val clock = NativeDnsClock { TimeUnit.NANOSECONDS.toMillis(System.nanoTime()) }
+                NativeNat64Transport(SocketDnsTransport(), clock).use { transport ->
+                    NativeRuntimeEch(config, transport, clock, 3_000).use { discovery ->
+                        discovery.requireConfiguration(NativeRuntimeEchRoute("inner.example", "verify.example", peer.port))
+                        val dialer = ConscryptNativeTlsDialer(discovery, NativeEchTrustSupplier { peer.trust })
+                        dialer.connect(peer.raw(), NativeTlsPolicy("verify.example", "inner.example", echRequired = true), 3_000).use { tls ->
+                            tls.soTimeout = 3_000
+                            tls.outputStream.write("GET /runtime/dns-ech HTTP/1.1\r\nHost: inner.example\r\nConnection: close\r\n\r\n".toByteArray())
+                            assertTrue(tls.inputStream.readBytes().toString(Charsets.US_ASCII).startsWith("HTTP/1.1 200 "))
+                        }
+                    }
+                }
+                dns.finish()
+            }
+            val result = peer.result()
+            assertTrue(result.ech)
+            assertEquals("inner.example", result.sni)
+            assertEquals("GET /runtime/dns-ech HTTP/1.1\r\n", result.requestLine)
+            record("runtime-https-dns-ech-http", result)
+        }
+    }
+
     @Test
     fun independentHttpPeerClosesTlsCleanlyForAndroidReadToEofProbe() {
         HttpPeer("accepted").use { peer ->

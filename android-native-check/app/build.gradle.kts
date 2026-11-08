@@ -52,6 +52,7 @@ dependencies {
     implementation(files(conscryptAar))
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.4.21")
     implementation("org.bouncycastle:bcpkix-jdk18on:1.79")
+    implementation("org.brotli:dec:0.1.2")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
 }
 

@@ -42,12 +42,11 @@ internal class NativeRuntimeCacheCompatibility(private val clock: Clock) {
                     // This descriptor was handled as a source-compatible miss, not ignored.
                 }
                 is RequestAction.Retry -> {
-                    if (action.descriptor != null) throw IOException("Retry needs an engine precommit attempt boundary")
-                    remaining.add(step)
+                    // The runtime retains the original descriptor for the precommit retry hook.
+                    remaining.add(step.copy(action = RequestAction.Retry(null)))
                 }
                 is RequestAction.Proxy -> {
-                    if (action.backup != null) throw IOException("Backup needs actual attempt feedback and target recomposition")
-                    remaining.add(step)
+                    remaining.add(step.copy(action = action.copy(backup = null)))
                 }
                 else -> remaining.add(step)
             }
@@ -77,7 +76,7 @@ internal class NativeRuntimeCacheCompatibility(private val clock: Clock) {
                 val next = CacheCompatibility.responseHeaders(scheduled(request), action.descriptor, head, clock.millis())
                 if (next != head) changes.incrementAndGet()
                 head = next
-            } else {
+            } else if (action !is ResponseAction.ScriptInjection) {
                 pending.add(step)
             }
         }

@@ -12,6 +12,12 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "2.4.21"
 }
 
+val prepareNativeAssets = tasks.register<Sync>("prepareNativeAssets") {
+    from(layout.projectDirectory.dir("src/main/assets"))
+    exclude("node-libs.zip", "nodejs-project.zip", "cacert.pem")
+    into(layout.buildDirectory.dir("generated/native-assets"))
+}
+
 android {
     compileSdk = 37
     compileSdkMinor = 2
@@ -27,6 +33,11 @@ android {
     val isCi = System.getenv("CI") == "true"
 
     sourceSets {
+        getByName("main").apply {
+            assets.directories.clear()
+            assets.directories.add(layout.buildDirectory.dir("generated/native-assets").get().asFile.absolutePath)
+            jniLibs.directories.clear()
+        }
         create("lightningPlus").apply {
             setRoot("src/LightningPlus")
         }
@@ -43,7 +54,6 @@ android {
 
     buildTypes {
         named("debug") {
-            multiDexEnabled = true
             isMinifyEnabled = false
             isShrinkResources = false
             setProguardFiles(listOf("proguard-project.txt"))
@@ -52,7 +62,6 @@ android {
         }
 
         named("release") {
-            multiDexEnabled = false
             // 不混淆：R8 会把 kotlinx.serialization / Room 的类型信息裁坏，
             // 启动即崩（IllegalStateException: Unsupported type class fn4）。
             // 上游靠 CI 里的额外 keep 规则撑着，本地自用直接关掉最省事，
@@ -66,7 +75,7 @@ android {
             enableAndroidTestCoverage = false
 
             ndk {
-                // 内嵌的 Node 运行时只有 arm64，其它 ABI 打了也跑不了加速
+                // Conscrypt 的设备验收以 arm64 为发布目标。
                 abiFilters.add("arm64-v8a")
             }
         }
@@ -74,7 +83,7 @@ android {
 
     flavorDimensions.add("capabilities")
 
-    val commonVersionCode = 102
+    val commonVersionCode = 103
 
     productFlavors {
         create("lightningPlus") {
@@ -92,18 +101,17 @@ android {
     }
     packaging {
         resources {
-            excludes += listOf(".readme")
-        }
-        jniLibs {
-            // Node 二进制以 libnodebin.so 的形式放在 jniLibs 里，
-            // Android 10+ 只允许从 nativeLibraryDir 执行文件，必须真解压到磁盘
-            useLegacyPackaging = true
+            excludes += listOf(".readme", "META-INF/versions/9/OSGI-INF/MANIFEST.MF")
         }
     }
 
     androidResources {
-        // 这两个是运行时才解压的资源，禁止 AAPT 二次压缩
-        noCompress += listOf("zip", "pem")
+        noCompress += listOf("pem")
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
     lint {
         checkReleaseBuilds = false
@@ -129,6 +137,8 @@ android {
     }
 }
 
+tasks.named("preBuild") { dependsOn(prepareNativeAssets) }
+
 androidComponents {
     onVariants(selector().all()) { variant ->
         variant.runtimeConfiguration.resolutionStrategy.activateDependencyLocking()
@@ -136,6 +146,8 @@ androidComponents {
 }
 
 dependencies {
+    implementation(project(":native-core"))
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
     val robolectric = "4.17"
     val mezzanineVersion = "2.5.0"
     val daggerVersion = "2.60.1"
@@ -232,9 +244,12 @@ licensee {
 
     allow(SpdxId.Apache_20)
     allow(SpdxId.BSD_3_Clause)
+    allow(SpdxId.MIT)
+    allowUrl("https://www.bouncycastle.org/licence.html")
     allowUrl("https://jsoup.org/license")
 }
 
 kotlin {
     jvmToolchain(21)
+    compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }
 }

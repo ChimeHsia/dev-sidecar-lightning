@@ -20,6 +20,9 @@ import java.util.Collections
 import java.util.Locale
 
 class NativeNavigationRules private constructor(private val rules: Map<String, String>) {
+    internal fun needsMitm(request: NativeProxyRequest): Boolean =
+        request.head.method == "CONNECT" && request.authority.port == 443 &&
+            "https://${request.authority.host.lowercase(Locale.ROOT)}" in rules
     fun target(request: NativeProxyRequest): String? {
         if (request.head.method !in setOf("GET", "HEAD")) return null
         val headers = request.head.headers
@@ -166,7 +169,11 @@ class NativeNavigationPolicy(
     private val rules: () -> NativeNavigationRules,
 ) : NativeExchangePolicy by downstream {
     override fun onRequest(request: NativeProxyRequest): NativeRequestDecision {
-        val target = rules().target(request) ?: return downstream.onRequest(request)
+        val current = rules()
+        if (current.needsMitm(request)) return NativeRequestDecision.Forward(request.head,
+            com.dsha.sidecar.net.proxy.native.NativeProxyRoute(
+                java.net.InetSocketAddress(java.net.InetAddress.getByName("127.0.0.1"), request.authority.port)))
+        val target = current.target(request) ?: return downstream.onRequest(request)
         return NativeRequestDecision.LocalResponse(
             Http1ResponseHead(
                 request.head.version,

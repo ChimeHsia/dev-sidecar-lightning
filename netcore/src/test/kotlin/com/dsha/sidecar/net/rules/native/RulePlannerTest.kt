@@ -21,7 +21,7 @@ class RulePlannerTest {
         assertFalse(planner(mapOf("newAction" to false)).plan("example.test", "/").hasBlockingIssues)
         val status = planner(mapOf("status" to 204)).plan("example.test", "/")
         assertNull(status.localResponse)
-        assertTrue(status.issues.any { it.action == "status" })
+        assertFalse(status.hasBlockingIssues) // Upstream ignores this legacy metadata field.
         assertEquals(204, planner(mapOf("success" to mapOf("status" to 204))).plan("example.test", "/").localResponse?.status)
     }
 

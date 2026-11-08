@@ -16,6 +16,8 @@ data class NativeRuntimeOptions(
     val dnsCache: NativeDnsLimits = NativeDnsLimits(),
     val ipv6Available: Boolean = true,
     val certificateCacheSize: Int = 64,
+    val allowSystemDnsFallback: Boolean = false,
+    val legacyTlsCompatibility: Boolean = false,
 ) {
     init { require(dnsTimeoutMillis > 0 && certificateCacheSize > 0) }
 }
@@ -30,17 +32,18 @@ class NativeRuntime(
     val config: NativeRuntimeConfig,
     authority: MitmCertificateAuthority,
     val options: NativeRuntimeOptions = NativeRuntimeOptions(),
-    tlsDialer: NativeTlsDialer = NativeTlsConnector(),
-    upstreamTrustContext: SSLContext? = null,
-    echRequirement: NativeRuntimeEchRequirement? = null,
-    endpointResolver: NativeDnsEndpointResolver = NativeDnsEndpointResolver.SYSTEM,
-    clock: Clock = Clock.systemUTC(),
-    dnsTrustContext: SSLContext? = null,
-    navigationRules: (() -> NativeNavigationRules)? = null,
-    scriptRoutes: NativeRuntimeScriptRoutes? = null,
+    private val tlsDialer: NativeTlsDialer? = null,
+    private val upstreamTrustContext: SSLContext? = null,
+    private val echRequirement: NativeRuntimeEchRequirement? = null,
+    private val endpointResolver: NativeDnsEndpointResolver = NativeDnsEndpointResolver.SYSTEM,
+    private val clock: Clock = Clock.systemUTC(),
+    private val dnsTrustContext: SSLContext? = null,
+    private val navigationRules: (() -> NativeNavigationRules)? = null,
+    private val scriptRoutes: NativeRuntimeScriptRoutes? = null,
+    private val scriptSources: Map<String, com.dsha.sidecar.net.http.native.script.CatalogSource> = emptyMap(),
 ) : Closeable {
     init {
-        if (config.requiresEchAdapter && echRequirement == null) {
+        if (config.requiresEchAdapter && tlsDialer != null && echRequirement == null) {
             throw NativeRuntimeConfigurationException(listOf("Required ECH configuration needs a paired injected composite TLS dialer and requirement resolver"))
         }
         if (config.requiresEchAdapter && tlsDialer is NativeTlsConnector) {
@@ -54,24 +57,84 @@ class NativeRuntime(
         scriptRoutes?.requireBodyLimit(options.proxy.limits.maxBodyBytes)
     }
 
+    private val authority = authority
+    private val revisionLock = Any()
+    @Volatile private var currentEpoch: NativeRuntime = this
+    private val activeEpoch = ThreadLocal<NativeRuntime>()
+    private val leases = mutableMapOf<NativeRuntime, Int>()
+    private val retired = mutableSetOf<NativeRuntime>()
+    val currentConfig: NativeRuntimeConfig get() = currentEpoch.config
+    private val runtimeScripts = NativeRuntimeScripts(config, scriptSources)
     private val transport = SocketDnsTransport(endpointResolver,
         sslContext = dnsTrustContext ?: SSLContext.getInstance("TLS").apply { init(null, null, null) },
         limits = options.dnsTransport)
-    private val resolver = try { NativeDnsResolver(config.catalog, transport,
-        NativeDnsClock { java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(System.nanoTime()).coerceAtLeast(0) },
+    private val dnsClock = NativeDnsClock { java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(System.nanoTime()).coerceAtLeast(0) }
+    private val nat64 = NativeNat64Transport(transport, dnsClock)
+    private val speed = NativeRuntimeSpeed(config)
+    private val resolver = try { NativeDnsResolver(config.catalog, nat64, dnsClock,
         mapping = NativeRuntimeConfig.objectAt(config.dns, "mapping"), presets = config.presets,
         ech = NativeRuntimeConfig.objectAt(config.dns, "ech").takeIf { it.isNotEmpty() },
-        ipv6Available = options.ipv6Available, limits = options.dnsCache)
+        nat64Domains = NativeRuntimeConfig.objectAt(config.dns, "nat64")["domains"],
+        ipv6Available = options.ipv6Available, limits = options.dnsCache, candidateOrder = speed)
     } catch (failure: Exception) {
-        transport.close()
+        nat64.close()
+        speed.close()
         throw failure
     }
-    val routes = NativeRuntimeRouteResolver(resolver, options.dnsTimeoutMillis)
+    private val localRoutes = NativeRuntimeRouteResolver(resolver, options.dnsTimeoutMillis, options.allowSystemDnsFallback)
+    val routes: NativeRuntimeRouteResolver get() = currentEpoch.localRoutes
+    private val automaticEch = try {
+        if (tlsDialer == null) NativeRuntimeEch(config, nat64, dnsClock, options.dnsTimeoutMillis) else null
+    } catch (failure: Exception) {
+        localRoutes.close()
+        resolver.close()
+        speed.close()
+        throw failure
+    }
+    private val selectedDialer = tlsDialer ?: ConscryptNativeTlsDialer(requireNotNull(automaticEch))
     private val certificates = LeafCertificateCache(authority, maxSize = options.certificateCacheSize)
-    val proxyOptions: NativeProxyOptions = options.proxy.copy(port = config.listenPort ?: options.proxy.port)
-    private val rules = NativeRuntimeRuleAdapter(config, routes, clock, upstreamTrustContext, echRequirement, scriptRoutes)
-    private val engine = NativeProxyServer(routes, certificates, proxyOptions, tlsConnector = tlsDialer,
-        exchangePolicy = if (navigationRules == null) rules else NativeNavigationPolicy(rules, navigationRules))
+    private val settings = NativeRuntimeConfig.objectAt(
+        NativeRuntimeConfig.objectAt(config.decoded, "server").ifEmpty { config.decoded }, "setting")
+    val proxyOptions: NativeProxyOptions = options.proxy.copy(
+        port = config.listenPort ?: options.proxy.port,
+        readTimeoutMillis = (settings["defaultTimeout"] as? Number)?.toInt()?.coerceIn(100, 120_000)
+            ?: options.proxy.readTimeoutMillis)
+    private val rules = NativeRuntimeRuleAdapter(config, localRoutes, clock, upstreamTrustContext,
+        echRequirement ?: automaticEch, scriptRoutes, runtimeScripts, options.legacyTlsCompatibility)
+    private val policy = if (navigationRules == null) rules else NativeNavigationPolicy(rules, navigationRules)
+    private val dispatch = object : NativeExchangePolicy {
+        override fun onRequest(request: NativeProxyRequest): NativeRequestDecision {
+            onExchangeComplete()
+            val epoch = synchronized(revisionLock) {
+                currentEpoch.also { leases[it] = (leases[it] ?: 0) + 1; activeEpoch.set(it) }
+            }
+            return epoch.policy.onRequest(request)
+        }
+        private fun selected() = checkNotNull(activeEpoch.get()) { "No native configuration epoch" }
+        override fun onResponseHead(request: NativeProxyRequest, head: com.dsha.sidecar.net.proxy.http.Http1ResponseHead) =
+            selected().policy.onResponseHead(request, head)
+        override fun onResponseEntity(request: NativeProxyRequest, head: com.dsha.sidecar.net.proxy.http.Http1ResponseHead,
+            entity: NativeResponseEntity) = selected().policy.onResponseEntity(request, head, entity)
+        override fun retry(request: NativeProxyRequest, previous: NativeProxyRoute, retries: Int,
+            failure: Exception?, status: Int?) = selected().policy.retry(request, previous, retries, failure, status)
+        override fun replayBodyLimit(request: NativeProxyRequest) = selected().policy.replayBodyLimit(request)
+        override fun onExchangeComplete() {
+            val epoch = activeEpoch.get() ?: return
+            activeEpoch.remove()
+            epoch.policy.onExchangeComplete()
+            val release = synchronized(revisionLock) {
+                val count = (leases[epoch] ?: 1) - 1
+                if (count == 0) leases.remove(epoch) else leases[epoch] = count
+                count == 0 && retired.remove(epoch)
+            }
+            if (release) releaseEpoch(epoch)
+        }
+    }
+    private val engine = NativeProxyServer(
+        RouteResolver { (activeEpoch.get() ?: currentEpoch).localRoutes.resolve(it) }, certificates, proxyOptions,
+        tlsConnector = NativeTlsDialer { raw, policy, timeout ->
+            (activeEpoch.get() ?: currentEpoch).selectedDialer.connect(raw, policy, timeout)
+        }, exchangePolicy = dispatch)
     private val lifecycle = Any()
     @Volatile private var phase = NativeRuntimeState.NEW
     val state: NativeRuntimeState get() = if (phase == NativeRuntimeState.LISTENING &&
@@ -79,14 +142,37 @@ class NativeRuntime(
     val failure: Throwable? get() = engine.failure
     val localAddress: InetSocketAddress? get() = engine.localAddress
     val activeSocketCount: Int get() = engine.activeSocketCount
-    fun dnsState(): NativeDnsResolver.State = resolver.state()
-    fun transportState(): SocketDnsTransport.State = transport.state()
-    fun cacheState(): NativeRuntimeCacheState = rules.cacheState()
+    fun dnsState(): NativeDnsResolver.State = currentEpoch.resolver.state()
+    fun transportState(): SocketDnsTransport.State = currentEpoch.transport.state()
+    fun cacheState(): NativeRuntimeCacheState = currentEpoch.rules.cacheState()
+
+    /** Publish one validated epoch; existing exchanges retain their DNS/TLS/rules until completion. */
+    fun reconfigure(next: NativeRuntimeConfig): Unit = synchronized(lifecycle) {
+        check(state == NativeRuntimeState.LISTENING) { "Runtime must be listening before reconfiguration" }
+        require(next.listenPort == null || next.listenPort == localAddress?.port) { "Live port changes require restart" }
+        val replacement = NativeRuntime(next, authority, options.copy(proxy = proxyOptions), tlsDialer,
+            upstreamTrustContext, echRequirement, endpointResolver, clock, dnsTrustContext, navigationRules,
+            scriptRoutes, scriptSources)
+        val obsolete = synchronized(revisionLock) {
+            val previous = currentEpoch
+            currentEpoch = replacement
+            if ((leases[previous] ?: 0) == 0) previous else {
+                retired.add(previous)
+                null
+            }
+        }
+        replacement.speed.start(replacement.resolver)
+        obsolete?.let(::releaseEpoch)
+    }
+
+    private fun releaseEpoch(epoch: NativeRuntime) {
+        if (epoch === this) closeDns() else epoch.close()
+    }
 
     fun start(): InetSocketAddress = synchronized(lifecycle) {
         check(phase == NativeRuntimeState.NEW) { "Native runtime is single-use: $phase" }
         try {
-            engine.start().also { phase = NativeRuntimeState.LISTENING }
+            engine.start().also { phase = NativeRuntimeState.LISTENING; speed.start(resolver) }
         } catch (failure: Exception) {
             phase = NativeRuntimeState.FAILED
             closeDns()
@@ -95,13 +181,19 @@ class NativeRuntime(
     }
 
     private fun closeDns() {
-        routes.close()
+        automaticEch?.close()
+        speed.close()
+        localRoutes.close()
         resolver.close() // Owns the real SocketDnsTransport; cancels in-flight futures before workers wait.
     }
 
-    override fun close() = synchronized(lifecycle) {
+    override fun close(): Unit = synchronized(lifecycle) {
         if (phase != NativeRuntimeState.STOPPED) {
             phase = NativeRuntimeState.STOPPED
+            val revisions = synchronized(revisionLock) {
+                (retired.toList() + currentEpoch).distinct().also { retired.clear() }
+            }
+            revisions.filter { it !== this }.forEach { it.close() }
             closeDns()
             engine.close()
             certificates.clear()
@@ -113,7 +205,7 @@ class NativeRuntime(
             config: Map<String, Any?>,
             authority: MitmCertificateAuthority,
             options: NativeRuntimeOptions = NativeRuntimeOptions(),
-            tlsDialer: NativeTlsDialer = NativeTlsConnector(),
+            tlsDialer: NativeTlsDialer? = null,
             upstreamTrustContext: SSLContext? = null,
             echRequirement: NativeRuntimeEchRequirement? = null,
             dnsTrustContext: SSLContext? = null,

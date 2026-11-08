@@ -39,31 +39,44 @@ class NativeRuntimeConfig private constructor(
             val decoded = PlannerJson.obj(PlannerJson.snapshot(ConfigMerge.sanitize(merged, true)))
             val server = if ("server" in decoded) objectAt(decoded, "server") else decoded
             val setting = objectAt(server, "setting")
+            for (name in listOf("whiteList", "intercept", "cloudflareRoute", "compatible")) {
+                val value = server[name]
+                if (value != null && value !is Map<*, *> && value != emptyList<Any?>()) {
+                    throw NativeRuntimeConfigurationException(listOf("server.$name must be an object"))
+                }
+            }
             val script = objectAt(setting, "script")
             val problems = mutableListOf<String>()
             // The enabled flag gates header interception too; it does not authorize script execution.
-            for ((key, value) in script) {
-                if (PlannerJson.truthy(script["enabled"]) && key != "enabled" && activeUnboundValue(value)) {
-                    problems.add("setting.script.$key needs an asset/body adapter")
-                }
-            }
             val diagnostics = mutableListOf(
-                "Actual TCP feedback affects future DNS selections; same-exchange retry/backup failover is disabled.",
+                "Precommit retries exclude failed destinations within each request and never replay unbuffered uploads.",
                 "Cache rules use source-compatible 304/header operations only; memory entity storage is disabled.",
-                "Response entities stream unchanged; body processors, retry and backup are not scheduled.",
-                "Upstream trust is STRICT regardless of legacy planner compatibility trust reasons.",
+                "Response entities stream unless a configured HTML script action needs bounded preparation.",
             )
+            for ((key, value) in objectAt(server, "compatible")) {
+                if (activeUnboundValue(value)) problems.add("server.compatible.$key is unsupported")
+            }
+            if (objectAt(server, "cloudflareRoute")["enabled"] == true) {
+                problems.add("Enabled cloudflareRoute requires a configured native endpoint adapter")
+            }
+            for ((key, value) in script) if (key !in setOf("enabled", "defaultDir") && activeUnboundValue(value)) {
+                problems.add("setting.script.$key has no runtime binding")
+            }
             when (server["enabled"]) {
                 null, true -> Unit
                 false -> problems.add("server.enabled is false; the native proxy must not start")
                 else -> problems.add("server.enabled must be a Boolean")
             }
             for ((key, value) in server) {
-                if (key !in setOf("enabled", "dns", "setting", "intercepts", "preSetIpList", "port") &&
+                if (key !in setOf("enabled", "dns", "setting", "intercepts", "preSetIpList", "port",
+                        "host", "fakeServerMaxLength", "compatible", "cloudflareRoute", "intercept",
+                        "whiteList", "app", "plugin", "proxy") &&
                     activeUnboundValue(value)) problems.add("server.$key has no runtime binding")
             }
             for ((key, value) in setting) {
-                if (key !in setOf("script", "verifySsl") && activeUnboundValue(value)) {
+                if (key !in setOf("script", "verifySsl", "NODE_TLS_REJECT_UNAUTHORIZED", "allowTls12",
+                        "userBasePath", "rootCaFile", "rootDir", "defaultTimeout", "defaultKeepAliveTimeout",
+                        "timeoutMapping", "lowSpeedDelay") && activeUnboundValue(value)) {
                     problems.add("setting.$key has no runtime binding")
                 }
             }
@@ -75,16 +88,13 @@ class NativeRuntimeConfig private constructor(
                 number.toInt()
             }
             val headerGate = PlannerJson.truthy(script["enabled"])
-            if (headerGate) diagnostics.add("setting.script.enabled enables header-only response processing and explicitly injected local script routes; HTML injection remains unsupported.")
+            if (headerGate) diagnostics.add("setting.script.enabled enables response actions and bounded HTML injection.")
             for ((host, paths) in objectAt(server, "intercepts")) {
                 for ((path, raw) in PlannerJson.obj(paths)) {
                     if (path == "matched") continue
                     val rule = PlannerJson.obj(raw)
                     for ((key, value) in rule) {
                         if (!PlannerJson.truthy(value)) continue
-                        if (key == "retry" || key == "backup") {
-                            problems.add("$host $path $key needs an engine precommit attempt/feedback boundary; not wired")
-                        }
                         if (key == "cacheImmutable" && value == "false" && (PlannerJson.maxAge(rule) ?: 0.0) > 0) {
                             problems.add("$host $path cacheImmutable string false has unsupported legacy coercion; use Boolean false")
                         }
@@ -108,7 +118,7 @@ class NativeRuntimeConfig private constructor(
                 }
             }
             val rawDns = objectAt(server, "dns")
-            val acceptedDnsKeys = setOf("providers", "mapping", "familyMapping", "ech", "nat64", "preSetIpList")
+            val acceptedDnsKeys = setOf("providers", "mapping", "familyMapping", "ech", "nat64", "preSetIpList", "speedTest")
             for ((key, value) in rawDns) if (key !in acceptedDnsKeys && activeUnboundValue(value)) {
                 problems.add("dns.$key has no runtime binding")
             }
@@ -122,15 +132,15 @@ class NativeRuntimeConfig private constructor(
             }
             val prefix = DnsProviderJson.trim((prefixValue as? String).orEmpty())
             val nat64Enabled = declared && prefix.isNotEmpty()
-            if (nat64Enabled) problems.add("NAT64 provider execution is not bound by this runtime")
-            else if (declared) diagnostics.add("dns.nat64 is inactive: the configured prefix is blank.")
+            if (!nat64Enabled && declared) diagnostics.add("dns.nat64 is inactive: the configured prefix is blank.")
             val mapping = normalizeDnsMapping(rawDns, problems)
             val dns = PlannerJson.obj(PlannerJson.snapshot(rawDns + mapOf(
                 "mapping" to mapping, "nat64" to (nat64 + ("enabled" to nat64Enabled)))))
-            val effectiveServer = server + ("dns" to dns)
+            val effectiveServer = server + ("dns" to dns) + if (objectAt(server, "intercept")["enabled"] == false)
+                mapOf("intercepts" to emptyMap<String, Any?>()) else emptyMap()
             val effectiveConfig = if ("server" in decoded) decoded + ("server" to effectiveServer) else effectiveServer
             val planner = RulePlanner(listOf(effectiveConfig))
-            problems.addAll(planner.audit().issues.filterNot { it.kind == IssueKind.GLOBAL_SCRIPT_MIDDLEWARE }
+            problems.addAll(planner.audit().issues.filterNot { boundIssue(it) }
                 .map { "${it.hostnamePattern ?: "*"} ${it.pathPattern ?: "*"} ${it.action}: ${it.message}" })
             val providers = objectAt(dns, "providers")
             for ((name, raw) in providers) {
@@ -140,6 +150,7 @@ class NativeRuntimeConfig private constructor(
                         "tls", "dot", "dns-over-tls")) problems.add("dns.providers.$name.type is unsupported")
             }
             val ech = objectAt(dns, "ech")
+            com.dsha.sidecar.net.dns.native.NativeEchOptions.fromRaw(ech)
             val requiresEch = ech["enabled"] != false && ech["use"] != false &&
                 when (val domains = ech["domains"]) {
                     is List<*> -> domains.isNotEmpty()
@@ -147,11 +158,15 @@ class NativeRuntimeConfig private constructor(
                     else -> false
                 }
             if (problems.isNotEmpty()) throw NativeRuntimeConfigurationException(problems.distinct())
-            val catalog = DnsProviderConfig.normalize(providers, dns)
+            val catalog = com.dsha.sidecar.net.dns.native.NativeNat64Config.normalizeCatalog(providers, dns)
             return NativeRuntimeConfig(decoded, headerGate, Collections.unmodifiableList(diagnostics), planner,
                 catalog, dns, objectAt(server, "preSetIpList").ifEmpty { objectAt(dns, "preSetIpList") },
                 requiresEch, port)
         }
+
+        internal fun boundIssue(issue: com.dsha.sidecar.net.rules.native.PlanningIssue): Boolean =
+            issue.kind == IssueKind.GLOBAL_SCRIPT_MIDDLEWARE ||
+                issue.kind == IssueKind.UNSUPPORTED_ACTION && issue.action in setOf("script", "tampermonkeyScript")
 
         internal fun objectAt(map: Map<String, Any?>, name: String): Map<String, Any?> {
             val value = map[name] ?: return emptyMap()
