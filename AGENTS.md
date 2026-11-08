@@ -43,4 +43,4 @@ This workspace holds multi-megabyte generated assets, and linked worktrees in `.
 
 ## Security and Configuration
 
-Generated Node binaries, payload archives, local configuration, and CA key material must not be committed. The browser uses a local MITM proxy on `127.0.0.1:31181`; stop competing test packages before device testing. Release builds currently use the debug signing configuration and are intended for local use.
+Generated Node binaries, payload archives, local configuration, and CA key material must not be committed. The browser prefers a local MITM proxy on `127.0.0.1:31181`, trying successive ports through 31200 on bind conflicts. Record the actual service-owned port during device testing. Release builds currently use the debug signing configuration and are intended for local use.

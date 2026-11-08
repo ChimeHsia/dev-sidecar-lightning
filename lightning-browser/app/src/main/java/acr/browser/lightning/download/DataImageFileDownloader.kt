@@ -81,9 +81,17 @@ class DataImageFileDownloader @Inject constructor(
                 }
 
             val bitmap = BitmapFactory.decodeByteArray(encoded, 0, encoded.size)
+                ?: throw java.io.IOException("Image data cannot be decoded")
 
-            application.fileOutputStream(uri, coroutineDispatchers.io)?.use { outputStream ->
-                bitmap.compress(compressFormat, 100, outputStream)
+            try {
+                val stream = application.fileOutputStream(uri, coroutineDispatchers.io)
+                    ?: throw java.io.IOException("Cannot open image destination")
+                stream.use { outputStream ->
+                    if (!bitmap.compress(compressFormat, 100, outputStream)) {
+                        throw java.io.IOException("Cannot save image")
+                    }
+                }
+            } finally {
                 bitmap.recycle()
             }
 

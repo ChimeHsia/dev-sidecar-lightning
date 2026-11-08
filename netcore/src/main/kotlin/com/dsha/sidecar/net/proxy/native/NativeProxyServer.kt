@@ -37,6 +37,8 @@ data class NativeProxyOptions(
     val listenAddress: InetAddress = InetAddress.getByName("127.0.0.1"),
     val port: Int = 0,
     val backlog: Int = 32,
+    /** Number of following ports to attempt only when bind reports address-in-use. */
+    val portFallbackCount: Int = 0,
     val workers: Int = 4,
     val queuedConnections: Int = 16,
     val connectTimeoutMillis: Int = 5_000,
@@ -55,6 +57,7 @@ data class NativeProxyOptions(
 ) {
     init {
         require(listenAddress.isLoopbackAddress && port in 0..65535)
+        require(portFallbackCount in 0..100 && (port != 0 || portFallbackCount == 0) && port + portFallbackCount <= 65535)
         require(backlog > 0 && workers in 1..256 && queuedConnections in 1..4096)
         require(listOf(connectTimeoutMillis, handshakeTimeoutMillis, readTimeoutMillis,
             exchangeTimeoutMillis, stopTimeoutMillis, maxRequestsPerConnection).all { it > 0 })
@@ -99,10 +102,19 @@ class NativeProxyServer(
     fun start(): InetSocketAddress = synchronized(lifecycle) {
         check(state == NativeProxyState.NEW) { "Server is single-use: $state" }
         state = NativeProxyState.STARTING
-        val bound = ServerSocket()
+        var bound = ServerSocket()
         try {
-            bound.reuseAddress = false
-            bound.bind(InetSocketAddress(options.listenAddress, options.port), options.backlog)
+            for (candidate in options.port..options.port + options.portFallbackCount) {
+                try {
+                    bound.reuseAddress = false
+                    bound.bind(InetSocketAddress(options.listenAddress, candidate), options.backlog)
+                    break
+                } catch (failure: java.net.BindException) {
+                    bound.close()
+                    if (candidate == options.port + options.portFallbackCount) throw failure
+                    bound = ServerSocket()
+                }
+            }
             listener = bound
             workers = ThreadPoolExecutor(options.workers, options.workers, 0, TimeUnit.MILLISECONDS,
                 ArrayBlockingQueue(options.queuedConnections), threads)
@@ -111,7 +123,8 @@ class NativeProxyServer(
             timer = ScheduledThreadPoolExecutor(1, threads).apply { removeOnCancelPolicy = true }
             localAddress = bound.localSocketAddress as InetSocketAddress
             state = NativeProxyState.LISTENING
-            acceptThread = threads.newThread { acceptLoop(bound) }.also { it.start() }
+            val ownedListener = bound
+            acceptThread = threads.newThread { acceptLoop(ownedListener) }.also { it.start() }
             localAddress!!
         } catch (error: Throwable) {
             runCatching { bound.close() }

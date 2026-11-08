@@ -1,6 +1,6 @@
 # dev-sidecar-lightning
 
-把 [docmirror/dev-sidecar](https://github.com/docmirror/dev-sidecar) 的加速能力接入 Android 浏览器。WebView 通过本地代理（127.0.0.1:31181）访问网络，由 Kotlin 核心处理 DNS、MITM、SNI、ECH 和规则。
+把 [docmirror/dev-sidecar](https://github.com/docmirror/dev-sidecar) 的加速能力接入 Android 浏览器。WebView 通过本地代理（优先 127.0.0.1:31181，冲突时递增至 31200）访问网络，由 Kotlin 核心处理 DNS、MITM、SNI、ECH 和规则。
 
 浏览器外壳基于 [Lightning Browser](https://github.com/anthonycr/Lightning-Browser)（MPL-2.0）。当前产品直接运行原生 Kotlin/JVM 核心；APK 不再携带或启动 Node.js。
 
@@ -8,7 +8,7 @@
 
 - 已接通原生核心、普通/隐身进程服务绑定、配置继承和远程规则热更新。
 - 默认 56 组域名规则保留 ECH、脚本、备用目标；请求失败支持有界候选切换。
-- Release versionCode 103，APK 约 21.2 MiB，已检查不含 Node 负载及运行时。
+- Release versionCode 104，APK 约 21.2 MiB，已检查不含 Node 负载及运行时。
 - 本轮主机测试和构建记录见 [原生迁移记录](docs/NATIVE-KOTLIN-MIGRATION-2026-11-08.md)。当前没有连接 Android 设备，原生包尚未完成 WebView/生命周期真机验收；旧 Node 包的设备结果只作为历史记录。
 
 ## 仓库结构
@@ -55,4 +55,6 @@ python scripts/verify-native-browser-apk.py --apk lightning-browser/app/build/ou
 - [历史差距分析](KOTLIN-MIGRATION.md)、[历史 Node 移植](PORT.md)：早期实现背景。
 - 桌面 PAC、系统代理安装、插件运行时和 cloudflareRoute 未启用；启用未实现选项时配置会明确拒绝。
 - 缓存规则保持上游 304/响应头语义，不提供内存实体缓存。ECH 失败保持拒绝；浏览器对旧 SNI 规则显式保留原有上游 TLS 兼容策略，独立核心默认严格校验。
-- 本地 31181 端口被其他测试包占用时核心启动失败；设备测试前检查并停止冲突包。
+- 核心优先绑定 31181，冲突时依次尝试至 31200，实际端口通过服务同步至普通/隐身 WebView；整个范围被占用才启动失败。
+- 下载启动的网络、存储和参数异常会显示失败提示；系统 DownloadManager 的文件传输不使用 WebView 代理，受限站点可能下载失败，仍需真机验证。
+- 仓库保留历史 Node 工具与参考壳；旧设备数据目录暂保留以兼容配置迁移，APK 本身不包含 Node。

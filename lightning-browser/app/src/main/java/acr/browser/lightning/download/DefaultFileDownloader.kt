@@ -45,7 +45,14 @@ class DefaultFileDownloader @Inject constructor(
 
             val cookie = CookieManager.getInstance().getCookie(pendingDownload.url)
 
-            val normalizedPendingDownload = fetchFileInfo(cookie, pendingDownload)
+            val normalizedPendingDownload = try {
+                fetchFileInfo(cookie, pendingDownload)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (failure: java.io.IOException) {
+                logger.log(TAG, "File metadata unavailable; use the original download details", failure)
+                pendingDownload
+            }
 
             val guessExtension = normalizedPendingDownload.mimeType?.let {
                 MimeTypeMap.getSingleton().getExtensionFromMimeType(it)
@@ -77,8 +84,8 @@ class DefaultFileDownloader @Inject constructor(
                     normalizedPendingDownload.contentDisposition ?: normalizedPendingDownload.url
                 )
                 .setMimeType(guessMimeType)
-                .addRequestHeader("Cookie", cookie)
-                .addRequestHeader("User-Agent", normalizedPendingDownload.userAgent)
+                .addRequestHeader("Cookie", cookie.orEmpty())
+                .addRequestHeader("User-Agent", normalizedPendingDownload.userAgent.orEmpty())
                 .setDestinationInExternalPublicDir(
                     Environment.DIRECTORY_DOWNLOADS,
                     fileSubPath
@@ -111,24 +118,22 @@ class DefaultFileDownloader @Inject constructor(
             return@withContext pendingDownload
         }
 
-        val response = okHttpClient.await().newCall(
+        return@withContext okHttpClient.await().newCall(
             Request.Builder()
                 .url(pendingDownload.url)
                 .head()
                 .addHeader("Cookie", cookie.orEmpty())
                 .addHeader("User-Agent", pendingDownload.userAgent.orEmpty())
                 .build()
-        ).execute()
-
-        logger.log(TAG, "HEAD: ${response.headers}")
-
-        pendingDownload.copy(
-            mimeType = response.header("content-type") ?: pendingDownload.mimeType,
-            contentLength = response.header("content-length")?.toLong()
-                ?: pendingDownload.contentLength,
-            contentDisposition = response.header("content-disposition")
-                ?: pendingDownload.contentDisposition ?: "attachment"
-        )
+        ).execute().use { response ->
+            pendingDownload.copy(
+                mimeType = response.header("content-type") ?: pendingDownload.mimeType,
+                contentLength = response.header("content-length")?.toLongOrNull()?.takeIf { it >= 0 }
+                    ?: pendingDownload.contentLength,
+                contentDisposition = response.header("content-disposition")
+                    ?: pendingDownload.contentDisposition ?: "attachment"
+            )
+        }
     }
 
     companion object {

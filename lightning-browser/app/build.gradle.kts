@@ -83,7 +83,7 @@ android {
 
     flavorDimensions.add("capabilities")
 
-    val commonVersionCode = 103
+    val commonVersionCode = 104
 
     productFlavors {
         create("lightningPlus") {

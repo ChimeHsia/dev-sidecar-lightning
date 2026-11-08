@@ -149,7 +149,7 @@ class NativeRuntime(
     /** Publish one validated epoch; existing exchanges retain their DNS/TLS/rules until completion. */
     fun reconfigure(next: NativeRuntimeConfig): Unit = synchronized(lifecycle) {
         check(state == NativeRuntimeState.LISTENING) { "Runtime must be listening before reconfiguration" }
-        require(next.listenPort == null || next.listenPort == localAddress?.port) { "Live port changes require restart" }
+        require(next.listenPort == null || next.listenPort == config.listenPort || next.listenPort == proxyOptions.port) { "Live port changes require restart" }
         val replacement = NativeRuntime(next, authority, options.copy(proxy = proxyOptions), tlsDialer,
             upstreamTrustContext, echRequirement, endpointResolver, clock, dnsTrustContext, navigationRules,
             scriptRoutes, scriptSources)

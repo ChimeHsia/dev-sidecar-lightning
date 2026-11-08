@@ -325,4 +325,5 @@
 
     <!-- Search -->
     <string name="search_insert_suggestion">插入搜索建议</string>
+    <string name="message_download_failed">无法开始下载，请检查链接、网络和存储权限。</string>
 </resources>

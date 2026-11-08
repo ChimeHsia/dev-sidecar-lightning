@@ -13,7 +13,7 @@ class NativeProxyService : Service() {
             if (code != READY) return super.onTransact(code, data, reply, flags)
             data.enforceInterface(DESCRIPTOR)
             reply?.writeNoException()
-            reply?.writeInt(if (DshaAccel.isNativeOwnerReady()) 1 else 0)
+            reply?.writeInt(DshaAccel.nativeOwnerPort())
             return true
         }
     }
@@ -34,14 +34,16 @@ class NativeProxyService : Service() {
         private const val DESCRIPTOR = "acr.browser.lightning.accel.NativeProxyService"
         private const val READY = IBinder.FIRST_CALL_TRANSACTION
 
-        internal fun isReady(service: IBinder): Boolean {
+        internal fun isReady(service: IBinder): Boolean = readyPort(service) > 0
+
+        internal fun readyPort(service: IBinder): Int {
             val data = Parcel.obtain()
             val reply = Parcel.obtain()
             return try {
                 data.writeInterfaceToken(DESCRIPTOR)
-                if (!service.transact(READY, data, reply, 0)) false else {
+                if (!service.transact(READY, data, reply, 0)) 0 else {
                     reply.readException()
-                    reply.readInt() == 1
+                    reply.readInt().takeIf { it in 1..65535 } ?: 0
                 }
             } finally {
                 reply.recycle()

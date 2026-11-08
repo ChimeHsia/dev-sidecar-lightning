@@ -25,6 +25,7 @@ object DshaAccel {
 
     private const val TAG = "dsha-accel"
     private const val PORT = 31181
+    @Volatile private var activePort = PORT
 
     @Volatile
     private var started = false
@@ -103,7 +104,7 @@ object DshaAccel {
                     context.assets.open("native/navigation-rules.json").bufferedReader().use { it.readText() },
                     File(context.getExternalFilesDir(null) ?: context.filesDir, "navigation-rules.json"))
                 val native = NativeRuntime(config, authority, NativeRuntimeOptions(
-                    proxy = NativeProxyOptions(port = PORT, workers = 24, queuedConnections = 96,
+                    proxy = NativeProxyOptions(port = PORT, portFallbackCount = 19, workers = 24, queuedConnections = 96,
                         connectTimeoutMillis = 4_000, handshakeTimeoutMillis = 6_000,
                         readTimeoutMillis = 20_000, exchangeTimeoutMillis = 60_000),
                     allowSystemDnsFallback = true, legacyTlsCompatibility = true),
@@ -112,12 +113,13 @@ object DshaAccel {
                     if (!isActive(token)) { native.close(); return }
                     runtime = native
                 }
-                native.start()
+                val bound = native.start()
                 synchronized(this) {
                     if (!isActive(token)) { native.close(); return }
+                    activePort = bound.port
                     coreReady = true
                 }
-                Log.i(TAG, "[android] READY Kotlin 127.0.0.1:$PORT")
+                Log.i(TAG, "[android] READY Kotlin 127.0.0.1:$activePort")
                 refreshProxy(context, token)
                 refreshRemote(store, defaults, token, authority)
             }
@@ -128,8 +130,8 @@ object DshaAccel {
     }
 
     @Synchronized
-    internal fun isNativeOwnerReady(): Boolean = ownsCore && coreReady &&
-        runtime?.state == com.dsha.sidecar.net.runtime.NativeRuntimeState.LISTENING
+    internal fun nativeOwnerPort(): Int = if (ownsCore && coreReady &&
+        runtime?.state == com.dsha.sidecar.net.runtime.NativeRuntimeState.LISTENING) activePort else 0
 
     @Synchronized
     private fun isActive(token: Long): Boolean = started && activeToken == token
@@ -157,12 +159,13 @@ object DshaAccel {
                 Thread({
                     val until = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(15)
                     while (isActive(token) && System.nanoTime() < until) {
-                        val listening = runCatching {
-                            NativeProxyService.isReady(service)
-                        }.getOrDefault(false)
-                        if (listening) {
+                        val boundPort = runCatching {
+                            NativeProxyService.readyPort(service)
+                        }.getOrDefault(0)
+                        if (boundPort > 0) {
                             synchronized(this@DshaAccel) {
                                 if (!isActive(token)) return@Thread
+                                activePort = boundPort
                                 coreReady = true
                             }
                             refreshProxy(context, token)
@@ -199,7 +202,7 @@ object DshaAccel {
             }
             val fetcher = HttpsRemoteConfigFetcher(HttpsConfigLimits(
                 connectTimeoutMillis = 4_000, readTimeoutMillis = 6_000, totalTimeoutMillis = 10_000),
-                java.net.Proxy(java.net.Proxy.Type.HTTP, java.net.InetSocketAddress("127.0.0.1", PORT)), context)
+                java.net.Proxy(java.net.Proxy.Type.HTTP, java.net.InetSocketAddress("127.0.0.1", activePort)), context)
             synchronized(this) {
                 if (!isActive(token)) { fetcher.close(); return@Thread }
                 remoteFetcher = fetcher
@@ -268,14 +271,15 @@ object DshaAccel {
             return
         }
         // 不设 bypass：与已验证可用的版本保持一致，加了 bypass 规则反而出现过代理不生效
+        val configuredPort = activePort
         val config = ProxyConfig.Builder()
-            .addProxyRule("http://127.0.0.1:$PORT")
+            .addProxyRule("http://127.0.0.1:$configuredPort")
             .build()
         val token = activeToken
         ProxyController.getInstance().setProxyOverride(config, executor) {
-            Log.i(TAG, "WebView 代理已生效 → 127.0.0.1:$PORT")
+            Log.i(TAG, "WebView 代理已生效 → 127.0.0.1:$activePort")
             synchronized(this) {
-                if (coreReady && isActive(token)) startupGate.markReady(token)
+                if (coreReady && activePort == configuredPort && isActive(token)) startupGate.markReady(token)
             }
         }
     }

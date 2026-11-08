@@ -1,5 +1,8 @@
 package acr.browser.lightning.browser
 
+import acr.browser.lightning.R
+import acr.browser.lightning.download.attemptDownload
+import android.widget.Toast
 import acr.browser.lightning.DefaultBrowserActivity
 import acr.browser.lightning.IncognitoBrowserActivity
 import acr.browser.lightning.browser.cleanup.ExitCleanup
@@ -66,7 +69,10 @@ class BrowserNavigator @Inject constructor(
 
     override fun download(pendingDownload: PendingDownload) {
         appCoroutineScope.launch {
-            fileDownloader.download(pendingDownload)
+            attemptDownload(fileDownloader, pendingDownload) { failure ->
+                logger.log(TAG, "Download could not be started", failure)
+                Toast.makeText(activity, R.string.message_download_failed, Toast.LENGTH_LONG).show()
+            }
         }
     }
 

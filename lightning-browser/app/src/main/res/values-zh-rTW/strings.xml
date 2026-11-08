@@ -291,4 +291,5 @@
     </plurals>
     <string name="notification_incognito_running_message">點觸以開啟</string>
     <string name="notification_incognito_running_description">正在顯示無痕通知</string>
+    <string name="message_download_failed">無法開始下載，請檢查連結、網路和儲存權限。</string>
 </resources>
